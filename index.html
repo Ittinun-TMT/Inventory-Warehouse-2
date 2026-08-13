@@ -121,6 +121,37 @@
   .area-fill{height:100%;border-radius:6px;transition:width .4s ease;}
   .area-meta{font-size:11.5px;color:var(--gray-600);display:flex;justify-content:space-between;}
 
+  /* ===== Group Sale breakdown modal ===== */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(10,38,71,0.55);z-index:900;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+    animation:fadein .15s ease;
+  }
+  .modal-box{
+    background:var(--white);border-radius:var(--radius);max-width:480px;width:100%;
+    max-height:82vh;overflow:auto;box-shadow:var(--shadow-lg);
+  }
+  .modal-head{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:16px 20px;border-bottom:1px solid var(--gray-200);
+    position:sticky;top:0;background:var(--white);border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .modal-head h3{margin:0;font-size:15.5px;color:var(--navy-900);}
+  .modal-close{
+    background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-600);
+    line-height:1;padding:2px 6px;border-radius:6px;
+  }
+  .modal-close:hover{color:var(--danger);background:var(--gray-100);}
+  .modal-body{padding:18px 20px;}
+  .modal-total{font-size:12.5px;color:var(--gray-600);margin-bottom:14px;}
+  .gs-row{margin-bottom:14px;}
+  .gs-row:last-child{margin-bottom:0;}
+  .gs-head{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:500;color:var(--navy-900);margin-bottom:5px;}
+  .gs-head .gs-pct{color:var(--orange-500);font-weight:600;white-space:nowrap;}
+  .gs-track{height:8px;border-radius:6px;background:var(--gray-100);overflow:hidden;}
+  .gs-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--navy-800),var(--orange-500));transition:width .3s ease;}
+  .gs-sub{font-size:11px;color:var(--gray-500);margin-top:3px;}
+
   /* ===== Filter bar ===== */
   .filter-sticky{position:sticky;top:68px;z-index:50;background:var(--gray-50);padding-top:10px;margin-top:10px;}
   .filter-bar{
@@ -374,6 +405,14 @@
 
     </div>
 
+    <div class="section-title">📋 Storage ที่มีข้อมูลอยู่ในระบบ <span class="tag">อ้างอิงจากข้อมูลสต็อกล่าสุดที่นำเข้า — แยกตาม Storage Location / โรงงาน</span></div>
+    <div class="history-table-wrap">
+      <table class="data-table" id="storageSummaryTable">
+        <thead><tr><th>Storage Location</th><th>โรงงาน</th><th class="cell-num">จำนวนแถว</th><th class="cell-num">จำนวน SKU</th><th>นำเข้าล่าสุด</th></tr></thead>
+        <tbody id="storageSummaryTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+      </table>
+    </div>
+
     <div class="section-title">🕒 ประวัติการนำเข้าข้อมูล <span class="tag" id="historyCount"></span></div>
     <div class="history-table-wrap">
       <table class="data-table" id="historyTable">
@@ -577,39 +616,34 @@ const DashboardPage = (() => {
     el('kpiLocations').textContent = fmtNum(locSet.size);
   }
 
+  // โรงงานที่ไม่ต้องแสดงใน Area Utilization grid
+  const EXCLUDED_LOCATIONS = ['Fac F', 'Fac H', 'Fac 21'];
+
   function renderAreaGrid(rows, stockRows){
     const grid = el('areaGrid');
-    if (!rows.length){
+    const visibleRows = (rows||[]).filter(r => !EXCLUDED_LOCATIONS.includes(r.location_code));
+    if (!visibleRows.length){
       grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">ยังไม่มีข้อมูลพื้นที่คลัง — กรุณานำเข้าไฟล์ Area ในหน้า "นำเข้าข้อมูล"</div>';
       return;
     }
-    // นับจำนวน SKU และจำนวนแถวสต็อกที่มีอยู่จริงต่อโรงงาน (สำหรับ "ภายใต้โรงงานนี้ มี stock อะไรอัปโหลดไปแล้วบ้าง")
-    const statsByLoc = {};
-    (stockRows||[]).forEach(r => {
-      const key = r.location_code || '__unknown__';
-      if (!statsByLoc[key]) statsByLoc[key] = { skuSet:new Set(), rowCount:0 };
-      statsByLoc[key].skuSet.add(r.material);
-      statsByLoc[key].rowCount++;
-    });
+    // ผลรวม stock ทั้งหมด (เฉพาะโรงงานที่แสดง) สำหรับคำนวณ % ของทั้งหมด
+    const grandTotalUsed = visibleRows.reduce((s,r) => s + (Number(r.stock_weight_tons)||0), 0);
 
-    grid.innerHTML = rows.map(r => {
+    grid.innerHTML = visibleRows.map(r => {
       const capacity = Number(r.actual_capacity_tons) || 0;
       const used = Number(r.stock_weight_tons) || 0;
       const pct = capacity > 0 ? Math.min(999, (used / capacity) * 100) : 0;
       let color = 'var(--success)';
       if (pct > 100) color = 'var(--danger)';
       else if (pct > 80) color = 'var(--warning)';
-      const stat = statsByLoc[r.location_code];
-      const skuCount = stat ? stat.skuSet.size : 0;
-      const rowCount = stat ? stat.rowCount : 0;
+      const shareOfTotal = grandTotalUsed > 0 ? (used / grandTotalUsed) * 100 : 0;
       return `
-        <div class="area-card" data-location="${escapeHtml(r.location_code)}" title="คลิกเพื่อดูรายการสต็อกในโรงงานนี้ในตารางด้านล่าง">
+        <div class="area-card" data-location="${escapeHtml(r.location_code)}" title="คลิกเพื่อดูสัดส่วน Group Sale / Product Type ของโรงงานนี้">
           <div class="af-name"><span>${escapeHtml(r.location_code)}</span><span class="af-pct" style="color:${color}">${pct.toFixed(0)}%</span></div>
           <div class="area-track"><div class="area-fill" style="width:${Math.min(100,pct)}%;background:${color};"></div></div>
           <div class="area-meta"><span>ใช้ ${fmtNum(used,1)} ตัน</span><span>จุได้ ${fmtNum(capacity,1)} ตัน</span></div>
           <div class="area-meta" style="margin-top:4px;">
-            <span>${rowCount ? `📦 ${fmtNum(rowCount)} แถว` : '<span class="cell-muted">ยังไม่มีสต็อก</span>'}</span>
-            <span>${rowCount ? `${fmtNum(skuCount)} SKU` : ''}</span>
+            <span>สัดส่วนของทั้งหมด</span><span style="font-weight:600;color:var(--navy-800);">${shareOfTotal.toFixed(1)}%</span>
           </div>
         </div>`;
     }).join('');
@@ -619,8 +653,65 @@ const DashboardPage = (() => {
         el('fLocation').value = card.dataset.location;
         currentPage = 1;
         applyFilters();
-        document.querySelector('.filter-sticky').scrollIntoView({behavior:'smooth', block:'start'});
+        openLocationBreakdownModal(card.dataset.location, stockRows);
       });
+    });
+  }
+
+  // คำนวณสัดส่วน (%) ของ field ที่กำหนด (group_sale / product_type) ภายในโรงงานที่เลือก แล้วเปิด modal แสดงผล
+  function openLocationBreakdownModal(locationCode, stockRows){
+    const rows = (stockRows||[]).filter(r => r.location_code === locationCode);
+
+    const summarize = (field) => {
+      const byKey = {};
+      let total = 0;
+      rows.forEach(r => {
+        const key = r[field] || 'ไม่ระบุ';
+        const w = Number(r.total_weight) || 0;
+        byKey[key] = (byKey[key] || 0) + w;
+        total += w;
+      });
+      return { entries: Object.entries(byKey).sort((a,b) => b[1]-a[1]), total };
+    };
+
+    const renderSection = (title, field) => {
+      const { entries, total } = summarize(field);
+      if (!entries.length) return `<div class="modal-total">${escapeHtml(title)}: ไม่มีข้อมูล</div>`;
+      return `
+        <div style="margin-bottom:20px;">
+          <div class="modal-total" style="font-weight:600;color:var(--navy-900);margin-bottom:10px;">${escapeHtml(title)}</div>
+          ${entries.map(([name, weight]) => {
+            const pct = total > 0 ? (weight/total)*100 : 0;
+            return `
+              <div class="gs-row">
+                <div class="gs-head"><span>${escapeHtml(name)}</span><span class="gs-pct">${pct.toFixed(1)}%</span></div>
+                <div class="gs-track"><div class="gs-fill" style="width:${Math.min(100,pct)}%;"></div></div>
+                <div class="gs-sub">${fmtNum(weight/1000,2)} ตัน</div>
+              </div>`;
+          }).join('')}
+        </div>`;
+    };
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <div class="modal-head">
+          <h3>📦 ${escapeHtml(locationCode)} — สัดส่วนสต็อก</h3>
+          <button class="modal-close" aria-label="ปิด">&times;</button>
+        </div>
+        <div class="modal-body">
+          ${rows.length
+            ? renderSection('ตาม Group Sale', 'group_sale') + renderSection('ตาม Product Type', 'product_type')
+            : '<div class="empty-state">ยังไม่มีสต็อกในโรงงานนี้</div>'}
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    overlay.querySelector('.modal-close').addEventListener('click', close);
+    document.addEventListener('keydown', function escHandler(e){
+      if (e.key === 'Escape'){ close(); document.removeEventListener('keydown', escHandler); }
     });
   }
 
@@ -983,6 +1074,7 @@ const ImportPage = (() => {
 
       await loadLastImportInfo();
       await loadImportHistory();
+      await loadStorageSummary();
     } catch (e) {
       console.error(e);
       logLine(logId, `✗ เกิดข้อผิดพลาด: ${e.message || e}`, 'err');
@@ -1034,10 +1126,45 @@ const ImportPage = (() => {
       </tr>`).join('');
   }
 
+  async function loadStorageSummary(){
+    const tbody = el('storageSummaryTbody');
+    const { data, error } = await sb.from('stock').select('material, storage_location, imported_at').limit(20000);
+    if (error){
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(error.message)}</div></td></tr>`;
+      return;
+    }
+    if (!data || !data.length){
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">ยังไม่มีข้อมูลสต็อกในระบบ — กรุณานำเข้าไฟล์สต็อก</div></td></tr>';
+      return;
+    }
+    const byStorage = {};
+    data.forEach(r => {
+      const key = r.storage_location || 'ไม่ระบุ';
+      if (!byStorage[key]) byStorage[key] = { skuSet: new Set(), rowCount: 0, lastImported: null };
+      const b = byStorage[key];
+      b.skuSet.add(r.material);
+      b.rowCount++;
+      if (!b.lastImported || (r.imported_at && r.imported_at > b.lastImported)) b.lastImported = r.imported_at;
+    });
+    const entries = Object.entries(byStorage).sort((a,b) => a[0].localeCompare(b[0], 'th'));
+    tbody.innerHTML = entries.map(([storageLoc, stat]) => {
+      const fac = facFromSloc(storageLoc) || '-';
+      return `
+        <tr>
+          <td>${escapeHtml(storageLoc)}</td>
+          <td><span class="badge badge-navy">${escapeHtml(fac)}</span></td>
+          <td class="cell-num">${fmtNum(stat.rowCount)}</td>
+          <td class="cell-num">${fmtNum(stat.skuSet.size)}</td>
+          <td>${stat.lastImported ? fmtDateTime(stat.lastImported) : '-'}</td>
+        </tr>`;
+    }).join('');
+  }
+
   function activate(){
     mount();
     loadLastImportInfo();
     loadImportHistory();
+    loadStorageSummary();
   }
 
   return { activate, mount };
