@@ -845,6 +845,32 @@ function facFromSloc(sloc){
 }
 
 /* ============================================================
+   fetchAllRows — ดึงข้อมูลทุกแถวแบบแบ่งหน้า (pagination)
+   ⚠️ สำคัญมาก: Supabase project นี้ตั้งค่า "Max Rows" ของ PostgREST API ไว้ที่ 1,000 แถว
+   ต่อ 1 request เสมอ — ต่อให้โค้ดฝั่ง client ขอ .limit(20000)/.limit(50000) เท่าไหร่ก็ตาม
+   เซิร์ฟเวอร์จะตัดเหลือแค่ 1,000 แถวแรกให้แบบเงียบๆ (เห็นจาก response header
+   "content-range: 0-999/*" ทุกครั้งที่ query ตรวจสอบ) ทำให้ข้อมูลที่ดึงมาแสดงผลบนแดชบอร์ด
+   ไม่ครบ (ตอนนี้ตาราง stock มีมากกว่า 1,000 แถวแล้วจากโหมดวางเติม) — ฟังก์ชันนี้แก้ปัญหานี้
+   โดยวนดึงทีละหน้า (.range()) จนกว่าจะได้ครบทุกแถวจริง ไม่ว่า Max Rows ของโปรเจกต์จะตั้งไว้เท่าไหร่
+============================================================ */
+async function fetchAllRows(table, selectCols, orderCol){
+  const PAGE_SIZE = 1000;
+  let all = [];
+  let from = 0;
+  while (true) {
+    let q = sb.from(table).select(selectCols).range(from, from + PAGE_SIZE - 1);
+    if (orderCol) q = q.order(orderCol, { ascending: true });
+    const { data, error } = await q;
+    if (error) throw error;
+    if (!data || !data.length) break;
+    all = all.concat(data);
+    if (data.length < PAGE_SIZE) break; // หน้าสุดท้ายแล้ว (ได้น้อยกว่าขนาดหน้า)
+    from += PAGE_SIZE;
+  }
+  return all;
+}
+
+/* ============================================================
    DASHBOARD PAGE
 ============================================================ */
 const DashboardPage = (() => {
@@ -935,11 +961,10 @@ const DashboardPage = (() => {
   async function loadData(){
     setSummaryLoading();
     try {
-      const [{data: stockData, error: stockErr}, {data: utilData, error: utilErr}] = await Promise.all([
-        sb.from('v_stock_enriched').select('*').limit(20000),
+      const [stockData, { data: utilData, error: utilErr }] = await Promise.all([
+        fetchAllRows('v_stock_enriched', '*'),
         sb.from('v_location_utilization').select('*').order('location_code')
       ]);
-      if (stockErr) throw stockErr;
       if (utilErr) throw utilErr;
       allRows = stockData || [];
       locUtil = utilData || [];
@@ -1367,11 +1392,10 @@ const LookupPage = (() => {
 
   async function loadData(){
     try {
-      const [{data: stockData, error: stockErr}, {data: utilData, error: utilErr}] = await Promise.all([
-        sb.from('v_stock_enriched').select('*').limit(20000),
+      const [stockData, { data: utilData, error: utilErr }] = await Promise.all([
+        fetchAllRows('v_stock_enriched', '*'),
         sb.from('v_location_utilization').select('*').order('location_code'),
       ]);
-      if (stockErr) throw stockErr;
       if (utilErr) throw utilErr;
       allRows = stockData || [];
       locTotals = {};
@@ -1457,8 +1481,7 @@ const UnmatchedPage = (() => {
     el('unmatchedBanner').innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
     el('unmatchedTbody').innerHTML = '<tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr>';
     try {
-      const { data, error } = await sb.from('v_stock_enriched').select('*').limit(20000);
-      if (error) throw error;
+      const data = await fetchAllRows('v_stock_enriched', '*');
       const rows = (data || []).filter(r => !r.group_sale);
       const byMat = {};
       rows.forEach(r => {
@@ -1879,9 +1902,11 @@ const ImportPage = (() => {
 
   async function loadStorageSummary(){
     const tbody = el('storageSummaryTbody');
-    const { data, error } = await sb.from('stock').select('material, storage_location, imported_at').limit(20000);
-    if (error){
-      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(error.message)}</div></td></tr>`;
+    let data;
+    try {
+      data = await fetchAllRows('stock', 'material, storage_location, imported_at');
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(error.message || error)}</div></td></tr>`;
       return;
     }
     if (!data || !data.length){
@@ -1943,9 +1968,11 @@ const ImportPage = (() => {
 
   async function loadStockByDate(){
     const tbody = el('stockByDateTbody');
-    const { data, error } = await sb.from('stock').select('imported_at, total_weight').limit(50000);
-    if (error){
-      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(error.message)}</div></td></tr>`;
+    let data;
+    try {
+      data = await fetchAllRows('stock', 'imported_at, total_weight');
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(error.message || error)}</div></td></tr>`;
       return;
     }
     if (!data || !data.length){
