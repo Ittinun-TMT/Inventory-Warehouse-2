@@ -268,6 +268,57 @@
   .pagination button:hover:not(:disabled){background:var(--gray-100);}
   .pagination button.active{background:var(--orange-500);color:#fff;border-color:var(--orange-500);}
 
+  /* ===== Manager view ===== */
+  .mgr-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+  @media (max-width:980px){ .mgr-hero{grid-template-columns:repeat(2,1fr);} }
+  .mgr-card{
+    background:var(--white);border-radius:var(--radius);padding:18px;
+    box-shadow:var(--shadow);border:1px solid var(--gray-200);position:relative;overflow:hidden;
+  }
+  .mgr-card::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:4px;
+    background:linear-gradient(90deg, var(--navy-800), var(--navy-700));
+  }
+  .mgr-label{font-size:12.5px;color:var(--gray-600);font-weight:500;}
+  .mgr-value{font-size:25px;font-weight:600;color:var(--navy-900);margin-top:6px;font-variant-numeric:tabular-nums;}
+  .mgr-sub{font-size:11.5px;color:var(--gray-400);margin-top:2px;}
+
+  .mgr-status-row{display:flex;gap:14px;flex-wrap:wrap;}
+  .mgr-status-pill{
+    font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;
+    display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+  }
+  .mgr-status-pill.normal{background:rgba(25,135,84,.12);color:var(--success);}
+  .mgr-status-pill.warn{background:rgba(255,193,7,.18);color:#8a6300;}
+  .mgr-status-pill.critical{background:rgba(220,53,69,.12);color:var(--danger);}
+
+  .mgr-gauge-wrap{
+    background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px;margin-bottom:22px;display:flex;align-items:center;gap:28px;flex-wrap:wrap;
+  }
+  .mgr-gauge{position:relative;width:160px;height:160px;flex:none;}
+  .mgr-gauge svg{transform:rotate(-90deg);}
+  .mgr-gauge-value{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  }
+  .mgr-gauge-value b{font-size:27px;color:var(--navy-900);font-variant-numeric:tabular-nums;}
+  .mgr-gauge-value span{font-size:11px;color:var(--gray-600);margin-top:2px;}
+
+  .mgr-factory-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--gray-100);}
+  .mgr-factory-row:last-child{border-bottom:none;}
+  .mgr-factory-name{flex:0 0 84px;font-size:13.5px;font-weight:600;color:var(--navy-900);}
+  .mgr-factory-track{flex:1 1 auto;height:20px;background:var(--gray-100);border-radius:10px;overflow:hidden;min-width:60px;}
+  .mgr-factory-fill{height:100%;border-radius:10px;transition:width .5s ease;}
+  .mgr-factory-nums{flex:0 0 200px;text-align:right;font-size:11.5px;color:var(--gray-600);font-variant-numeric:tabular-nums;}
+  .mgr-factory-nums b{color:var(--navy-900);font-weight:600;}
+
+  /* ===== Material lookup view ===== */
+  #lookupInput{width:100%;box-sizing:border-box;}
+  .lookup-notfound{
+    background:var(--orange-100);border:1px solid var(--orange-400);border-radius:10px;
+    padding:10px 14px;font-size:12.5px;color:#8a3d00;margin-bottom:14px;
+  }
+
   /* ===== Import view ===== */
   .import-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
   @media (max-width:980px){.import-grid{grid-template-columns:1fr;}}
@@ -322,6 +373,9 @@
   </a>
   <div class="nav-links">
     <a href="#/dashboard" class="nav-link" data-route="dashboard">แดชบอร์ด</a>
+    <a href="#/manager" class="nav-link" data-route="manager">ภาพรวมผู้จัดการ</a>
+    <a href="#/lookup" class="nav-link" data-route="lookup">ค้นหา Material</a>
+    <a href="#/unmatched" class="nav-link" data-route="unmatched">⚠️ Code ไม่พบข้อมูล</a>
     <a href="#/import" class="nav-link" data-route="import">นำเข้าข้อมูล</a>
   </div>
 </div>
@@ -399,6 +453,96 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ============ MANAGER VIEW ============ -->
+  <div id="view-manager" class="route-view">
+    <div class="section-title">👔 ภาพรวมผู้จัดการคลังสินค้า <span class="tag">พื้นที่ทั้งหมด / ใช้งานปัจจุบัน / คงเหลือ — ทุกโรงงาน</span></div>
+
+    <div class="mgr-hero">
+      <div class="mgr-card">
+        <div class="mgr-label">พื้นที่ทั้งหมด (ตัน)</div>
+        <div class="mgr-value" id="mgrTotalCapacity">–</div>
+        <div class="mgr-sub">รวมทุกโรงงาน/พื้นที่จัดเก็บ</div>
+      </div>
+      <div class="mgr-card">
+        <div class="mgr-label">ใช้งานปัจจุบัน (ตัน)</div>
+        <div class="mgr-value" id="mgrTotalUsed">–</div>
+        <div class="mgr-sub" id="mgrTotalUsedSub">&nbsp;</div>
+      </div>
+      <div class="mgr-card">
+        <div class="mgr-label">พื้นที่คงเหลือ (ตัน)</div>
+        <div class="mgr-value" id="mgrTotalRemain">–</div>
+        <div class="mgr-sub" id="mgrTotalRemainSub">&nbsp;</div>
+      </div>
+      <div class="mgr-card">
+        <div class="mgr-label">สถานะโรงงาน</div>
+        <div class="mgr-status-row" id="mgrStatusCounts" style="margin-top:10px;">–</div>
+      </div>
+    </div>
+
+    <div class="mgr-gauge-wrap">
+      <div class="mgr-gauge">
+        <svg viewBox="0 0 160 160" width="160" height="160">
+          <circle cx="80" cy="80" r="70" fill="none" stroke="var(--gray-100)" stroke-width="16"/>
+          <circle id="mgrGaugeArc" cx="80" cy="80" r="70" fill="none" stroke="var(--success)" stroke-width="16" stroke-linecap="round" stroke-dasharray="440" stroke-dashoffset="440" style="transition:stroke-dashoffset .6s ease, stroke .3s ease;"/>
+        </svg>
+        <div class="mgr-gauge-value"><b id="mgrGaugePct">–</b><span>ใช้พื้นที่รวม</span></div>
+      </div>
+      <div style="flex:1;min-width:240px;">
+        <div style="font-size:13.5px;color:var(--gray-600);line-height:1.8;">
+          เกณฑ์แบ่งระดับต่อโรงงาน:<br/>
+          <span class="mgr-status-pill normal" style="margin-right:8px;">✅ ปกติ</span>ใช้พื้นที่ไม่เกิน 80%<br/>
+          <span class="mgr-status-pill warn" style="margin-right:8px;margin-top:6px;display:inline-flex;">⚠️ ใกล้เต็ม</span>ใช้พื้นที่ 80–100%<br/>
+          <span class="mgr-status-pill critical" style="margin-right:8px;margin-top:6px;display:inline-flex;">⛔ เกินพิกัด</span>ใช้พื้นที่เกิน 100%
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:26px;">🏭 รายโรงงาน <span class="tag">เรียงจากวิกฤตที่สุดก่อน</span></div>
+    <div class="viz-block" id="mgrFactoryList"><div class="viz-empty">กำลังโหลด...</div></div>
+  </div>
+
+  <!-- ============ MATERIAL LOOKUP VIEW ============ -->
+  <div id="view-lookup" class="route-view">
+    <div class="section-title">🔎 ค้นหา Material <span class="tag">วางรหัสจาก Excel ได้หลายรายการพร้อมกัน</span></div>
+
+    <div class="import-card" style="max-width:100%;">
+      <div class="desc">พิมพ์หรือวางรหัส Material ได้เลย (Copy มาจาก Excel ได้ — รองรับหลายรายการ คั่นด้วยขึ้นบรรทัดใหม่, comma หรือ tab)</div>
+      <textarea id="lookupInput" rows="4" placeholder="เช่น&#10;1BP0012-020-0058&#10;3RP01005018-0233" style="font-family:'Kanit',sans-serif;font-size:13.5px;border:1px solid var(--gray-200);border-radius:9px;padding:10px 12px;background:var(--gray-50);color:var(--navy-900);resize:vertical;"></textarea>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" id="btnLookup">🔎 ค้นหา</button>
+        <button class="btn btn-outline" id="btnLookupClear">✕ ล้าง</button>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:22px;">ผลการค้นหา <span class="tag" id="lookupResultCount"></span></div>
+    <div id="lookupNotFound"></div>
+    <div class="history-table-wrap">
+      <table class="data-table" id="lookupTable">
+        <thead><tr><th>Material</th><th>รายละเอียด</th><th>Batch</th><th class="cell-num">จำนวน</th><th>Storage Loc.</th><th>โรงงาน</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">% ของพื้นที่โรงงานนี้</th><th class="cell-num">% ของสต็อกในโรงงานนี้</th></tr></thead>
+        <tbody id="lookupTbody"><tr><td colspan="9"><div class="empty-state">วางหรือพิมพ์รหัส Material แล้วกด "ค้นหา"</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ UNMATCHED CODES VIEW ============ -->
+  <div id="view-unmatched" class="route-view">
+    <div class="section-title">⚠️ Code ที่ไม่พบข้อมูลกลุ่มสินค้า <span class="tag">Material ในสต็อกที่ยังไม่มีคู่ข้อมูลใน Group Sale/Group Product/Product Type</span></div>
+    <div class="viz-block" id="unmatchedBanner" style="margin-bottom:18px;padding:18px 20px;"><div class="viz-empty">กำลังโหลด...</div></div>
+
+    <div class="filter-bar" style="margin-bottom:14px;">
+      <input type="text" id="unmatchedSearch" placeholder="ค้นหา Material / รายละเอียด..." />
+      <button class="btn btn-navy" id="btnUnmatchedExport">⬇ Export CSV</button>
+      <button class="btn btn-outline" id="btnUnmatchedRefresh">↻ รีเฟรช</button>
+    </div>
+
+    <div class="history-table-wrap">
+      <table class="data-table" id="unmatchedTable">
+        <thead><tr><th>Material</th><th>รายละเอียด (ตัวอย่าง)</th><th class="cell-num">จำนวนแบทช์/แถว</th><th class="cell-num">น้ำหนักรวม (ตัน)</th><th>พบในโรงงาน</th></tr></thead>
+        <tbody id="unmatchedTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- ============ IMPORT VIEW ============ -->
@@ -543,7 +687,7 @@ const Router = {
   go(route){ window.location.hash = '#/' + route; },
   current(){
     const h = (window.location.hash || '').replace('#/', '').split('?')[0];
-    return ['dashboard','import'].includes(h) ? h : 'dashboard';
+    return ['dashboard','manager','lookup','unmatched','import'].includes(h) ? h : 'dashboard';
   }
 };
 function handleRoute(){
@@ -555,6 +699,9 @@ function handleRoute(){
   const link = document.querySelector(`.nav-link[data-route="${route}"]`);
   if (link) link.classList.add('active');
   if (route === 'dashboard') DashboardPage.activate();
+  if (route === 'manager') ManagerPage.activate();
+  if (route === 'lookup') LookupPage.activate();
+  if (route === 'unmatched') UnmatchedPage.activate();
   if (route === 'import') ImportPage.activate();
 }
 window.addEventListener('hashchange', handleRoute);
@@ -939,6 +1086,286 @@ const DashboardPage = (() => {
     renderRankBars('summaryGroupSaleViz', groupSummary(rows, 'group_sale'), 20, 80, 'ตัน');
     renderRankBars('summaryProductTypeViz', groupSummary(rows, 'product_type'), 165, 55, 'ตัน');
     renderStackedByLocation('summaryLocGroupViz', rows);
+  }
+
+  function activate(){
+    mount();
+    loadData();
+  }
+
+  return { activate, mount };
+})();
+
+/* ============================================================
+   MANAGER PAGE — มุมมองผู้จัดการคลังสินค้า (พื้นที่ทั้งหมด/ใช้งาน/คงเหลือ + ระดับสถานะ)
+============================================================ */
+const ManagerPage = (() => {
+  let mounted = false;
+
+  const Tier = {
+    of(pct){ return pct > 100 ? 'critical' : pct > 80 ? 'warn' : 'normal'; },
+    label(tier){ return tier === 'critical' ? '⛔ เกินพิกัด' : tier === 'warn' ? '⚠️ ใกล้เต็ม' : '✅ ปกติ'; },
+    color(tier){ return tier === 'critical' ? 'var(--danger)' : tier === 'warn' ? 'var(--warning)' : 'var(--success)'; },
+  };
+
+  function mount(){
+    if (mounted) return;
+    mounted = true;
+  }
+
+  async function loadData(){
+    el('mgrFactoryList').innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
+    try {
+      const { data, error } = await sb.from('v_location_utilization').select('*').order('location_code');
+      if (error) throw error;
+      render(data || []);
+    } catch (e) {
+      console.error(e);
+      el('mgrFactoryList').innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message||e)}</div>`;
+      toast('โหลดข้อมูลภาพรวมผู้จัดการไม่สำเร็จ: ' + (e.message || e), 'error');
+    }
+  }
+
+  function render(rows){
+    const withPct = rows.map(r => {
+      const capacity = Number(r.actual_capacity_tons) || 0;
+      const used = Number(r.stock_weight_tons) || 0;
+      const pct = capacity > 0 ? (used / capacity) * 100 : 0;
+      return { location_code: r.location_code, capacity, used, pct, tier: Tier.of(pct) };
+    });
+
+    const totalCapacity = withPct.reduce((s,r) => s + r.capacity, 0);
+    const totalUsed = withPct.reduce((s,r) => s + r.used, 0);
+    const totalRemain = totalCapacity - totalUsed;
+    const overallPct = totalCapacity > 0 ? (totalUsed / totalCapacity) * 100 : 0;
+
+    el('mgrTotalCapacity').textContent = fmtNum(totalCapacity, 1);
+    el('mgrTotalUsed').textContent = fmtNum(totalUsed, 1);
+    el('mgrTotalUsedSub').textContent = `${overallPct.toFixed(1)}% ของพื้นที่ทั้งหมด`;
+    el('mgrTotalRemain').textContent = fmtNum(Math.max(0, totalRemain), 1);
+    el('mgrTotalRemainSub').textContent = totalRemain >= 0
+      ? `เหลืออีก ${Math.max(0,100-overallPct).toFixed(1)}%`
+      : `⛔ เกินพิกัดรวม ${fmtNum(Math.abs(totalRemain),1)} ตัน`;
+
+    const counts = { normal:0, warn:0, critical:0 };
+    withPct.forEach(r => counts[r.tier]++);
+    el('mgrStatusCounts').innerHTML = `
+      <span class="mgr-status-pill normal">✅ ${counts.normal}</span>
+      <span class="mgr-status-pill warn">⚠️ ${counts.warn}</span>
+      <span class="mgr-status-pill critical">⛔ ${counts.critical}</span>`;
+
+    const circumference = 440;
+    const clampedPct = Math.min(100, Math.max(0, overallPct));
+    const offset = circumference * (1 - clampedPct / 100);
+    const arc = el('mgrGaugeArc');
+    arc.setAttribute('stroke-dashoffset', String(offset));
+    arc.setAttribute('stroke', Tier.color(Tier.of(overallPct)));
+    el('mgrGaugePct').textContent = overallPct.toFixed(1) + '%';
+
+    const sorted = withPct.slice().sort((a,b) => b.pct - a.pct);
+    const list = el('mgrFactoryList');
+    if (!sorted.length){ list.innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลพื้นที่คลัง — กรุณานำเข้าไฟล์ Area ในหน้า "นำเข้าข้อมูล"</div>'; return; }
+    list.innerHTML = sorted.map(r => {
+      const widthPct = Math.min(100, r.pct);
+      return `
+        <div class="mgr-factory-row">
+          <div class="mgr-factory-name">${escapeHtml(r.location_code)}</div>
+          <div class="mgr-factory-track"><div class="mgr-factory-fill" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div></div>
+          <div class="mgr-factory-nums"><b>${r.pct.toFixed(0)}%</b> · ใช้ ${fmtNum(r.used,1)} / ${fmtNum(r.capacity,1)} ตัน</div>
+          <span class="mgr-status-pill ${r.tier}" style="flex:none;">${Tier.label(r.tier)}</span>
+        </div>`;
+    }).join('');
+  }
+
+  function activate(){
+    mount();
+    loadData();
+  }
+
+  return { activate, mount };
+})();
+
+/* ============================================================
+   MATERIAL LOOKUP PAGE — ค้นหา Material (วางจาก Excel ได้หลายรายการ)
+============================================================ */
+const LookupPage = (() => {
+  let mounted = false;
+  let allRows = [];
+  let locTotals = {};
+
+  function mount(){
+    if (mounted) return;
+    mounted = true;
+    el('btnLookup').addEventListener('click', runLookup);
+    el('btnLookupClear').addEventListener('click', () => {
+      el('lookupInput').value = '';
+      el('lookupTbody').innerHTML = '<tr><td colspan="9"><div class="empty-state">วางหรือพิมพ์รหัส Material แล้วกด "ค้นหา"</div></td></tr>';
+      el('lookupResultCount').textContent = '';
+      el('lookupNotFound').innerHTML = '';
+    });
+    // รองรับ Enter (ไม่ต้องกด shift) เพื่อค้นหาไว — แต่ยังพิมพ์/วางหลายบรรทัดได้ปกติด้วย Shift+Enter หรือวางเป็นก้อน
+    el('lookupInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) runLookup();
+    });
+  }
+
+  async function loadData(){
+    try {
+      const [{data: stockData, error: stockErr}, {data: utilData, error: utilErr}] = await Promise.all([
+        sb.from('v_stock_enriched').select('*').limit(20000),
+        sb.from('v_location_utilization').select('*').order('location_code'),
+      ]);
+      if (stockErr) throw stockErr;
+      if (utilErr) throw utilErr;
+      allRows = stockData || [];
+      locTotals = {};
+      (utilData || []).forEach(r => {
+        locTotals[r.location_code] = {
+          capacity: Number(r.actual_capacity_tons) || 0,
+          totalStock: Number(r.stock_weight_tons) || 0,
+        };
+      });
+    } catch (e) {
+      console.error(e);
+      toast('โหลดข้อมูลสำหรับค้นหาไม่สำเร็จ: ' + (e.message || e), 'error');
+    }
+  }
+
+  // รองรับวางจาก Excel: คั่นด้วยขึ้นบรรทัดใหม่ / comma / tab (คอลัมน์เดียวจาก Excel จะติดมาเป็นขึ้นบรรทัดใหม่)
+  function parseCodes(text){
+    return [...new Set(text.split(/[\n,\t]+/).map(s => s.trim()).filter(Boolean))];
+  }
+
+  function runLookup(){
+    const codes = parseCodes(el('lookupInput').value);
+    if (!codes.length){ toast('กรุณาใส่รหัส Material อย่างน้อย 1 รายการ', 'error'); return; }
+    const codesUpper = new Set(codes.map(c => c.toUpperCase()));
+    const matched = allRows.filter(r => codesUpper.has(String(r.material||'').toUpperCase()));
+    const foundUpperSet = new Set(matched.map(r => String(r.material||'').toUpperCase()));
+    const notFound = codes.filter(c => !foundUpperSet.has(c.toUpperCase()));
+
+    el('lookupResultCount').textContent = `พบ ${fmtNum(matched.length)} แถว จาก ${fmtNum(codes.length)} รหัสที่ค้นหา`;
+    el('lookupNotFound').innerHTML = notFound.length
+      ? `<div class="lookup-notfound">⚠️ ไม่พบข้อมูลของ ${notFound.length} รหัส: ${notFound.map(c => escapeHtml(c)).join(', ')}</div>`
+      : '';
+
+    const tbody = el('lookupTbody');
+    if (!matched.length){
+      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">ไม่พบข้อมูลตามรหัสที่ค้นหา</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = matched.map(r => {
+      const weightTons = (Number(r.total_weight) || 0) / 1000;
+      const loc = locTotals[r.location_code] || { capacity: 0, totalStock: 0 };
+      const pctOfCapacity = loc.capacity > 0 ? (weightTons / loc.capacity) * 100 : 0;
+      const pctOfStock = loc.totalStock > 0 ? (weightTons / loc.totalStock) * 100 : 0;
+      return `
+        <tr>
+          <td>${escapeHtml(r.material)}</td>
+          <td>${escapeHtml(r.material_description)}</td>
+          <td>${escapeHtml(r.batch)}</td>
+          <td class="cell-num">${fmtNum(r.unrestricted_qty)}</td>
+          <td><span class="badge badge-navy">${escapeHtml(r.storage_location)||'-'}</span></td>
+          <td>${r.location_code ? escapeHtml(r.location_code) : '<span class="cell-muted">ไม่ทราบ</span>'}</td>
+          <td class="cell-num">${fmtNum(weightTons, 3)}</td>
+          <td class="cell-num" style="font-weight:600;color:var(--navy-800);">${loc.capacity > 0 ? pctOfCapacity.toFixed(2)+'%' : '<span class="cell-muted">-</span>'}</td>
+          <td class="cell-num">${loc.totalStock > 0 ? pctOfStock.toFixed(2)+'%' : '<span class="cell-muted">-</span>'}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  function activate(){
+    mount();
+    loadData();
+  }
+
+  return { activate, mount };
+})();
+
+/* ============================================================
+   UNMATCHED CODES PAGE — Material ที่ไม่มีคู่ข้อมูลกลุ่มสินค้า
+============================================================ */
+const UnmatchedPage = (() => {
+  let mounted = false;
+  let allUnmatched = [];
+
+  function mount(){
+    if (mounted) return;
+    mounted = true;
+    el('unmatchedSearch').addEventListener('input', debounce(renderTable, 200));
+    el('btnUnmatchedExport').addEventListener('click', exportCsv);
+    el('btnUnmatchedRefresh').addEventListener('click', loadData);
+  }
+
+  async function loadData(){
+    el('unmatchedBanner').innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
+    el('unmatchedTbody').innerHTML = '<tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr>';
+    try {
+      const { data, error } = await sb.from('v_stock_enriched').select('*').limit(20000);
+      if (error) throw error;
+      const rows = (data || []).filter(r => !r.group_sale);
+      const byMat = {};
+      rows.forEach(r => {
+        const key = r.material || 'ไม่ทราบ';
+        if (!byMat[key]) byMat[key] = { material: key, description: r.material_description || '', rowCount:0, weight:0, locs: new Set() };
+        byMat[key].rowCount++;
+        byMat[key].weight += Number(r.total_weight) || 0;
+        if (r.location_code) byMat[key].locs.add(r.location_code);
+        if (!byMat[key].description && r.material_description) byMat[key].description = r.material_description;
+      });
+      allUnmatched = Object.values(byMat).sort((a,b) => b.weight - a.weight);
+
+      const totalRows = rows.length;
+      const totalMats = allUnmatched.length;
+      el('unmatchedBanner').innerHTML = totalMats
+        ? `<div style="font-size:14px;color:var(--navy-900);"><b style="color:var(--danger);font-size:19px;">${fmtNum(totalMats)}</b> รหัส Material (${fmtNum(totalRows)} แถวสต็อก) ที่ยังไม่มีข้อมูล Group Sale / Group Product / Product Type — กรุณาเพิ่มรหัสเหล่านี้ในไฟล์กลุ่มสินค้า (Group_LongProduct.xlsx) แล้วนำเข้าใหม่ในหน้า "นำเข้าข้อมูล"</div>`
+        : `<div style="font-size:14px;color:var(--success);">✅ ไม่มีรหัส Material ที่ขาดข้อมูลกลุ่มสินค้า — ข้อมูลครบถ้วน</div>`;
+
+      renderTable();
+    } catch (e) {
+      console.error(e);
+      el('unmatchedBanner').innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message||e)}</div>`;
+      el('unmatchedTbody').innerHTML = '<tr><td colspan="5"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
+      toast('โหลดข้อมูล Code ไม่พบข้อมูลไม่สำเร็จ: ' + (e.message || e), 'error');
+    }
+  }
+
+  function renderTable(){
+    const search = el('unmatchedSearch').value.trim().toLowerCase();
+    const filtered = !search ? allUnmatched : allUnmatched.filter(m =>
+      m.material.toLowerCase().includes(search) || (m.description||'').toLowerCase().includes(search)
+    );
+    const tbody = el('unmatchedTbody');
+    if (!filtered.length){
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่ค้นหา</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = filtered.map(m => `
+      <tr>
+        <td>${escapeHtml(m.material)}</td>
+        <td>${escapeHtml(m.description)||'<span class="cell-muted">-</span>'}</td>
+        <td class="cell-num">${fmtNum(m.rowCount)}</td>
+        <td class="cell-num">${fmtNum(m.weight/1000, 2)}</td>
+        <td>${[...m.locs].map(l => `<span class="badge badge-navy" style="margin-right:4px;">${escapeHtml(l)}</span>`).join('') || '<span class="cell-muted">ไม่ทราบ</span>'}</td>
+      </tr>`).join('');
+  }
+
+  function exportCsv(){
+    if (!allUnmatched.length){ toast('ไม่มีข้อมูลให้ export', 'error'); return; }
+    const headers = ['Material','Description','Row Count','Weight (Ton)','Found In Factories'];
+    const lines = [headers.join(',')];
+    allUnmatched.forEach(m => {
+      const row = [m.material, m.description, m.rowCount, (m.weight/1000).toFixed(3), [...m.locs].join('; ')]
+        .map(v => `"${String(v===null||v===undefined?'':v).replace(/"/g,'""')}"`);
+      lines.push(row.join(','));
+    });
+    const blob = new Blob(['﻿' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wh2_unmatched_codes_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function activate(){
