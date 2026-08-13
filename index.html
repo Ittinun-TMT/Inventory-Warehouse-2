@@ -240,6 +240,9 @@
   .btn-outline:hover{background:var(--gray-100);}
   .btn-navy{background:var(--navy-800);color:var(--white);}
   .btn-navy:hover{background:var(--navy-700);}
+  .btn-danger-outline{background:var(--white);color:var(--danger);border:1px solid rgba(220,53,69,.35);}
+  .btn-danger-outline:hover{background:rgba(220,53,69,.08);}
+  .btn-sm{font-size:12px;padding:6px 12px;border-radius:7px;}
   .btn:disabled{opacity:.5;cursor:not-allowed;}
   .group-head-row{
     display:grid;grid-template-columns:1.6fr 1fr 1fr .9fr 1fr .9fr 1fr .9fr;
@@ -577,14 +580,14 @@
 
   <!-- ============ IMPORT VIEW ============ -->
   <div id="view-import" class="route-view">
-    <div class="section-title">📥 นำเข้าข้อมูล <span class="tag">อัปโหลดไฟล์ทั้ง 3 ประเภททุกครั้งที่มีข้อมูลใหม่ — ระบบจะแทนที่ข้อมูลเดิมของประเภทนั้นทั้งหมด</span></div>
+    <div class="section-title">📥 นำเข้าข้อมูล <span class="tag">รายการสินค้า/สต็อก = เพิ่มต่อจากเดิม (ลบตามวันที่ได้) · พื้นที่คลัง/กลุ่มสินค้า = แทนที่ข้อมูลเดิมทั้งหมดทุกครั้ง</span></div>
 
     <div class="import-grid">
 
       <!-- Stock -->
       <div class="import-card">
         <h3>📦 รายการสินค้า / สต็อก</h3>
-        <div class="desc">ไฟล์ SAP Export แบบหน้าเว็บ (.mhtml / .htm) — คอลัมน์: Material, Material Description, Batch, Unrestricted, Storage Location, น้ำหนักรวม</div>
+        <div class="desc">ไฟล์ SAP Export แบบหน้าเว็บ (.mhtml / .htm) — คอลัมน์: Material, Material Description, Batch, Unrestricted, Storage Location, น้ำหนักรวม<br/><b style="color:var(--orange-500);">📌 นำเข้าแบบ "วางเติม" — ข้อมูลเดิมจะไม่ถูกลบ ระบบบันทึกวันที่นำเข้าไว้ให้ทุกแถว ลบย้อนหลังตามวันที่ได้ด้านล่าง</b></div>
         <label class="dropzone" id="dzStock">
           <input type="file" id="fileStock" accept=".mhtml,.htm,.html" />
           <div class="dz-icon">📄</div>
@@ -593,7 +596,7 @@
         <div class="file-chip" id="chipStock" style="display:none;"></div>
         <div class="progress-bar" id="pgStock"><div class="fill"></div></div>
         <div class="import-log" id="logStock"></div>
-        <button class="btn btn-primary" id="btnImportStock" disabled>นำเข้าไฟล์สต็อก</button>
+        <button class="btn btn-primary" id="btnImportStock" disabled>➕ เพิ่มข้อมูลสต็อก</button>
         <div class="last-import-info" id="lastStock">ยังไม่เคยนำเข้าข้อมูล</div>
       </div>
 
@@ -636,6 +639,14 @@
       <table class="data-table" id="storageSummaryTable">
         <thead><tr><th>Storage Location</th><th>โรงงาน</th><th class="cell-num">จำนวนแถว</th><th class="cell-num">จำนวน SKU</th><th>นำเข้าล่าสุด</th></tr></thead>
         <tbody id="storageSummaryTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">🗓️ ข้อมูลสต็อกแยกตามวันที่นำเข้า <span class="tag">โหมด "วางเติม" — เลือกลบข้อมูลของวันที่ต้องการได้โดยไม่กระทบวันอื่น</span></div>
+    <div class="history-table-wrap">
+      <table class="data-table" id="stockByDateTable">
+        <thead><tr><th>วันที่นำเข้า</th><th class="cell-num">จำนวนแถว</th><th class="cell-num">น้ำหนักรวม (ตัน)</th><th></th></tr></thead>
+        <tbody id="stockByDateTbody"><tr><td colspan="4"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
       </table>
     </div>
 
@@ -1740,20 +1751,32 @@ const ImportPage = (() => {
       setProgress(pgId, 75);
       logLine(logId, `✓ นำเข้าข้อมูลใหม่สำเร็จ`, 'ok');
 
-      logLine(logId, `⏳ กำลังลบข้อมูลเดิม (ก่อนรอบนี้) ...`);
-      const { error: delErr } = await sb.from(table).delete().lt('imported_at', importStartedAt);
-      if (delErr) throw delErr;
+      if (kind === 'stock') {
+        // สต็อก/รายการสินค้า = โหมด "วางเติม" — ไม่ลบข้อมูลเดิม เก็บซ้อนกันไว้ทุกรอบ
+        // (ผู้ใช้ลบย้อนหลังเองได้ตามวันที่ผ่านตาราง "ข้อมูลสต็อกแยกตามวันที่นำเข้า" ด้านล่าง)
+        logLine(logId, `📌 โหมด "วางเติม" — ข้อมูลสต็อกเดิมทั้งหมดยังอยู่ครบ ไม่ถูกลบ`, 'ok');
+      } else {
+        logLine(logId, `⏳ กำลังลบข้อมูลเดิม (ก่อนรอบนี้) ...`);
+        const { error: delErr } = await sb.from(table).delete().lt('imported_at', importStartedAt);
+        if (delErr) throw delErr;
+      }
       setProgress(pgId, 95);
 
       await logImportBatch(BATCH_TYPE_OF[kind], file.name, rows.length);
       setProgress(pgId, 100);
-      logLine(logId, `✅ เสร็จสมบูรณ์ — แทนที่ข้อมูล${LABEL_OF[kind]}เรียบร้อย (${rows.length.toLocaleString()} แถว)`, 'ok');
-      toast(`นำเข้าไฟล์${LABEL_OF[kind]}สำเร็จ (${rows.length.toLocaleString()} แถว)`, 'success');
+      if (kind === 'stock') {
+        logLine(logId, `✅ เสร็จสมบูรณ์ — เพิ่มข้อมูลสต็อกต่อจากเดิมเรียบร้อย (${rows.length.toLocaleString()} แถว)`, 'ok');
+        toast(`เพิ่มข้อมูลสต็อกสำเร็จ (${rows.length.toLocaleString()} แถว)`, 'success');
+      } else {
+        logLine(logId, `✅ เสร็จสมบูรณ์ — แทนที่ข้อมูล${LABEL_OF[kind]}เรียบร้อย (${rows.length.toLocaleString()} แถว)`, 'ok');
+        toast(`นำเข้าไฟล์${LABEL_OF[kind]}สำเร็จ (${rows.length.toLocaleString()} แถว)`, 'success');
+      }
       setTimeout(() => hideProgress(pgId), 1200);
 
       await loadLastImportInfo();
       await loadImportHistory();
       await loadStorageSummary();
+      if (kind === 'stock') await loadStockByDate();
     } catch (e) {
       console.error(e);
       logLine(logId, `✗ เกิดข้อผิดพลาด: ${e.message || e}`, 'err');
@@ -1839,11 +1862,93 @@ const ImportPage = (() => {
     }).join('');
   }
 
+  /* ---------- Stock append-mode: group by import date + delete-by-date ---------- */
+
+  // แปลง imported_at (ISO/UTC) ให้เป็น "คีย์วันที่ตามเวลาท้องถิ่นของเครื่องผู้ใช้" เช่น '2026-08-13'
+  // ใช้เป็นตัวจัดกลุ่มแถวสต็อกที่นำเข้าในวันเดียวกัน (ไม่สนใจเวลา ชม./นาที/วินาที)
+  function localDateKey(iso){
+    if (!iso) return 'ไม่ระบุ';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return 'ไม่ระบุ';
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+
+  // จาก dateKey ('YYYY-MM-DD' ตามเวลาท้องถิ่น) คืนช่วงเวลา [start, end) เป็น ISO string (UTC)
+  // สำหรับใช้กับ .gte(start).lt(end) ตอนลบข้อมูลของวันนั้นโดยเฉพาะ โดยไม่กระทบวันอื่น
+  function localDayRange(dateKey){
+    const [y, m, day] = dateKey.split('-').map(Number);
+    const start = new Date(y, m - 1, day, 0, 0, 0, 0);
+    const end = new Date(y, m - 1, day + 1, 0, 0, 0, 0);
+    return { startIso: start.toISOString(), endIso: end.toISOString() };
+  }
+
+  function fmtDateKey(dateKey){
+    if (dateKey === 'ไม่ระบุ') return dateKey;
+    const [y, m, day] = dateKey.split('-').map(Number);
+    const d = new Date(y, m - 1, day);
+    return d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  async function loadStockByDate(){
+    const tbody = el('stockByDateTbody');
+    const { data, error } = await sb.from('stock').select('imported_at, total_weight').limit(50000);
+    if (error){
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(error.message)}</div></td></tr>`;
+      return;
+    }
+    if (!data || !data.length){
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">ยังไม่มีข้อมูลสต็อกในระบบ — กรุณาเพิ่มข้อมูลสต็อก</div></td></tr>';
+      return;
+    }
+    const byDate = {};
+    data.forEach(r => {
+      const key = localDateKey(r.imported_at);
+      if (!byDate[key]) byDate[key] = { rowCount: 0, weight: 0 };
+      byDate[key].rowCount++;
+      byDate[key].weight += Number(r.total_weight) || 0;
+    });
+    const entries = Object.entries(byDate).sort((a,b) => b[0].localeCompare(a[0]));
+    tbody.innerHTML = entries.map(([dateKey, stat]) => `
+      <tr>
+        <td>${escapeHtml(fmtDateKey(dateKey))}</td>
+        <td class="cell-num">${fmtNum(stat.rowCount)}</td>
+        <td class="cell-num">${fmtNum(stat.weight/1000)}</td>
+        <td><button class="btn btn-danger-outline btn-sm" data-date-key="${escapeHtml(dateKey)}" data-row-count="${stat.rowCount}">🗑️ ลบวันนี้</button></td>
+      </tr>`).join('');
+    tbody.querySelectorAll('button[data-date-key]').forEach(btn => {
+      btn.addEventListener('click', () => deleteStockByDate(btn.dataset.dateKey, Number(btn.dataset.rowCount)));
+    });
+  }
+
+  async function deleteStockByDate(dateKey, rowCount){
+    if (dateKey === 'ไม่ระบุ'){
+      toast('ไม่สามารถลบกลุ่ม "ไม่ระบุ" อัตโนมัติได้ (ไม่มีวันที่นำเข้าที่ชัดเจน)', 'error');
+      return;
+    }
+    const ok = confirm(`ยืนยันลบข้อมูลสต็อกของวันที่ ${fmtDateKey(dateKey)} จำนวน ${rowCount.toLocaleString()} แถว?\nการลบนี้ไม่สามารถย้อนกลับได้`);
+    if (!ok) return;
+    const { startIso, endIso } = localDayRange(dateKey);
+    try {
+      const { error } = await sb.from('stock').delete().gte('imported_at', startIso).lt('imported_at', endIso);
+      if (error) throw error;
+      toast(`ลบข้อมูลสต็อกวันที่ ${fmtDateKey(dateKey)} เรียบร้อย`, 'success');
+      await loadStockByDate();
+      await loadStorageSummary();
+    } catch (e) {
+      console.error(e);
+      toast(`ลบไม่สำเร็จ: ${e.message || e}`, 'error');
+    }
+  }
+
   function activate(){
     mount();
     loadLastImportInfo();
     loadImportHistory();
     loadStorageSummary();
+    loadStockByDate();
   }
 
   return { activate, mount };
