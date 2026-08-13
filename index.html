@@ -244,6 +244,8 @@
   .btn-danger-outline:hover{background:rgba(220,53,69,.08);}
   .btn-sm{font-size:12px;padding:6px 12px;border-radius:7px;}
   .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .btn-row .btn{flex:none;}
   .group-head-row{
     display:grid;grid-template-columns:1.6fr 1fr 1fr .9fr 1fr .9fr 1fr .9fr;
     gap:0;background:var(--navy-900);color:#fff;border-radius:10px 10px 0 0;
@@ -596,7 +598,10 @@
         <div class="file-chip" id="chipStock" style="display:none;"></div>
         <div class="progress-bar" id="pgStock"><div class="fill"></div></div>
         <div class="import-log" id="logStock"></div>
-        <button class="btn btn-primary" id="btnImportStock" disabled>➕ เพิ่มข้อมูลสต็อก</button>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnImportStock" disabled>➕ เพิ่มข้อมูลสต็อก</button>
+          <button class="btn btn-danger-outline" id="btnDeleteAllStock">🗑️ ลบข้อมูลสต็อกทั้งหมด</button>
+        </div>
         <div class="last-import-info" id="lastStock">ยังไม่เคยนำเข้าข้อมูล</div>
       </div>
 
@@ -612,7 +617,10 @@
         <div class="file-chip" id="chipArea" style="display:none;"></div>
         <div class="progress-bar" id="pgArea"><div class="fill"></div></div>
         <div class="import-log" id="logArea"></div>
-        <button class="btn btn-primary" id="btnImportArea" disabled>นำเข้าไฟล์พื้นที่คลัง</button>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnImportArea" disabled>นำเข้าไฟล์พื้นที่คลัง</button>
+          <button class="btn btn-danger-outline" id="btnDeleteAllArea">🗑️ ลบข้อมูลพื้นที่คลังทั้งหมด</button>
+        </div>
         <div class="last-import-info" id="lastArea">ยังไม่เคยนำเข้าข้อมูล</div>
       </div>
 
@@ -628,7 +636,10 @@
         <div class="file-chip" id="chipGroup" style="display:none;"></div>
         <div class="progress-bar" id="pgGroup"><div class="fill"></div></div>
         <div class="import-log" id="logGroup"></div>
-        <button class="btn btn-primary" id="btnImportGroup" disabled>นำเข้าไฟล์กลุ่มสินค้า</button>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnImportGroup" disabled>นำเข้าไฟล์กลุ่มสินค้า</button>
+          <button class="btn btn-danger-outline" id="btnDeleteAllGroup">🗑️ ลบข้อมูลกลุ่มสินค้าทั้งหมด</button>
+        </div>
         <div class="last-import-info" id="lastGroup">ยังไม่เคยนำเข้าข้อมูล</div>
       </div>
 
@@ -1539,6 +1550,10 @@ const ImportPage = (() => {
     el('btnImportStock').addEventListener('click', () => runImport('stock'));
     el('btnImportArea').addEventListener('click', () => runImport('area'));
     el('btnImportGroup').addEventListener('click', () => runImport('group'));
+
+    el('btnDeleteAllStock').addEventListener('click', () => deleteAllData('stock'));
+    el('btnDeleteAllArea').addEventListener('click', () => deleteAllData('area'));
+    el('btnDeleteAllGroup').addEventListener('click', () => deleteAllData('group'));
   }
 
   function setupDropzone(dzId, inputId, chipId, kind){
@@ -1789,6 +1804,40 @@ const ImportPage = (() => {
 
   async function logImportBatch(fileType, fileName, rowCount){
     await sb.from('import_batches').insert({ file_type: fileType, file_name: fileName, row_count: rowCount });
+  }
+
+  /* ---------- ลบข้อมูลทั้งหมด (ทุกชีท) — เผื่อผู้ใช้ต้องการล้างแล้ววางไฟล์ใหม่ทั้งชุด ---------- */
+  const DELETE_BTN_ID_OF = { stock:'btnDeleteAllStock', area:'btnDeleteAllArea', group:'btnDeleteAllGroup' };
+
+  async function getTableCount(table){
+    const { count, error } = await sb.from(table).select('id', { count: 'exact', head: true });
+    if (error) return null;
+    return count;
+  }
+
+  async function deleteAllData(kind){
+    const table = TABLE_OF[kind];
+    const btn = el(DELETE_BTN_ID_OF[kind]);
+    const currentCount = await getTableCount(table);
+    const countText = (currentCount === null) ? '' : ` (ปัจจุบันมี ${currentCount.toLocaleString()} แถว)`;
+    const ok = confirm(`ยืนยันลบข้อมูล${LABEL_OF[kind]}ทั้งหมด${countText}?\nข้อมูลทั้งชีทจะถูกล้างทิ้งทันที เพื่อให้นำเข้าไฟล์ใหม่ทั้งชุด — การลบนี้ไม่สามารถย้อนกลับได้`);
+    if (!ok) return;
+    btn.disabled = true;
+    try {
+      // id เป็น bigint identity เริ่มจาก 1 เสมอ — ใช้ .gt('id', 0) แทนการลบแบบไม่มีเงื่อนไขเลย เพื่อความชัดเจน/ปลอดภัย
+      const { error } = await sb.from(table).delete().gt('id', 0);
+      if (error) throw error;
+      toast(`ลบข้อมูล${LABEL_OF[kind]}ทั้งหมดเรียบร้อย — พร้อมนำเข้าไฟล์ใหม่ได้เลย`, 'success');
+      await loadLastImportInfo();
+      await loadImportHistory();
+      await loadStorageSummary();
+      if (kind === 'stock') await loadStockByDate();
+    } catch (e) {
+      console.error(e);
+      toast(`ลบข้อมูล${LABEL_OF[kind]}ไม่สำเร็จ: ${e.message || e}`, 'error');
+    } finally {
+      btn.disabled = false;
+    }
   }
 
   async function loadLastImportInfo(){
