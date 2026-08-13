@@ -162,10 +162,49 @@
   .gs-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--navy-800),var(--orange-500));transition:width .3s ease;}
   .gs-sub{font-size:11px;color:var(--gray-500);margin-top:3px;}
 
-  /* ===== Dashboard summary sections ===== */
+  /* ===== Dashboard summary sections (creative viz, no tables) ===== */
   .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
   @media (max-width:980px){ .summary-grid{grid-template-columns:1fr;} }
-  .summary-block .history-table-wrap{margin-top:0;}
+  .viz-block{
+    background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:18px 20px 6px;
+  }
+  .viz-empty{padding:34px 10px;text-align:center;color:var(--gray-400);font-size:13px;}
+
+  /* ranked horizontal bar list (sequential magnitude) */
+  .rank-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--gray-100);}
+  .rank-row:last-child{border-bottom:none;}
+  .rank-badge{
+    flex:none;width:22px;height:22px;border-radius:50%;background:var(--gray-100);color:var(--gray-600);
+    font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  }
+  .rank-row:nth-child(1) .rank-badge{background:var(--orange-500);color:#fff;}
+  .rank-row:nth-child(2) .rank-badge{background:var(--navy-800);color:#fff;}
+  .rank-row:nth-child(3) .rank-badge{background:var(--navy-100);color:var(--navy-900);}
+  .rank-label{
+    flex:0 0 118px;font-size:13px;font-weight:500;color:var(--navy-900);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .rank-track{flex:1 1 auto;height:15px;background:var(--gray-100);border-radius:8px;overflow:hidden;min-width:40px;}
+  .rank-fill{height:100%;border-radius:8px;transition:width .5s ease;}
+  .rank-value{flex:none;width:128px;text-align:right;font-size:11.5px;color:var(--gray-600);font-variant-numeric:tabular-nums;}
+  .rank-value b{color:var(--navy-900);font-weight:600;font-size:12.5px;}
+
+  /* stacked composition bar (part-to-whole, categorical) */
+  .stack-row{margin-bottom:16px;}
+  .stack-row:last-child{margin-bottom:6px;}
+  .stack-label{display:flex;justify-content:space-between;gap:10px;font-size:13px;font-weight:600;color:var(--navy-900);margin-bottom:6px;}
+  .stack-bar{display:flex;height:26px;border-radius:8px;overflow:hidden;background:var(--gray-100);}
+  .stack-seg{height:100%;position:relative;transition:width .5s ease;}
+  .stack-seg + .stack-seg{box-shadow:-2px 0 0 var(--white);}
+  .stack-seg-label{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:10.5px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4);
+    white-space:nowrap;overflow:hidden;pointer-events:none;
+  }
+  .legend-row{display:flex;flex-wrap:wrap;gap:8px 16px;margin:14px 0 16px;padding-top:14px;border-top:1px solid var(--gray-100);}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--gray-600);}
+  .legend-swatch{width:11px;height:11px;border-radius:3px;flex:none;}
 
   /* ===== Filter bar ===== */
   .filter-sticky{position:sticky;top:68px;z-index:50;background:var(--gray-50);padding-top:10px;margin-top:10px;}
@@ -340,43 +379,23 @@
 
     <div class="summary-grid">
       <div class="summary-block">
-        <div class="section-title" style="margin:22px 0 12px;">🏭 สรุปตามโรงงาน <span class="tag">ตามตัวกรองด้านบน</span></div>
-        <div class="history-table-wrap">
-          <table class="data-table" id="summaryLocationTable">
-            <thead><tr><th>โรงงาน</th><th class="cell-num">SKU</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">จำนวนคงเหลือ</th><th class="cell-num">% ของทั้งหมด</th></tr></thead>
-            <tbody id="summaryLocationTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
-          </table>
-        </div>
+        <div class="section-title" style="margin:22px 0 12px;">🏭 สรุปตามโรงงาน <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
+        <div class="viz-block" id="summaryLocationViz"><div class="viz-empty">กำลังโหลด...</div></div>
       </div>
 
       <div class="summary-block">
-        <div class="section-title" style="margin:22px 0 12px;">🏷️ สรุปตาม Group Sale <span class="tag">ตามตัวกรองด้านบน</span></div>
-        <div class="history-table-wrap">
-          <table class="data-table" id="summaryGroupSaleTable">
-            <thead><tr><th>Group Sale</th><th class="cell-num">SKU</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">จำนวนคงเหลือ</th><th class="cell-num">% ของทั้งหมด</th></tr></thead>
-            <tbody id="summaryGroupSaleTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
-          </table>
-        </div>
+        <div class="section-title" style="margin:22px 0 12px;">🏷️ สรุปตาม Group Sale <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
+        <div class="viz-block" id="summaryGroupSaleViz"><div class="viz-empty">กำลังโหลด...</div></div>
       </div>
 
       <div class="summary-block">
-        <div class="section-title" style="margin:22px 0 12px;">📦 สรุปตาม Product Type <span class="tag">ตามตัวกรองด้านบน</span></div>
-        <div class="history-table-wrap">
-          <table class="data-table" id="summaryProductTypeTable">
-            <thead><tr><th>Product Type</th><th class="cell-num">SKU</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">จำนวนคงเหลือ</th><th class="cell-num">% ของทั้งหมด</th></tr></thead>
-            <tbody id="summaryProductTypeTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
-          </table>
-        </div>
+        <div class="section-title" style="margin:22px 0 12px;">📦 สรุปตาม Product Type <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
+        <div class="viz-block" id="summaryProductTypeViz"><div class="viz-empty">กำลังโหลด...</div></div>
       </div>
 
       <div class="summary-block">
-        <div class="section-title" style="margin:22px 0 12px;">🧭 สรุปตามโรงงาน + Group Sale <span class="tag">% เทียบกับน้ำหนักรวมของโรงงานนั้น</span></div>
-        <div class="history-table-wrap">
-          <table class="data-table" id="summaryLocGroupTable">
-            <thead><tr><th>โรงงาน</th><th>Group Sale</th><th class="cell-num">SKU</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">% ในโรงงานนี้</th></tr></thead>
-            <tbody id="summaryLocGroupTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
-          </table>
-        </div>
+        <div class="section-title" style="margin:22px 0 12px;">🧭 สรุปตามโรงงาน + Group Sale <span class="tag">สัดส่วนองค์ประกอบต่อโรงงาน</span></div>
+        <div class="viz-block" id="summaryLocGroupViz"><div class="viz-empty">กำลังโหลด...</div></div>
       </div>
     </div>
 
@@ -586,13 +605,13 @@ const DashboardPage = (() => {
   }
 
   function setSummaryLoading(){
-    ['summaryLocationTbody','summaryGroupSaleTbody','summaryProductTypeTbody','summaryLocGroupTbody'].forEach(id => {
-      el(id).innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="icon">⏳</div>กำลังโหลดข้อมูล...</div></td></tr>';
+    ['summaryLocationViz','summaryGroupSaleViz','summaryProductTypeViz','summaryLocGroupViz'].forEach(id => {
+      el(id).innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
     });
   }
   function setSummaryError(msg){
-    ['summaryLocationTbody','summaryGroupSaleTbody','summaryProductTypeTbody','summaryLocGroupTbody'].forEach(id => {
-      el(id).innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">⚠️</div>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(msg)}</div></td></tr>`;
+    ['summaryLocationViz','summaryGroupSaleViz','summaryProductTypeViz','summaryLocGroupViz'].forEach(id => {
+      el(id).innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(msg)}</div>`;
     });
   }
 
@@ -828,37 +847,98 @@ const DashboardPage = (() => {
     return entries;
   }
 
-  function renderSimpleSummary(tbodyId, entries){
-    const tbody = el(tbodyId);
-    if (!entries.length){ tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div></td></tr>'; return; }
-    tbody.innerHTML = entries.map(e => `
-      <tr>
-        <td>${e.name === 'ไม่ระบุ' ? '<span class="cell-muted">ไม่ระบุ</span>' : `<span class="badge badge-navy">${escapeHtml(e.name)}</span>`}</td>
-        <td class="cell-num">${fmtNum(e.skuCount)}</td>
-        <td class="cell-num">${fmtNum(e.weightTons, 2)}</td>
-        <td class="cell-num">${fmtNum(e.qty)}</td>
-        <td class="cell-num" style="font-weight:600;color:var(--navy-800);">${e.pct.toFixed(1)}%</td>
-      </tr>`).join('');
+  // ===== Creative viz renderers (แทนตาราง) =====
+  // สี categorical 7 ค่าแรก (validated palette จากสคีม dataviz — CVD-safe, fixed order, ผูกกับ entity เดิมเสมอ)
+  const CATEGORICAL_SLOTS = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7'];
+  const OTHER_SLOT_COLOR = '#9a9a92'; // สีกลางสำหรับกลุ่มที่ถูกยุบรวมเป็น "อื่นๆ"
+  const RANK_TOP_N = 8; // เกินจากนี้ยุบรวมเป็นแถว "อื่นๆ" กันรายการยาวเกินไป
+
+  // สีของแท่ง sequential (magnitude): 1 hue เดียวต่อ 1 มุมมอง, ความเข้ม (lightness) แปรผันตาม % ของทั้งหมด (มากกว่า = เข้มกว่า)
+  function sequentialColor(hue, sat, pct){
+    const l = Math.max(38, 74 - (Math.min(100, pct) / 100) * 36);
+    return `hsl(${hue} ${sat}% ${l}%)`;
   }
 
-  function renderCrossSummary(tbodyId, entries){
-    const tbody = el(tbodyId);
-    if (!entries.length){ tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div></td></tr>'; return; }
-    tbody.innerHTML = entries.map(e => `
-      <tr>
-        <td><span class="badge badge-navy">${escapeHtml(e.k1)}</span></td>
-        <td>${e.k2 === 'ไม่ระบุ' ? '<span class="cell-muted">ไม่ระบุ</span>' : `<span class="badge badge-orange">${escapeHtml(e.k2)}</span>`}</td>
-        <td class="cell-num">${fmtNum(e.skuCount)}</td>
-        <td class="cell-num">${fmtNum(e.weightTons, 2)}</td>
-        <td class="cell-num" style="font-weight:600;color:var(--navy-800);">${e.pct.toFixed(1)}%</td>
-      </tr>`).join('');
+  function renderRankBars(containerId, entries, hue, sat, unitLabel){
+    const box = el(containerId);
+    if (!entries.length){ box.innerHTML = '<div class="viz-empty">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div>'; return; }
+    let shown = entries.slice(0, RANK_TOP_N);
+    const rest = entries.slice(RANK_TOP_N);
+    if (rest.length){
+      const agg = rest.reduce((a,e) => ({
+        skuCount: a.skuCount + e.skuCount, weightTons: a.weightTons + e.weightTons,
+        qty: a.qty + e.qty, pct: a.pct + e.pct,
+      }), {skuCount:0, weightTons:0, qty:0, pct:0});
+      shown = shown.concat([{ name: `อื่นๆ (${rest.length})`, ...agg }]);
+    }
+    const maxVal = Math.max(...shown.map(e => e.weightTons), 0.0001);
+    box.innerHTML = shown.map((e, i) => {
+      const widthPct = (e.weightTons / maxVal) * 100;
+      const color = sequentialColor(hue, sat, e.pct);
+      const label = e.name === 'ไม่ระบุ' ? '<span class="cell-muted">ไม่ระบุ</span>' : escapeHtml(e.name);
+      return `
+        <div class="rank-row">
+          <div class="rank-badge">${i+1}</div>
+          <div class="rank-label" title="${escapeHtml(e.name)}">${label}</div>
+          <div class="rank-track"><div class="rank-fill" style="width:${widthPct}%;background:${color};"></div></div>
+          <div class="rank-value"><b>${e.pct.toFixed(1)}%</b> · ${fmtNum(e.weightTons,1)} ${unitLabel}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // แท่งสัดส่วนองค์ประกอบต่อโรงงาน (stacked, part-to-whole) — สีของแต่ละ Group Sale ผูกกับชื่อเดิมเสมอทุกแท่ง
+  // (จัดอันดับ Group Sale จากภาพรวมทั้งหมดก่อน ไม่ใช่จัดอันดับใหม่ในแต่ละโรงงาน กันสีสลับความหมาย)
+  function renderStackedByLocation(containerId, rows){
+    const box = el(containerId);
+    const overallGs = groupSummary(rows, 'group_sale');
+    const topNames = overallGs.slice(0, CATEGORICAL_SLOTS.length).map(e => e.name);
+    const colorOf = {};
+    topNames.forEach((name, i) => { colorOf[name] = CATEGORICAL_SLOTS[i]; });
+
+    const crossEntries = groupSummaryCross(rows, 'location_code', 'group_sale');
+    const locs = {};
+    crossEntries.forEach(e => {
+      if (!locs[e.k1]) locs[e.k1] = { total: 0, segs: {} };
+      const gsKey = topNames.includes(e.k2) ? e.k2 : 'อื่นๆ';
+      if (!locs[e.k1].segs[gsKey]) locs[e.k1].segs[gsKey] = 0;
+      locs[e.k1].segs[gsKey] += e.weightTons;
+      locs[e.k1].total += e.weightTons;
+    });
+    const locNames = Object.keys(locs).sort((a,b) => locs[b].total - locs[a].total);
+    if (!locNames.length){ box.innerHTML = '<div class="viz-empty">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div>'; return; }
+
+    let usedOther = false;
+    const barsHtml = locNames.map(locName => {
+      const { total, segs } = locs[locName];
+      const segEntries = Object.entries(segs).sort((a,b) => b[1]-a[1]);
+      const segsHtml = segEntries.map(([gsName, weightTons]) => {
+        const pct = total > 0 ? (weightTons/total)*100 : 0;
+        const isOther = gsName === 'อื่นๆ';
+        if (isOther) usedOther = true;
+        const color = isOther ? OTHER_SLOT_COLOR : colorOf[gsName];
+        return `<div class="stack-seg" style="width:${pct}%;background:${color};" title="${escapeHtml(gsName)}: ${pct.toFixed(1)}% (${fmtNum(weightTons,2)} ตัน)">${pct >= 12 ? `<span class="stack-seg-label">${pct.toFixed(0)}%</span>` : ''}</div>`;
+      }).join('');
+      return `
+        <div class="stack-row">
+          <div class="stack-label"><span>${escapeHtml(locName)}</span><span class="cell-muted" style="font-weight:400;">${fmtNum(total,1)} ตัน</span></div>
+          <div class="stack-bar">${segsHtml}</div>
+        </div>`;
+    }).join('');
+
+    const legendNames = topNames.concat(usedOther ? ['อื่นๆ'] : []);
+    const legendHtml = legendNames.map(name => {
+      const color = name === 'อื่นๆ' ? OTHER_SLOT_COLOR : colorOf[name];
+      return `<div class="legend-item"><span class="legend-swatch" style="background:${color};"></span>${escapeHtml(name)}</div>`;
+    }).join('');
+
+    box.innerHTML = barsHtml + `<div class="legend-row">${legendHtml}</div>`;
   }
 
   function renderSummaries(rows){
-    renderSimpleSummary('summaryLocationTbody', groupSummary(rows, 'location_code'));
-    renderSimpleSummary('summaryGroupSaleTbody', groupSummary(rows, 'group_sale'));
-    renderSimpleSummary('summaryProductTypeTbody', groupSummary(rows, 'product_type'));
-    renderCrossSummary('summaryLocGroupTbody', groupSummaryCross(rows, 'location_code', 'group_sale'));
+    renderRankBars('summaryLocationViz', groupSummary(rows, 'location_code'), 213, 66, 'ตัน');
+    renderRankBars('summaryGroupSaleViz', groupSummary(rows, 'group_sale'), 20, 80, 'ตัน');
+    renderRankBars('summaryProductTypeViz', groupSummary(rows, 'product_type'), 165, 55, 'ตัน');
+    renderStackedByLocation('summaryLocGroupViz', rows);
   }
 
   function activate(){
