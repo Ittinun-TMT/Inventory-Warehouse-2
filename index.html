@@ -108,19 +108,6 @@
     font-size:10px;cursor:help;
   }
 
-  /* ===== Area utilization ===== */
-  .area-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
-  .area-card{
-    background:var(--white);border:1px solid var(--gray-200);border-radius:12px;
-    padding:14px 16px;box-shadow:var(--shadow);cursor:pointer;transition:.15s;
-  }
-  .area-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--orange-400);}
-  .area-card .af-name{font-weight:600;font-size:14.5px;color:var(--navy-900);display:flex;justify-content:space-between;align-items:center;}
-  .area-card .af-pct{font-size:13px;font-weight:600;}
-  .area-track{height:9px;border-radius:6px;background:var(--gray-100);margin:10px 0 8px;overflow:hidden;}
-  .area-fill{height:100%;border-radius:6px;transition:width .4s ease;}
-  .area-meta{font-size:11.5px;color:var(--gray-600);display:flex;justify-content:space-between;}
-
   /* ===== Location breakdown modal (ซ้าย-ขวา) ===== */
   .modal-overlay{
     position:fixed;inset:0;background:rgba(10,38,71,0.6);z-index:900;
@@ -311,6 +298,10 @@
   .mgr-factory-fill{height:100%;border-radius:10px;transition:width .5s ease;}
   .mgr-factory-nums{flex:0 0 200px;text-align:right;font-size:11.5px;color:var(--gray-600);font-variant-numeric:tabular-nums;}
   .mgr-factory-nums b{color:var(--navy-900);font-weight:600;}
+  .mgr-factory-share{flex:0 0 110px;text-align:right;font-size:11px;color:var(--gray-400);line-height:1.5;}
+  .mgr-factory-share b{color:var(--navy-800);font-weight:600;font-size:12.5px;}
+  .mgr-factory-row[data-location]{cursor:pointer;border-radius:8px;margin:0 -10px;padding:12px 10px;transition:background .15s ease;}
+  .mgr-factory-row[data-location]:hover{background:var(--orange-100);}
 
   /* ===== Material lookup view ===== */
   #lookupInput{width:100%;box-sizing:border-box;}
@@ -373,7 +364,6 @@
   </a>
   <div class="nav-links">
     <a href="#/dashboard" class="nav-link" data-route="dashboard">แดชบอร์ด</a>
-    <a href="#/manager" class="nav-link" data-route="manager">ภาพรวมผู้จัดการ</a>
     <a href="#/lookup" class="nav-link" data-route="lookup">ค้นหา Material</a>
     <a href="#/unmatched" class="nav-link" data-route="unmatched">⚠️ Code ไม่พบข้อมูล</a>
     <a href="#/import" class="nav-link" data-route="import">นำเข้าข้อมูล</a>
@@ -382,82 +372,10 @@
 
 <main>
 
-  <!-- ============ DASHBOARD VIEW ============ -->
+  <!-- ============ DASHBOARD VIEW (รวมภาพรวมผู้จัดการ + สรุปสต็อก) ============ -->
   <div id="view-dashboard" class="route-view">
 
-    <div class="section-title">📊 ภาพรวมคลังสินค้า</div>
-    <div class="kpi-grid" id="kpiGrid">
-      <div class="kpi-card">
-        <div class="kpi-label">รายการทั้งหมด <span class="kpi-info" title="จำนวนแถวข้อมูลสต็อกทั้งหมดที่นำเข้า (Material x Batch x Storage Location)">ⓘ</span></div>
-        <div class="kpi-value" id="kpiRecords">–</div>
-        <div class="kpi-sub" id="kpiRecordsSub">&nbsp;</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">จำนวน SKU <span class="kpi-info" title="จำนวนรหัสสินค้า (Material) ที่ไม่ซ้ำกัน">ⓘ</span></div>
-        <div class="kpi-value" id="kpiSku">–</div>
-        <div class="kpi-sub">&nbsp;</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">น้ำหนักรวม (ตัน) <span class="kpi-info" title="ผลรวมน้ำหนักทุกแถว หารด้วย 1000 (ข้อมูลดิบเก็บเป็น กก.)">ⓘ</span></div>
-        <div class="kpi-value" id="kpiWeight">–</div>
-        <div class="kpi-sub">&nbsp;</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">จำนวนคงเหลือรวม <span class="kpi-info" title="ผลรวมคอลัมน์ Unrestricted ทุกแถวที่ตรงตัวกรอง">ⓘ</span></div>
-        <div class="kpi-value" id="kpiQty">–</div>
-        <div class="kpi-sub">&nbsp;</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">โรงงาน/พื้นที่ที่ใช้งาน <span class="kpi-info" title="จำนวน Factory/Location ที่มีสต็อกอยู่จริงตามข้อมูลปัจจุบัน">ⓘ</span></div>
-        <div class="kpi-value" id="kpiLocations">–</div>
-        <div class="kpi-sub">&nbsp;</div>
-      </div>
-    </div>
-
-    <div class="section-title">🏭 การใช้พื้นที่คลังตามโรงงาน (Area Utilization) <span class="tag">น้ำหนักสต็อก vs พื้นที่จัดเก็บจริง (ตัน)</span></div>
-    <div class="area-grid" id="areaGrid">
-      <div class="area-card"><div class="skeleton" style="height:70px;"></div></div>
-    </div>
-
-    <div class="filter-sticky">
-      <div class="filter-bar">
-        <input type="text" id="fSearch" placeholder="ค้นหา Material / รายละเอียด / Batch..." />
-        <select id="fGroupSale"><option value="">Group Sale ทั้งหมด</option></select>
-        <select id="fGroupProduct"><option value="">Group Product ทั้งหมด</option></select>
-        <select id="fProductType"><option value="">Product Type ทั้งหมด</option></select>
-        <select id="fLocation"><option value="">โรงงาน/Location ทั้งหมด</option></select>
-        <button class="btn btn-outline" id="btnClearFilters">✕ ล้างตัวกรอง</button>
-        <button class="btn btn-outline" id="btnRefreshDashboard">↻ รีเฟรช</button>
-      </div>
-    </div>
-
-    <div class="summary-grid">
-      <div class="summary-block">
-        <div class="section-title" style="margin:22px 0 12px;">🏭 สรุปตามโรงงาน <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
-        <div class="viz-block" id="summaryLocationViz"><div class="viz-empty">กำลังโหลด...</div></div>
-      </div>
-
-      <div class="summary-block">
-        <div class="section-title" style="margin:22px 0 12px;">🏷️ สรุปตาม Group Sale <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
-        <div class="viz-block" id="summaryGroupSaleViz"><div class="viz-empty">กำลังโหลด...</div></div>
-      </div>
-
-      <div class="summary-block">
-        <div class="section-title" style="margin:22px 0 12px;">📦 สรุปตาม Product Type <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
-        <div class="viz-block" id="summaryProductTypeViz"><div class="viz-empty">กำลังโหลด...</div></div>
-      </div>
-
-      <div class="summary-block">
-        <div class="section-title" style="margin:22px 0 12px;">🧭 สรุปตามโรงงาน + Group Sale <span class="tag">สัดส่วนองค์ประกอบต่อโรงงาน</span></div>
-        <div class="viz-block" id="summaryLocGroupViz"><div class="viz-empty">กำลังโหลด...</div></div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ============ MANAGER VIEW ============ -->
-  <div id="view-manager" class="route-view">
-    <div class="section-title">👔 ภาพรวมผู้จัดการคลังสินค้า <span class="tag">พื้นที่ทั้งหมด / ใช้งานปัจจุบัน / คงเหลือ — ทุกโรงงาน</span></div>
+    <div class="section-title">👔 ภาพรวมคลังสินค้า <span class="tag">พื้นที่ทั้งหมด / ใช้งานปัจจุบัน / คงเหลือ — ทุกโรงงาน แบบเรียลไทม์</span></div>
 
     <div class="mgr-hero">
       <div class="mgr-card">
@@ -499,8 +417,72 @@
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:26px;">🏭 รายโรงงาน <span class="tag">เรียงจากวิกฤตที่สุดก่อน</span></div>
+    <div class="section-title" style="margin-top:26px;">🏭 รายโรงงานทั้งหมด <span class="tag">เรียงจากวิกฤตที่สุดก่อน · คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้าง</span></div>
     <div class="viz-block" id="mgrFactoryList"><div class="viz-empty">กำลังโหลด...</div></div>
+
+    <div class="section-title" style="margin-top:26px;">📊 ตัวเลขสต็อก <span class="tag">ตามตัวกรองด้านล่าง</span></div>
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi-card">
+        <div class="kpi-label">รายการทั้งหมด <span class="kpi-info" title="จำนวนแถวข้อมูลสต็อกทั้งหมดที่นำเข้า (Material x Batch x Storage Location)">ⓘ</span></div>
+        <div class="kpi-value" id="kpiRecords">–</div>
+        <div class="kpi-sub" id="kpiRecordsSub">&nbsp;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">จำนวน SKU <span class="kpi-info" title="จำนวนรหัสสินค้า (Material) ที่ไม่ซ้ำกัน">ⓘ</span></div>
+        <div class="kpi-value" id="kpiSku">–</div>
+        <div class="kpi-sub">&nbsp;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">น้ำหนักรวม (ตัน) <span class="kpi-info" title="ผลรวมน้ำหนักทุกแถว หารด้วย 1000 (ข้อมูลดิบเก็บเป็น กก.)">ⓘ</span></div>
+        <div class="kpi-value" id="kpiWeight">–</div>
+        <div class="kpi-sub">&nbsp;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">จำนวนคงเหลือรวม <span class="kpi-info" title="ผลรวมคอลัมน์ Unrestricted ทุกแถวที่ตรงตัวกรอง">ⓘ</span></div>
+        <div class="kpi-value" id="kpiQty">–</div>
+        <div class="kpi-sub">&nbsp;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">โรงงาน/พื้นที่ที่ใช้งาน <span class="kpi-info" title="จำนวน Factory/Location ที่มีสต็อกอยู่จริงตามข้อมูลปัจจุบัน">ⓘ</span></div>
+        <div class="kpi-value" id="kpiLocations">–</div>
+        <div class="kpi-sub">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="filter-sticky">
+      <div class="filter-bar">
+        <input type="text" id="fSearch" placeholder="ค้นหา Material / รายละเอียด / Batch..." />
+        <select id="fGroupSale"><option value="">Group Sale ทั้งหมด</option></select>
+        <select id="fGroupProduct"><option value="">Group Product ทั้งหมด</option></select>
+        <select id="fProductType"><option value="">Product Type ทั้งหมด</option></select>
+        <select id="fLocation"><option value="">โรงงาน/Location ทั้งหมด</option></select>
+        <button class="btn btn-outline" id="btnClearFilters">✕ ล้างตัวกรอง</button>
+        <button class="btn btn-outline" id="btnRefreshDashboard">↻ รีเฟรช</button>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-block">
+        <div class="section-title" style="margin:22px 0 12px;">🏭 สรุปตามโรงงาน <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
+        <div class="viz-block" id="summaryLocationViz"><div class="viz-empty">กำลังโหลด...</div></div>
+      </div>
+
+      <div class="summary-block">
+        <div class="section-title" style="margin:22px 0 12px;">🏷️ สรุปตาม Group Sale <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
+        <div class="viz-block" id="summaryGroupSaleViz"><div class="viz-empty">กำลังโหลด...</div></div>
+      </div>
+
+      <div class="summary-block">
+        <div class="section-title" style="margin:22px 0 12px;">📦 สรุปตาม Product Type <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
+        <div class="viz-block" id="summaryProductTypeViz"><div class="viz-empty">กำลังโหลด...</div></div>
+      </div>
+
+      <div class="summary-block">
+        <div class="section-title" style="margin:22px 0 12px;">🧭 สรุปตามโรงงาน + Group Sale <span class="tag">สัดส่วนองค์ประกอบต่อโรงงาน</span></div>
+        <div class="viz-block" id="summaryLocGroupViz"><div class="viz-empty">กำลังโหลด...</div></div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ============ MATERIAL LOOKUP VIEW ============ -->
@@ -687,7 +669,7 @@ const Router = {
   go(route){ window.location.hash = '#/' + route; },
   current(){
     const h = (window.location.hash || '').replace('#/', '').split('?')[0];
-    return ['dashboard','manager','lookup','unmatched','import'].includes(h) ? h : 'dashboard';
+    return ['dashboard','lookup','unmatched','import'].includes(h) ? h : 'dashboard';
   }
 };
 function handleRoute(){
@@ -699,7 +681,6 @@ function handleRoute(){
   const link = document.querySelector(`.nav-link[data-route="${route}"]`);
   if (link) link.classList.add('active');
   if (route === 'dashboard') DashboardPage.activate();
-  if (route === 'manager') ManagerPage.activate();
   if (route === 'lookup') LookupPage.activate();
   if (route === 'unmatched') UnmatchedPage.activate();
   if (route === 'import') ImportPage.activate();
@@ -726,6 +707,13 @@ const DashboardPage = (() => {
   let locUtil = [];
   let filtered = [];
   let mounted = false;
+
+  // เกณฑ์ระดับการใช้พื้นที่ต่อโรงงาน: ปกติ ≤80% / ใกล้เต็ม 80–100% / เกินพิกัด >100%
+  const Tier = {
+    of(pct){ return pct > 100 ? 'critical' : pct > 80 ? 'warn' : 'normal'; },
+    label(tier){ return tier === 'critical' ? '⛔ เกินพิกัด' : tier === 'warn' ? '⚠️ ใกล้เต็ม' : '✅ ปกติ'; },
+    color(tier){ return tier === 'critical' ? 'var(--danger)' : tier === 'warn' ? 'var(--warning)' : 'var(--success)'; },
+  };
 
   function mount(){
     if (mounted) return;
@@ -775,7 +763,8 @@ const DashboardPage = (() => {
       locUtil = utilData || [];
       populateFilterOptions();
       renderKpis(allRows);
-      renderAreaGrid(locUtil, allRows);
+      renderCapacityOverview(locUtil);
+      renderFactoryPanel(locUtil, allRows);
       applyFilters();
     } catch (e) {
       console.error(e);
@@ -818,43 +807,80 @@ const DashboardPage = (() => {
     el('kpiLocations').textContent = fmtNum(locSet.size);
   }
 
-  // โรงงานที่ไม่ต้องแสดงใน Area Utilization grid
-  const EXCLUDED_LOCATIONS = ['Fac F', 'Fac H', 'Fac 21'];
-
-  function renderAreaGrid(rows, stockRows){
-    const grid = el('areaGrid');
-    const visibleRows = (rows||[]).filter(r => !EXCLUDED_LOCATIONS.includes(r.location_code));
-    if (!visibleRows.length){
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">ยังไม่มีข้อมูลพื้นที่คลัง — กรุณานำเข้าไฟล์ Area ในหน้า "นำเข้าข้อมูล"</div>';
-      return;
-    }
-    // ผลรวม stock ทั้งหมด (เฉพาะโรงงานที่แสดง) สำหรับคำนวณ % ของทั้งหมด
-    const grandTotalUsed = visibleRows.reduce((s,r) => s + (Number(r.stock_weight_tons)||0), 0);
-
-    grid.innerHTML = visibleRows.map(r => {
+  // ===== การ์ดสรุปพื้นที่ภาพรวม (hero + gauge) — ไม่ผูกกับตัวกรอง แสดงสถานะจริงของทุกโรงงานเสมอ =====
+  function renderCapacityOverview(rows){
+    const withPct = (rows||[]).map(r => {
       const capacity = Number(r.actual_capacity_tons) || 0;
       const used = Number(r.stock_weight_tons) || 0;
-      const pct = capacity > 0 ? Math.min(999, (used / capacity) * 100) : 0;
-      let color = 'var(--success)';
-      if (pct > 100) color = 'var(--danger)';
-      else if (pct > 80) color = 'var(--warning)';
-      const shareOfTotal = grandTotalUsed > 0 ? (used / grandTotalUsed) * 100 : 0;
+      const pct = capacity > 0 ? (used / capacity) * 100 : 0;
+      return { location_code: r.location_code, capacity, used, pct, tier: Tier.of(pct) };
+    });
+
+    const totalCapacity = withPct.reduce((s,r) => s + r.capacity, 0);
+    const totalUsed = withPct.reduce((s,r) => s + r.used, 0);
+    const totalRemain = totalCapacity - totalUsed;
+    const overallPct = totalCapacity > 0 ? (totalUsed / totalCapacity) * 100 : 0;
+
+    el('mgrTotalCapacity').textContent = fmtNum(totalCapacity, 1);
+    el('mgrTotalUsed').textContent = fmtNum(totalUsed, 1);
+    el('mgrTotalUsedSub').textContent = `${overallPct.toFixed(1)}% ของพื้นที่ทั้งหมด`;
+    el('mgrTotalRemain').textContent = fmtNum(Math.max(0, totalRemain), 1);
+    el('mgrTotalRemainSub').textContent = totalRemain >= 0
+      ? `เหลืออีก ${Math.max(0,100-overallPct).toFixed(1)}%`
+      : `⛔ เกินพิกัดรวม ${fmtNum(Math.abs(totalRemain),1)} ตัน`;
+
+    const counts = { normal:0, warn:0, critical:0 };
+    withPct.forEach(r => counts[r.tier]++);
+    el('mgrStatusCounts').innerHTML = `
+      <span class="mgr-status-pill normal">✅ ${counts.normal}</span>
+      <span class="mgr-status-pill warn">⚠️ ${counts.warn}</span>
+      <span class="mgr-status-pill critical">⛔ ${counts.critical}</span>`;
+
+    const circumference = 440;
+    const clampedPct = Math.min(100, Math.max(0, overallPct));
+    const offset = circumference * (1 - clampedPct / 100);
+    const arc = el('mgrGaugeArc');
+    arc.setAttribute('stroke-dashoffset', String(offset));
+    arc.setAttribute('stroke', Tier.color(Tier.of(overallPct)));
+    el('mgrGaugePct').textContent = overallPct.toFixed(1) + '%';
+  }
+
+  // ===== รายโรงงานแบบครอบคลุมทั้งหมด (ไม่ตัดโรงงานใดออก) — เรียงวิกฤตก่อน, คลิกเพื่อดูรายละเอียดสินค้า =====
+  function renderFactoryPanel(rows, stockRows){
+    const list = el('mgrFactoryList');
+    const visibleRows = rows || [];
+    if (!visibleRows.length){
+      list.innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลพื้นที่คลัง — กรุณานำเข้าไฟล์ Area ในหน้า "นำเข้าข้อมูล"</div>';
+      return;
+    }
+    const grandTotalUsed = visibleRows.reduce((s,r) => s + (Number(r.stock_weight_tons)||0), 0);
+
+    const withPct = visibleRows.map(r => {
+      const capacity = Number(r.actual_capacity_tons) || 0;
+      const used = Number(r.stock_weight_tons) || 0;
+      const pct = capacity > 0 ? (used / capacity) * 100 : 0;
+      const share = grandTotalUsed > 0 ? (used / grandTotalUsed) * 100 : 0;
+      return { location_code: r.location_code, capacity, used, pct, share, tier: Tier.of(pct) };
+    });
+
+    const sorted = withPct.slice().sort((a,b) => b.pct - a.pct);
+    list.innerHTML = sorted.map(r => {
+      const widthPct = Math.min(100, r.pct);
       return `
-        <div class="area-card" data-location="${escapeHtml(r.location_code)}" title="คลิกเพื่อดูสัดส่วน Group Sale / Product Type ของโรงงานนี้">
-          <div class="af-name"><span>${escapeHtml(r.location_code)}</span><span class="af-pct" style="color:${color}">${pct.toFixed(0)}%</span></div>
-          <div class="area-track"><div class="area-fill" style="width:${Math.min(100,pct)}%;background:${color};"></div></div>
-          <div class="area-meta"><span>ใช้ ${fmtNum(used,1)} ตัน</span><span>จุได้ ${fmtNum(capacity,1)} ตัน</span></div>
-          <div class="area-meta" style="margin-top:4px;">
-            <span>สัดส่วนของทั้งหมด</span><span style="font-weight:600;color:var(--navy-800);">${shareOfTotal.toFixed(1)}%</span>
-          </div>
+        <div class="mgr-factory-row" data-location="${escapeHtml(r.location_code)}" title="คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้างในโรงงานนี้">
+          <div class="mgr-factory-name">${escapeHtml(r.location_code)}</div>
+          <div class="mgr-factory-track"><div class="mgr-factory-fill" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div></div>
+          <div class="mgr-factory-nums"><b>${r.pct.toFixed(0)}%</b> · ใช้ ${fmtNum(r.used,1)} / ${fmtNum(r.capacity,1)} ตัน</div>
+          <div class="mgr-factory-share">สัดส่วนรวม<br/><b>${r.share.toFixed(1)}%</b></div>
+          <span class="mgr-status-pill ${r.tier}" style="flex:none;">${Tier.label(r.tier)}</span>
         </div>`;
     }).join('');
 
-    grid.querySelectorAll('.area-card[data-location]').forEach(card => {
-      card.addEventListener('click', () => {
-        el('fLocation').value = card.dataset.location;
+    list.querySelectorAll('.mgr-factory-row[data-location]').forEach(row => {
+      row.addEventListener('click', () => {
+        el('fLocation').value = row.dataset.location;
         applyFilters();
-        openLocationBreakdownModal(card.dataset.location, stockRows);
+        openLocationBreakdownModal(row.dataset.location, stockRows);
       });
     });
   }
@@ -1086,95 +1112,6 @@ const DashboardPage = (() => {
     renderRankBars('summaryGroupSaleViz', groupSummary(rows, 'group_sale'), 20, 80, 'ตัน');
     renderRankBars('summaryProductTypeViz', groupSummary(rows, 'product_type'), 165, 55, 'ตัน');
     renderStackedByLocation('summaryLocGroupViz', rows);
-  }
-
-  function activate(){
-    mount();
-    loadData();
-  }
-
-  return { activate, mount };
-})();
-
-/* ============================================================
-   MANAGER PAGE — มุมมองผู้จัดการคลังสินค้า (พื้นที่ทั้งหมด/ใช้งาน/คงเหลือ + ระดับสถานะ)
-============================================================ */
-const ManagerPage = (() => {
-  let mounted = false;
-
-  const Tier = {
-    of(pct){ return pct > 100 ? 'critical' : pct > 80 ? 'warn' : 'normal'; },
-    label(tier){ return tier === 'critical' ? '⛔ เกินพิกัด' : tier === 'warn' ? '⚠️ ใกล้เต็ม' : '✅ ปกติ'; },
-    color(tier){ return tier === 'critical' ? 'var(--danger)' : tier === 'warn' ? 'var(--warning)' : 'var(--success)'; },
-  };
-
-  function mount(){
-    if (mounted) return;
-    mounted = true;
-  }
-
-  async function loadData(){
-    el('mgrFactoryList').innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
-    try {
-      const { data, error } = await sb.from('v_location_utilization').select('*').order('location_code');
-      if (error) throw error;
-      render(data || []);
-    } catch (e) {
-      console.error(e);
-      el('mgrFactoryList').innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message||e)}</div>`;
-      toast('โหลดข้อมูลภาพรวมผู้จัดการไม่สำเร็จ: ' + (e.message || e), 'error');
-    }
-  }
-
-  function render(rows){
-    const withPct = rows.map(r => {
-      const capacity = Number(r.actual_capacity_tons) || 0;
-      const used = Number(r.stock_weight_tons) || 0;
-      const pct = capacity > 0 ? (used / capacity) * 100 : 0;
-      return { location_code: r.location_code, capacity, used, pct, tier: Tier.of(pct) };
-    });
-
-    const totalCapacity = withPct.reduce((s,r) => s + r.capacity, 0);
-    const totalUsed = withPct.reduce((s,r) => s + r.used, 0);
-    const totalRemain = totalCapacity - totalUsed;
-    const overallPct = totalCapacity > 0 ? (totalUsed / totalCapacity) * 100 : 0;
-
-    el('mgrTotalCapacity').textContent = fmtNum(totalCapacity, 1);
-    el('mgrTotalUsed').textContent = fmtNum(totalUsed, 1);
-    el('mgrTotalUsedSub').textContent = `${overallPct.toFixed(1)}% ของพื้นที่ทั้งหมด`;
-    el('mgrTotalRemain').textContent = fmtNum(Math.max(0, totalRemain), 1);
-    el('mgrTotalRemainSub').textContent = totalRemain >= 0
-      ? `เหลืออีก ${Math.max(0,100-overallPct).toFixed(1)}%`
-      : `⛔ เกินพิกัดรวม ${fmtNum(Math.abs(totalRemain),1)} ตัน`;
-
-    const counts = { normal:0, warn:0, critical:0 };
-    withPct.forEach(r => counts[r.tier]++);
-    el('mgrStatusCounts').innerHTML = `
-      <span class="mgr-status-pill normal">✅ ${counts.normal}</span>
-      <span class="mgr-status-pill warn">⚠️ ${counts.warn}</span>
-      <span class="mgr-status-pill critical">⛔ ${counts.critical}</span>`;
-
-    const circumference = 440;
-    const clampedPct = Math.min(100, Math.max(0, overallPct));
-    const offset = circumference * (1 - clampedPct / 100);
-    const arc = el('mgrGaugeArc');
-    arc.setAttribute('stroke-dashoffset', String(offset));
-    arc.setAttribute('stroke', Tier.color(Tier.of(overallPct)));
-    el('mgrGaugePct').textContent = overallPct.toFixed(1) + '%';
-
-    const sorted = withPct.slice().sort((a,b) => b.pct - a.pct);
-    const list = el('mgrFactoryList');
-    if (!sorted.length){ list.innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลพื้นที่คลัง — กรุณานำเข้าไฟล์ Area ในหน้า "นำเข้าข้อมูล"</div>'; return; }
-    list.innerHTML = sorted.map(r => {
-      const widthPct = Math.min(100, r.pct);
-      return `
-        <div class="mgr-factory-row">
-          <div class="mgr-factory-name">${escapeHtml(r.location_code)}</div>
-          <div class="mgr-factory-track"><div class="mgr-factory-fill" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div></div>
-          <div class="mgr-factory-nums"><b>${r.pct.toFixed(0)}%</b> · ใช้ ${fmtNum(r.used,1)} / ${fmtNum(r.capacity,1)} ตัน</div>
-          <span class="mgr-status-pill ${r.tier}" style="flex:none;">${Tier.label(r.tier)}</span>
-        </div>`;
-    }).join('');
   }
 
   function activate(){
