@@ -121,28 +121,38 @@
   .area-fill{height:100%;border-radius:6px;transition:width .4s ease;}
   .area-meta{font-size:11.5px;color:var(--gray-600);display:flex;justify-content:space-between;}
 
-  /* ===== Group Sale breakdown modal ===== */
+  /* ===== Location breakdown modal (ซ้าย-ขวา) ===== */
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(10,38,71,0.55);z-index:900;
+    position:fixed;inset:0;background:rgba(10,38,71,0.6);z-index:900;
     display:flex;align-items:center;justify-content:center;padding:20px;
     animation:fadein .15s ease;
   }
   .modal-box{
-    background:var(--white);border-radius:var(--radius);max-width:480px;width:100%;
-    max-height:82vh;overflow:auto;box-shadow:var(--shadow-lg);
+    background:var(--white);border-radius:var(--radius);max-width:760px;width:100%;
+    max-height:86vh;overflow:auto;box-shadow:var(--shadow-lg);
   }
   .modal-head{
     display:flex;justify-content:space-between;align-items:center;gap:10px;
-    padding:16px 20px;border-bottom:1px solid var(--gray-200);
-    position:sticky;top:0;background:var(--white);border-radius:var(--radius) var(--radius) 0 0;
+    padding:18px 24px;border-bottom:1px solid var(--gray-200);
+    position:sticky;top:0;background:linear-gradient(135deg, var(--navy-900), var(--navy-800));
+    border-radius:var(--radius) var(--radius) 0 0;
   }
-  .modal-head h3{margin:0;font-size:15.5px;color:var(--navy-900);}
+  .modal-head h3{margin:0;font-size:16.5px;color:var(--white);font-weight:600;}
+  .modal-head .modal-sub{font-size:12px;color:#c9d6e8;margin-top:3px;}
   .modal-close{
-    background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-600);
-    line-height:1;padding:2px 6px;border-radius:6px;
+    background:rgba(255,255,255,0.12);border:none;font-size:20px;cursor:pointer;color:var(--white);
+    line-height:1;width:32px;height:32px;border-radius:8px;flex:none;
   }
-  .modal-close:hover{color:var(--danger);background:var(--gray-100);}
-  .modal-body{padding:18px 20px;}
+  .modal-close:hover{background:rgba(255,255,255,0.22);}
+  .modal-body{padding:0;display:flex;}
+  @media (max-width:640px){ .modal-body{flex-direction:column;} }
+  .modal-col{flex:1 1 50%;padding:20px 24px;min-width:0;}
+  .modal-col + .modal-col{border-left:1px solid var(--gray-200);}
+  @media (max-width:640px){ .modal-col + .modal-col{border-left:none;border-top:1px solid var(--gray-200);} }
+  .modal-col-title{
+    font-size:13px;font-weight:600;color:var(--navy-900);margin-bottom:14px;
+    display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.3px;
+  }
   .modal-total{font-size:12.5px;color:var(--gray-600);margin-bottom:14px;}
   .gs-row{margin-bottom:14px;}
   .gs-row:last-child{margin-bottom:0;}
@@ -151,6 +161,11 @@
   .gs-track{height:8px;border-radius:6px;background:var(--gray-100);overflow:hidden;}
   .gs-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--navy-800),var(--orange-500));transition:width .3s ease;}
   .gs-sub{font-size:11px;color:var(--gray-500);margin-top:3px;}
+
+  /* ===== Dashboard summary sections ===== */
+  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
+  @media (max-width:980px){ .summary-grid{grid-template-columns:1fr;} }
+  .summary-block .history-table-wrap{margin-top:0;}
 
   /* ===== Filter bar ===== */
   .filter-sticky{position:sticky;top:68px;z-index:50;background:var(--gray-50);padding-top:10px;margin-top:10px;}
@@ -319,33 +334,51 @@
         <select id="fProductType"><option value="">Product Type ทั้งหมด</option></select>
         <select id="fLocation"><option value="">โรงงาน/Location ทั้งหมด</option></select>
         <button class="btn btn-outline" id="btnClearFilters">✕ ล้างตัวกรอง</button>
-        <button class="btn btn-navy" id="btnExportCsv">⬇ Export CSV</button>
         <button class="btn btn-outline" id="btnRefreshDashboard">↻ รีเฟรช</button>
       </div>
     </div>
 
-    <div class="table-wrap" style="margin-top:0;">
-      <table class="data-table" id="stockTable">
-        <thead>
-          <tr>
-            <th data-key="material">Material</th>
-            <th data-key="material_description">รายละเอียด</th>
-            <th data-key="batch">Batch</th>
-            <th data-key="unrestricted_qty" class="cell-num">จำนวน</th>
-            <th data-key="storage_location">Storage Loc.</th>
-            <th data-key="location_code">โรงงาน</th>
-            <th data-key="total_weight" class="cell-num">น้ำหนัก (ตัน)</th>
-            <th data-key="group_sale">Group Sale</th>
-            <th data-key="group_product">Group Product</th>
-            <th data-key="product_type">Product Type</th>
-          </tr>
-        </thead>
-        <tbody id="stockTbody">
-          <tr><td colspan="10"><div class="empty-state"><div class="icon">⏳</div>กำลังโหลดข้อมูล...</div></td></tr>
-        </tbody>
-      </table>
+    <div class="summary-grid">
+      <div class="summary-block">
+        <div class="section-title" style="margin:22px 0 12px;">🏭 สรุปตามโรงงาน <span class="tag">ตามตัวกรองด้านบน</span></div>
+        <div class="history-table-wrap">
+          <table class="data-table" id="summaryLocationTable">
+            <thead><tr><th>โรงงาน</th><th class="cell-num">SKU</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">จำนวนคงเหลือ</th><th class="cell-num">% ของทั้งหมด</th></tr></thead>
+            <tbody id="summaryLocationTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="summary-block">
+        <div class="section-title" style="margin:22px 0 12px;">🏷️ สรุปตาม Group Sale <span class="tag">ตามตัวกรองด้านบน</span></div>
+        <div class="history-table-wrap">
+          <table class="data-table" id="summaryGroupSaleTable">
+            <thead><tr><th>Group Sale</th><th class="cell-num">SKU</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">จำนวนคงเหลือ</th><th class="cell-num">% ของทั้งหมด</th></tr></thead>
+            <tbody id="summaryGroupSaleTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="summary-block">
+        <div class="section-title" style="margin:22px 0 12px;">📦 สรุปตาม Product Type <span class="tag">ตามตัวกรองด้านบน</span></div>
+        <div class="history-table-wrap">
+          <table class="data-table" id="summaryProductTypeTable">
+            <thead><tr><th>Product Type</th><th class="cell-num">SKU</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">จำนวนคงเหลือ</th><th class="cell-num">% ของทั้งหมด</th></tr></thead>
+            <tbody id="summaryProductTypeTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="summary-block">
+        <div class="section-title" style="margin:22px 0 12px;">🧭 สรุปตามโรงงาน + Group Sale <span class="tag">% เทียบกับน้ำหนักรวมของโรงงานนั้น</span></div>
+        <div class="history-table-wrap">
+          <table class="data-table" id="summaryLocGroupTable">
+            <thead><tr><th>โรงงาน</th><th>Group Sale</th><th class="cell-num">SKU</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">% ในโรงงานนี้</th></tr></thead>
+            <tbody id="summaryLocGroupTbody"><tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    <div class="pagination" id="pagination"></div>
 
   </div>
 
@@ -435,8 +468,6 @@
 const SUPABASE_URL = 'https://edtazbvyakoakzlsdubc.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_044krxYqD8DJG_zJRHtS6g_-kUJDC51';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const PAGE_SIZE = 50;
 
 /* ============================================================
    UTILITIES
@@ -528,17 +559,20 @@ const DashboardPage = (() => {
   let allRows = [];
   let locUtil = [];
   let filtered = [];
-  let currentPage = 1;
-  let sortKey = null;
-  let sortDir = 1;
   let mounted = false;
 
   function mount(){
     if (mounted) return;
     mounted = true;
-    el('fSearch').addEventListener('input', debounce(() => { currentPage = 1; applyFilters(); }, 220));
-    ['fGroupSale','fGroupProduct','fProductType','fLocation'].forEach(id => {
-      el(id).addEventListener('change', () => { currentPage = 1; applyFilters(); });
+    el('fSearch').addEventListener('input', debounce(() => applyFilters(), 220));
+    ['fGroupSale','fGroupProduct','fProductType'].forEach(id => {
+      el(id).addEventListener('change', () => applyFilters());
+    });
+    // เลือกโรงงานจาก dropdown ปุ๊บ ให้กรองตารางสรุป + เปิด popup รายละเอียดของโรงงานนั้นทันที
+    el('fLocation').addEventListener('change', () => {
+      applyFilters();
+      const loc = el('fLocation').value;
+      if (loc) openLocationBreakdownModal(loc, allRows);
     });
     el('btnClearFilters').addEventListener('click', () => {
       el('fSearch').value = '';
@@ -546,22 +580,24 @@ const DashboardPage = (() => {
       el('fGroupProduct').value = '';
       el('fProductType').value = '';
       el('fLocation').value = '';
-      currentPage = 1;
       applyFilters();
     });
-    el('btnExportCsv').addEventListener('click', exportCsv);
     el('btnRefreshDashboard').addEventListener('click', loadData);
-    document.querySelectorAll('#stockTable thead th').forEach(th => {
-      th.addEventListener('click', () => {
-        const key = th.dataset.key;
-        if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
-        renderTable();
-      });
+  }
+
+  function setSummaryLoading(){
+    ['summaryLocationTbody','summaryGroupSaleTbody','summaryProductTypeTbody','summaryLocGroupTbody'].forEach(id => {
+      el(id).innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="icon">⏳</div>กำลังโหลดข้อมูล...</div></td></tr>';
+    });
+  }
+  function setSummaryError(msg){
+    ['summaryLocationTbody','summaryGroupSaleTbody','summaryProductTypeTbody','summaryLocGroupTbody'].forEach(id => {
+      el(id).innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="icon">⚠️</div>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(msg)}</div></td></tr>`;
     });
   }
 
   async function loadData(){
-    el('stockTbody').innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="icon">⏳</div>กำลังโหลดข้อมูล...</div></td></tr>';
+    setSummaryLoading();
     try {
       const [{data: stockData, error: stockErr}, {data: utilData, error: utilErr}] = await Promise.all([
         sb.from('v_stock_enriched').select('*').limit(20000),
@@ -577,7 +613,7 @@ const DashboardPage = (() => {
       applyFilters();
     } catch (e) {
       console.error(e);
-      el('stockTbody').innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="icon">⚠️</div>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message||e)}</div></td></tr>`;
+      setSummaryError(e.message || e);
       toast('โหลดข้อมูลแดชบอร์ดไม่สำเร็จ: ' + (e.message || e), 'error');
     }
   }
@@ -651,7 +687,6 @@ const DashboardPage = (() => {
     grid.querySelectorAll('.area-card[data-location]').forEach(card => {
       card.addEventListener('click', () => {
         el('fLocation').value = card.dataset.location;
-        currentPage = 1;
         applyFilters();
         openLocationBreakdownModal(card.dataset.location, stockRows);
       });
@@ -661,6 +696,8 @@ const DashboardPage = (() => {
   // คำนวณสัดส่วน (%) ของ field ที่กำหนด (group_sale / product_type) ภายในโรงงานที่เลือก แล้วเปิด modal แสดงผล
   function openLocationBreakdownModal(locationCode, stockRows){
     const rows = (stockRows||[]).filter(r => r.location_code === locationCode);
+    const grandTotalWeight = rows.reduce((s,r) => s + (Number(r.total_weight)||0), 0);
+    const skuCount = new Set(rows.map(r => r.material)).size;
 
     const summarize = (field) => {
       const byKey = {};
@@ -674,13 +711,13 @@ const DashboardPage = (() => {
       return { entries: Object.entries(byKey).sort((a,b) => b[1]-a[1]), total };
     };
 
-    const renderSection = (title, field) => {
+    // แต่ละมุมมอง (Group Sale / Product Type) แสดงเป็น 1 คอลัมน์ จัดวางซ้าย-ขวาใน .modal-body (flex)
+    const renderColumn = (icon, title, field) => {
       const { entries, total } = summarize(field);
-      if (!entries.length) return `<div class="modal-total">${escapeHtml(title)}: ไม่มีข้อมูล</div>`;
       return `
-        <div style="margin-bottom:20px;">
-          <div class="modal-total" style="font-weight:600;color:var(--navy-900);margin-bottom:10px;">${escapeHtml(title)}</div>
-          ${entries.map(([name, weight]) => {
+        <div class="modal-col">
+          <div class="modal-col-title">${icon} ${escapeHtml(title)}</div>
+          ${entries.length ? entries.map(([name, weight]) => {
             const pct = total > 0 ? (weight/total)*100 : 0;
             return `
               <div class="gs-row">
@@ -688,7 +725,7 @@ const DashboardPage = (() => {
                 <div class="gs-track"><div class="gs-fill" style="width:${Math.min(100,pct)}%;"></div></div>
                 <div class="gs-sub">${fmtNum(weight/1000,2)} ตัน</div>
               </div>`;
-          }).join('')}
+          }).join('') : '<div class="empty-state" style="padding:20px 0;">ไม่มีข้อมูล</div>'}
         </div>`;
     };
 
@@ -697,13 +734,16 @@ const DashboardPage = (() => {
     overlay.innerHTML = `
       <div class="modal-box">
         <div class="modal-head">
-          <h3>📦 ${escapeHtml(locationCode)} — สัดส่วนสต็อก</h3>
+          <div>
+            <h3>📦 ${escapeHtml(locationCode)} — มีอะไรจัดเก็บบ้าง</h3>
+            <div class="modal-sub">${rows.length ? `${fmtNum(skuCount)} SKU · น้ำหนักรวม ${fmtNum(grandTotalWeight/1000,2)} ตัน` : 'ยังไม่มีสต็อกในโรงงานนี้'}</div>
+          </div>
           <button class="modal-close" aria-label="ปิด">&times;</button>
         </div>
         <div class="modal-body">
           ${rows.length
-            ? renderSection('ตาม Group Sale', 'group_sale') + renderSection('ตาม Product Type', 'product_type')
-            : '<div class="empty-state">ยังไม่มีสต็อกในโรงงานนี้</div>'}
+            ? renderColumn('🏷️', 'ตาม Group Sale', 'group_sale') + renderColumn('📦', 'ตาม Product Type', 'product_type')
+            : '<div class="empty-state" style="flex:1;">ยังไม่มีสต็อกในโรงงานนี้</div>'}
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -734,93 +774,91 @@ const DashboardPage = (() => {
       return true;
     });
     renderKpis(filtered);
-    renderTable();
+    renderSummaries(filtered);
   }
 
-  function renderTable(){
-    let rows = filtered.slice();
-    if (sortKey){
-      rows.sort((a,b) => {
-        let av = a[sortKey], bv = b[sortKey];
-        if (['unrestricted_qty','total_weight'].includes(sortKey)){ av = Number(av)||0; bv = Number(bv)||0; }
-        else { av = (av||'').toString(); bv = (bv||'').toString(); }
-        if (av < bv) return -1*sortDir;
-        if (av > bv) return 1*sortDir;
-        return 0;
-      });
-    }
-    document.querySelectorAll('#stockTable thead th').forEach(th => {
-      th.innerHTML = th.textContent.replace(' ▲','').replace(' ▼','');
-      if (th.dataset.key === sortKey) th.innerHTML += sortDir === 1 ? ' ▲' : ' ▼';
+  // จัดกลุ่ม + สรุปยอด (SKU/น้ำหนัก/จำนวน/% ของทั้งหมด) ตามฟิลด์ที่กำหนด เช่น location_code / group_sale / product_type
+  function groupSummary(rows, field){
+    const map = {};
+    let totalWeight = 0;
+    rows.forEach(r => {
+      const key = r[field] || 'ไม่ระบุ';
+      if (!map[key]) map[key] = { skuSet: new Set(), weight: 0, qty: 0 };
+      map[key].skuSet.add(r.material);
+      map[key].weight += Number(r.total_weight) || 0;
+      map[key].qty += Number(r.unrestricted_qty) || 0;
+      totalWeight += Number(r.total_weight) || 0;
     });
-
-    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-    if (currentPage > totalPages) currentPage = totalPages;
-    const start = (currentPage-1) * PAGE_SIZE;
-    const pageRows = rows.slice(start, start + PAGE_SIZE);
-
-    const tbody = el('stockTbody');
-    if (!pageRows.length){
-      tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="icon">🔍</div>ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div></td></tr>';
-    } else {
-      tbody.innerHTML = pageRows.map(r => `
-        <tr>
-          <td>${escapeHtml(r.material)}</td>
-          <td>${escapeHtml(r.material_description)}</td>
-          <td>${escapeHtml(r.batch)}</td>
-          <td class="cell-num">${fmtNum(r.unrestricted_qty)}</td>
-          <td><span class="badge badge-navy">${escapeHtml(r.storage_location)||'-'}</span></td>
-          <td>${r.location_code ? escapeHtml(r.location_code) : '<span class="cell-muted">ไม่ทราบ</span>'}</td>
-          <td class="cell-num">${fmtNum((r.total_weight||0)/1000, 2)}</td>
-          <td>${r.group_sale ? `<span class="badge badge-orange">${escapeHtml(r.group_sale)}</span>` : '<span class="cell-muted">-</span>'}</td>
-          <td>${escapeHtml(r.group_product)||'<span class="cell-muted">-</span>'}</td>
-          <td>${escapeHtml(r.product_type)||'<span class="cell-muted">-</span>'}</td>
-        </tr>`).join('');
-    }
-    renderPagination(totalPages, rows.length);
+    const entries = Object.entries(map).map(([name, v]) => ({
+      name,
+      skuCount: v.skuSet.size,
+      weightTons: v.weight / 1000,
+      qty: v.qty,
+      pct: totalWeight > 0 ? (v.weight / totalWeight) * 100 : 0,
+    }));
+    entries.sort((a,b) => b.weightTons - a.weightTons);
+    return entries;
   }
 
-  function renderPagination(totalPages, totalRows){
-    const p = el('pagination');
-    if (!totalRows){ p.innerHTML = ''; return; }
-    let btns = '';
-    const maxBtns = 7;
-    let startP = Math.max(1, currentPage - 3);
-    let endP = Math.min(totalPages, startP + maxBtns - 1);
-    startP = Math.max(1, endP - maxBtns + 1);
-    for (let i = startP; i <= endP; i++){
-      btns += `<button data-page="${i}" class="${i===currentPage?'active':''}">${i}</button>`;
-    }
-    p.innerHTML = `
-      <div>แสดง ${((currentPage-1)*PAGE_SIZE)+1}-${Math.min(currentPage*PAGE_SIZE, totalRows)} จาก ${fmtNum(totalRows)} รายการ</div>
-      <div class="pg-btns">
-        <button id="pgPrev" ${currentPage<=1?'disabled':''}>‹ ก่อนหน้า</button>
-        ${btns}
-        <button id="pgNext" ${currentPage>=totalPages?'disabled':''}>ถัดไป ›</button>
-      </div>`;
-    const prevBtn = el('pgPrev'); if (prevBtn) prevBtn.addEventListener('click', () => { currentPage--; renderTable(); });
-    const nextBtn = el('pgNext'); if (nextBtn) nextBtn.addEventListener('click', () => { currentPage++; renderTable(); });
-    p.querySelectorAll('button[data-page]').forEach(b => b.addEventListener('click', () => { currentPage = Number(b.dataset.page); renderTable(); }));
-  }
-
-  function exportCsv(){
-    if (!filtered.length){ toast('ไม่มีข้อมูลให้ export', 'error'); return; }
-    const headers = ['Material','Material Description','Batch','Unrestricted','Storage Location','โรงงาน','Weight (Ton)','Group Sale','Group Product','Product Type'];
-    const lines = [headers.join(',')];
-    filtered.forEach(r => {
-      const row = [
-        r.material, r.material_description, r.batch, r.unrestricted_qty, r.storage_location,
-        r.location_code, ((r.total_weight||0)/1000).toFixed(3), r.group_sale, r.group_product, r.product_type
-      ].map(v => `"${String(v===null||v===undefined?'':v).replace(/"/g,'""')}"`);
-      lines.push(row.join(','));
+  // สรุปแบบ cross-tab 2 มิติ (เช่น โรงงาน x Group Sale) — % คำนวณเทียบกับน้ำหนักรวมของ field1 (โรงงาน) เท่านั้น
+  function groupSummaryCross(rows, field1, field2){
+    const totalsByF1 = {};
+    rows.forEach(r => {
+      const k1 = r[field1] || 'ไม่ระบุ';
+      totalsByF1[k1] = (totalsByF1[k1] || 0) + (Number(r.total_weight) || 0);
     });
-    const blob = new Blob(['﻿' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `wh2_stock_export_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const map = {};
+    rows.forEach(r => {
+      const k1 = r[field1] || 'ไม่ระบุ';
+      const k2 = r[field2] || 'ไม่ระบุ';
+      const key = k1 + '' + k2;
+      if (!map[key]) map[key] = { k1, k2, skuSet: new Set(), weight: 0, qty: 0 };
+      map[key].skuSet.add(r.material);
+      map[key].weight += Number(r.total_weight) || 0;
+      map[key].qty += Number(r.unrestricted_qty) || 0;
+    });
+    const entries = Object.values(map).map(v => ({
+      k1: v.k1, k2: v.k2,
+      skuCount: v.skuSet.size,
+      weightTons: v.weight / 1000,
+      qty: v.qty,
+      pct: totalsByF1[v.k1] > 0 ? (v.weight / totalsByF1[v.k1]) * 100 : 0,
+    }));
+    entries.sort((a,b) => a.k1.localeCompare(b.k1, 'th') || b.weightTons - a.weightTons);
+    return entries;
+  }
+
+  function renderSimpleSummary(tbodyId, entries){
+    const tbody = el(tbodyId);
+    if (!entries.length){ tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div></td></tr>'; return; }
+    tbody.innerHTML = entries.map(e => `
+      <tr>
+        <td>${e.name === 'ไม่ระบุ' ? '<span class="cell-muted">ไม่ระบุ</span>' : `<span class="badge badge-navy">${escapeHtml(e.name)}</span>`}</td>
+        <td class="cell-num">${fmtNum(e.skuCount)}</td>
+        <td class="cell-num">${fmtNum(e.weightTons, 2)}</td>
+        <td class="cell-num">${fmtNum(e.qty)}</td>
+        <td class="cell-num" style="font-weight:600;color:var(--navy-800);">${e.pct.toFixed(1)}%</td>
+      </tr>`).join('');
+  }
+
+  function renderCrossSummary(tbodyId, entries){
+    const tbody = el(tbodyId);
+    if (!entries.length){ tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div></td></tr>'; return; }
+    tbody.innerHTML = entries.map(e => `
+      <tr>
+        <td><span class="badge badge-navy">${escapeHtml(e.k1)}</span></td>
+        <td>${e.k2 === 'ไม่ระบุ' ? '<span class="cell-muted">ไม่ระบุ</span>' : `<span class="badge badge-orange">${escapeHtml(e.k2)}</span>`}</td>
+        <td class="cell-num">${fmtNum(e.skuCount)}</td>
+        <td class="cell-num">${fmtNum(e.weightTons, 2)}</td>
+        <td class="cell-num" style="font-weight:600;color:var(--navy-800);">${e.pct.toFixed(1)}%</td>
+      </tr>`).join('');
+  }
+
+  function renderSummaries(rows){
+    renderSimpleSummary('summaryLocationTbody', groupSummary(rows, 'location_code'));
+    renderSimpleSummary('summaryGroupSaleTbody', groupSummary(rows, 'group_sale'));
+    renderSimpleSummary('summaryProductTypeTbody', groupSummary(rows, 'product_type'));
+    renderCrossSummary('summaryLocGroupTbody', groupSummaryCross(rows, 'location_code', 'group_sale'));
   }
 
   function activate(){
