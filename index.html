@@ -112,8 +112,9 @@
   .area-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
   .area-card{
     background:var(--white);border:1px solid var(--gray-200);border-radius:12px;
-    padding:14px 16px;box-shadow:var(--shadow);
+    padding:14px 16px;box-shadow:var(--shadow);cursor:pointer;transition:.15s;
   }
+  .area-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--orange-400);}
   .area-card .af-name{font-weight:600;font-size:14.5px;color:var(--navy-900);display:flex;justify-content:space-between;align-items:center;}
   .area-card .af-pct{font-size:13px;font-weight:600;}
   .area-track{height:9px;border-radius:6px;background:var(--gray-100);margin:10px 0 8px;overflow:hidden;}
@@ -533,7 +534,7 @@ const DashboardPage = (() => {
       locUtil = utilData || [];
       populateFilterOptions();
       renderKpis(allRows);
-      renderAreaGrid(locUtil);
+      renderAreaGrid(locUtil, allRows);
       applyFilters();
     } catch (e) {
       console.error(e);
@@ -576,12 +577,21 @@ const DashboardPage = (() => {
     el('kpiLocations').textContent = fmtNum(locSet.size);
   }
 
-  function renderAreaGrid(rows){
+  function renderAreaGrid(rows, stockRows){
     const grid = el('areaGrid');
     if (!rows.length){
       grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">ยังไม่มีข้อมูลพื้นที่คลัง — กรุณานำเข้าไฟล์ Area ในหน้า "นำเข้าข้อมูล"</div>';
       return;
     }
+    // นับจำนวน SKU และจำนวนแถวสต็อกที่มีอยู่จริงต่อโรงงาน (สำหรับ "ภายใต้โรงงานนี้ มี stock อะไรอัปโหลดไปแล้วบ้าง")
+    const statsByLoc = {};
+    (stockRows||[]).forEach(r => {
+      const key = r.location_code || '__unknown__';
+      if (!statsByLoc[key]) statsByLoc[key] = { skuSet:new Set(), rowCount:0 };
+      statsByLoc[key].skuSet.add(r.material);
+      statsByLoc[key].rowCount++;
+    });
+
     grid.innerHTML = rows.map(r => {
       const capacity = Number(r.actual_capacity_tons) || 0;
       const used = Number(r.stock_weight_tons) || 0;
@@ -589,13 +599,29 @@ const DashboardPage = (() => {
       let color = 'var(--success)';
       if (pct > 100) color = 'var(--danger)';
       else if (pct > 80) color = 'var(--warning)';
+      const stat = statsByLoc[r.location_code];
+      const skuCount = stat ? stat.skuSet.size : 0;
+      const rowCount = stat ? stat.rowCount : 0;
       return `
-        <div class="area-card">
+        <div class="area-card" data-location="${escapeHtml(r.location_code)}" title="คลิกเพื่อดูรายการสต็อกในโรงงานนี้ในตารางด้านล่าง">
           <div class="af-name"><span>${escapeHtml(r.location_code)}</span><span class="af-pct" style="color:${color}">${pct.toFixed(0)}%</span></div>
           <div class="area-track"><div class="area-fill" style="width:${Math.min(100,pct)}%;background:${color};"></div></div>
           <div class="area-meta"><span>ใช้ ${fmtNum(used,1)} ตัน</span><span>จุได้ ${fmtNum(capacity,1)} ตัน</span></div>
+          <div class="area-meta" style="margin-top:4px;">
+            <span>${rowCount ? `📦 ${fmtNum(rowCount)} แถว` : '<span class="cell-muted">ยังไม่มีสต็อก</span>'}</span>
+            <span>${rowCount ? `${fmtNum(skuCount)} SKU` : ''}</span>
+          </div>
         </div>`;
     }).join('');
+
+    grid.querySelectorAll('.area-card[data-location]').forEach(card => {
+      card.addEventListener('click', () => {
+        el('fLocation').value = card.dataset.location;
+        currentPage = 1;
+        applyFilters();
+        document.querySelector('.filter-sticky').scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
   }
 
   function applyFilters(){
@@ -873,11 +899,21 @@ const ImportPage = (() => {
     }));
   }
 
-  /* ---------- Chunked insert helper ---------- */
+  /* ---------- Chunked insert / upsert helpers ---------- */
   async function chunkInsert(table, records, chunkSize=300){
     for (let i = 0; i < records.length; i += chunkSize){
       const chunk = records.slice(i, i + chunkSize);
       const { error } = await sb.from(table).insert(chunk);
+      if (error) throw error;
+    }
+  }
+  // locations.location_code is UNIQUE — a plain insert would collide with the existing row
+  // for that factory every time the Area file is re-uploaded, so this table is upserted
+  // (insert-or-update) on location_code instead of insert-then-delete.
+  async function chunkUpsert(table, records, conflictCol, chunkSize=300){
+    for (let i = 0; i < records.length; i += chunkSize){
+      const chunk = records.slice(i, i + chunkSize);
+      const { error } = await sb.from(table).upsert(chunk, { onConflict: conflictCol });
       if (error) throw error;
     }
   }
@@ -912,12 +948,24 @@ const ImportPage = (() => {
       const importStartedAt = new Date().toISOString();
 
       logLine(logId, `⏳ กำลังนำเข้าข้อมูลใหม่ (${rows.length.toLocaleString()} แถว) ...`);
-      try {
-        await chunkInsert(table, rows);
-      } catch (insertErr) {
-        logLine(logId, `✗ นำเข้าไม่สำเร็จ: ${insertErr.message || insertErr} — กำลังล้างข้อมูลที่ insert ไปบางส่วนของรอบนี้ทิ้ง...`, 'err');
-        await sb.from(table).delete().gte('imported_at', importStartedAt);
-        throw insertErr;
+      if (kind === 'area') {
+        // upsert by location_code (Fac ต้องไม่ซ้ำ) — ต้องแปะ imported_at ใหม่เองทุกแถว
+        // เพราะ default now() ใช้ได้แค่ตอน insert ไม่ทำงานตอน update ผ่าน upsert
+        const rowsStamped = rows.map(r => ({ ...r, imported_at: importStartedAt }));
+        try {
+          await chunkUpsert(table, rowsStamped, 'location_code');
+        } catch (upsertErr) {
+          logLine(logId, `✗ นำเข้าไม่สำเร็จ: ${upsertErr.message || upsertErr}`, 'err');
+          throw upsertErr;
+        }
+      } else {
+        try {
+          await chunkInsert(table, rows);
+        } catch (insertErr) {
+          logLine(logId, `✗ นำเข้าไม่สำเร็จ: ${insertErr.message || insertErr} — กำลังล้างข้อมูลที่ insert ไปบางส่วนของรอบนี้ทิ้ง...`, 'err');
+          await sb.from(table).delete().gte('imported_at', importStartedAt);
+          throw insertErr;
+        }
       }
       setProgress(pgId, 75);
       logLine(logId, `✓ นำเข้าข้อมูลใหม่สำเร็จ`, 'ok');
