@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Inventory Warehouse 2 | ระบบคลังสินค้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy-900:#0A2647;
+    --navy-800:#0F3460;
+    --navy-700:#16407e;
+    --navy-100:#e8edf5;
+    --orange-500:#E85D04;
+    --orange-400:#FA7E19;
+    --orange-100:#fff1e6;
+    --white:#ffffff;
+    --gray-50:#f8f9fa;
+    --gray-100:#f1f3f5;
+    --gray-200:#e9ecef;
+    --gray-400:#adb5bd;
+    --gray-600:#6c757d;
+    --gray-800:#343a40;
+    --danger:#dc3545;
+    --success:#198754;
+    --warning:#ffc107;
+    --radius:14px;
+    --shadow:0 2px 10px rgba(10,38,71,0.08);
+    --shadow-lg:0 8px 30px rgba(10,38,71,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Kanit', sans-serif;
+    background:linear-gradient(180deg, var(--gray-50) 0%, var(--white) 260px);
+    color:var(--navy-900);
+    min-height:100vh;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font-family:'Kanit', sans-serif;cursor:pointer;}
+  ::-webkit-scrollbar{height:10px;width:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--gray-400);border-radius:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ===== Navbar ===== */
+  .navbar{
+    height:68px;
+    background:linear-gradient(120deg, var(--navy-900), var(--navy-800));
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 24px;
+    position:sticky;top:0;z-index:100;
+    box-shadow:var(--shadow-lg);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:19px;color:var(--white);}
+  .brand .logo-badge{
+    width:38px;height:38px;border-radius:10px;
+    background:linear-gradient(135deg, var(--orange-500), var(--orange-400));
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+    box-shadow:0 2px 8px rgba(232,93,4,0.5);
+  }
+  .brand small{display:block;font-weight:300;font-size:11.5px;color:#c9d6e8;margin-top:1px;}
+  .nav-links{display:flex;gap:6px;}
+  .nav-link{
+    color:#d7e0ef;font-size:14.5px;font-weight:500;padding:9px 18px;border-radius:10px;
+    transition:.15s;
+  }
+  .nav-link:hover{background:rgba(255,255,255,0.08);color:var(--white);}
+  .nav-link.active{background:var(--orange-500);color:var(--white);}
+
+  main{max-width:1360px;margin:0 auto;padding:24px 20px 60px;}
+  .route-view{display:none;}
+  .route-view.visible{display:block;animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .section-title{
+    font-size:18px;font-weight:600;color:var(--navy-900);
+    margin:28px 0 14px;display:flex;align-items:center;gap:8px;
+  }
+  .section-title .tag{
+    font-size:11.5px;font-weight:400;color:var(--gray-600);background:var(--gray-100);
+    padding:3px 10px;border-radius:20px;
+  }
+
+  /* ===== KPI cards ===== */
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+  @media (max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:640px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+  .kpi-card{
+    background:var(--white);border-radius:var(--radius);padding:18px 18px 16px;
+    box-shadow:var(--shadow);border:1px solid var(--gray-200);
+    position:relative;overflow:hidden;transition:.2s;
+  }
+  .kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
+  .kpi-card::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:4px;
+    background:linear-gradient(90deg, var(--orange-500), var(--orange-400));
+  }
+  .kpi-label{font-size:12.5px;color:var(--gray-600);font-weight:500;display:flex;align-items:center;gap:5px;}
+  .kpi-value{font-size:26px;font-weight:600;color:var(--navy-900);margin-top:6px;font-variant-numeric:tabular-nums;}
+  .kpi-sub{font-size:11.5px;color:var(--gray-400);margin-top:2px;}
+  .kpi-info{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:15px;height:15px;border-radius:50%;background:var(--gray-200);color:var(--gray-600);
+    font-size:10px;cursor:help;
+  }
+
+  /* ===== Area utilization ===== */
+  .area-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;}
+  .area-card{
+    background:var(--white);border:1px solid var(--gray-200);border-radius:12px;
+    padding:14px 16px;box-shadow:var(--shadow);
+  }
+  .area-card .af-name{font-weight:600;font-size:14.5px;color:var(--navy-900);display:flex;justify-content:space-between;align-items:center;}
+  .area-card .af-pct{font-size:13px;font-weight:600;}
+  .area-track{height:9px;border-radius:6px;background:var(--gray-100);margin:10px 0 8px;overflow:hidden;}
+  .area-fill{height:100%;border-radius:6px;transition:width .4s ease;}
+  .area-meta{font-size:11.5px;color:var(--gray-600);display:flex;justify-content:space-between;}
+
+  /* ===== Filter bar ===== */
+  .filter-sticky{position:sticky;top:68px;z-index:50;background:var(--gray-50);padding-top:10px;margin-top:10px;}
+  .filter-bar{
+    background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);
+    padding:14px 16px;box-shadow:var(--shadow);
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  }
+  .filter-bar input[type=text], .filter-bar select{
+    font-family:'Kanit', sans-serif;font-size:13.5px;
+    border:1px solid var(--gray-200);border-radius:9px;padding:9px 12px;
+    background:var(--gray-50);color:var(--navy-900);min-width:130px;
+  }
+  .filter-bar input[type=text]:focus, .filter-bar select:focus{outline:2px solid var(--orange-400);background:var(--white);}
+  .filter-bar input[type=text]{flex:1 1 220px;min-width:200px;}
+  .btn{
+    font-size:13.5px;font-weight:500;border:none;border-radius:9px;padding:9px 16px;
+    transition:.15s;display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn-primary{background:var(--orange-500);color:var(--white);}
+  .btn-primary:hover{background:var(--orange-400);}
+  .btn-outline{background:var(--white);color:var(--navy-800);border:1px solid var(--gray-200);}
+  .btn-outline:hover{background:var(--gray-100);}
+  .btn-navy{background:var(--navy-800);color:var(--white);}
+  .btn-navy:hover{background:var(--navy-700);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .group-head-row{
+    display:grid;grid-template-columns:1.6fr 1fr 1fr .9fr 1fr .9fr 1fr .9fr;
+    gap:0;background:var(--navy-900);color:#fff;border-radius:10px 10px 0 0;
+    padding:11px 14px;font-size:12px;font-weight:500;margin-top:10px;
+  }
+
+  /* ===== Table ===== */
+  .table-wrap{
+    background:var(--white);border:1px solid var(--gray-200);border-top:none;
+    box-shadow:var(--shadow);border-radius:0 0 var(--radius) var(--radius);overflow:auto;
+  }
+  table.data-table{width:100%;border-collapse:collapse;font-size:13px;min-width:960px;}
+  table.data-table thead th{
+    position:sticky;top:0;background:var(--navy-100);color:var(--navy-900);
+    text-align:left;padding:10px 12px;font-weight:600;font-size:12.5px;
+    border-bottom:2px solid var(--gray-200);cursor:pointer;white-space:nowrap;user-select:none;
+  }
+  table.data-table thead th:hover{background:#dde6f2;}
+  table.data-table thead th .sort-arrow{color:var(--orange-500);margin-left:4px;}
+  table.data-table tbody td{padding:9px 12px;border-bottom:1px solid var(--gray-100);color:var(--navy-900);white-space:nowrap;}
+  table.data-table tbody tr:hover{background:var(--gray-50);}
+  table.data-table tbody tr:nth-child(even){background:rgba(248,249,250,0.5);}
+  table.data-table tbody tr:nth-child(even):hover{background:var(--gray-50);}
+  .cell-num{text-align:right;font-variant-numeric:tabular-nums;}
+  .cell-muted{color:var(--gray-400);}
+  .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;}
+  .badge-orange{background:var(--orange-100);color:var(--orange-500);}
+  .badge-navy{background:var(--navy-100);color:var(--navy-800);}
+  .empty-state{padding:50px 20px;text-align:center;color:var(--gray-600);}
+  .empty-state .icon{font-size:42px;margin-bottom:10px;}
+
+  .pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;font-size:13px;color:var(--gray-600);flex-wrap:wrap;gap:10px;}
+  .pagination .pg-btns{display:flex;gap:6px;}
+  .pagination button{background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:6px 12px;font-size:13px;}
+  .pagination button:hover:not(:disabled){background:var(--gray-100);}
+  .pagination button.active{background:var(--orange-500);color:#fff;border-color:var(--orange-500);}
+
+  /* ===== Import view ===== */
+  .import-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  @media (max-width:980px){.import-grid{grid-template-columns:1fr;}}
+  .import-card{
+    background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);
+    padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px;
+  }
+  .import-card h3{margin:0;font-size:15.5px;display:flex;align-items:center;gap:8px;color:var(--navy-900);}
+  .import-card .desc{font-size:12.5px;color:var(--gray-600);line-height:1.5;}
+  .dropzone{
+    border:2px dashed var(--gray-200);border-radius:12px;padding:20px 14px;text-align:center;
+    background:var(--gray-50);transition:.15s;cursor:pointer;
+  }
+  .dropzone.drag{border-color:var(--orange-500);background:var(--orange-100);}
+  .dropzone input{display:none;}
+  .dropzone .dz-icon{font-size:26px;}
+  .dropzone .dz-text{font-size:12.5px;color:var(--gray-600);margin-top:6px;}
+  .file-chip{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:var(--navy-100);border-radius:9px;padding:8px 12px;font-size:12.5px;color:var(--navy-800);
+  }
+  .progress-bar{height:7px;border-radius:6px;background:var(--gray-200);overflow:hidden;display:none;}
+  .progress-bar .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--orange-500),var(--orange-400));transition:width .2s;}
+  .import-log{font-size:11.5px;color:var(--gray-600);max-height:90px;overflow-y:auto;line-height:1.6;}
+  .import-log .err{color:var(--danger);}
+  .import-log .ok{color:var(--success);}
+  .last-import-info{font-size:11.5px;color:var(--gray-600);background:var(--gray-50);border-radius:8px;padding:8px 10px;}
+
+  .history-table-wrap{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius);box-shadow:var(--shadow);overflow:auto;margin-top:14px;}
+
+  .toast-wrap{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px;}
+  .toast{
+    background:var(--navy-900);color:#fff;padding:12px 18px;border-radius:10px;font-size:13.5px;
+    box-shadow:var(--shadow-lg);max-width:340px;animation:slidein .25s ease;
+  }
+  .toast.error{background:var(--danger);}
+  .toast.success{background:var(--success);}
+  @keyframes slidein{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+
+  .skeleton{background:linear-gradient(90deg,var(--gray-100) 25%,var(--gray-200) 37%,var(--gray-100) 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;border-radius:6px;}
+  @keyframes shimmer{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
+
+  footer{text-align:center;color:var(--gray-400);font-size:11.5px;padding:20px 0 30px;}
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <a href="#/dashboard" class="brand">
+    <span class="logo-badge">📦</span>
+    <span>Inventory Warehouse 2<small>ระบบคลังสินค้า • WH2</small></span>
+  </a>
+  <div class="nav-links">
+    <a href="#/dashboard" class="nav-link" data-route="dashboard">แดชบอร์ด</a>
+    <a href="#/import" class="nav-link" data-route="import">นำเข้าข้อมูล</a>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============ DASHBOARD VIEW ============ -->
+  <div id="view-dashboard" class="route-view">
+
+    <div class="section-title">📊 ภาพรวมคลังสินค้า</div>
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi-card">
+        <div class="kpi-label">รายการทั้งหมด <span class="kpi-info" title="จำนวนแถวข้อมูลสต็อกทั้งหมดที่นำเข้า (Material x Batch x Storage Location)">ⓘ</span></div>
+        <div class="kpi-value" id="kpiRecords">–</div>
+        <div class="kpi-sub" id="kpiRecordsSub">&nbsp;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">จำนวน SKU <span class="kpi-info" title="จำนวนรหัสสินค้า (Material) ที่ไม่ซ้ำกัน">ⓘ</span></div>
+        <div class="kpi-value" id="kpiSku">–</div>
+        <div class="kpi-sub">&nbsp;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">น้ำหนักรวม (ตัน) <span class="kpi-info" title="ผลรวมน้ำหนักทุกแถว หารด้วย 1000 (ข้อมูลดิบเก็บเป็น กก.)">ⓘ</span></div>
+        <div class="kpi-value" id="kpiWeight">–</div>
+        <div class="kpi-sub">&nbsp;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">จำนวนคงเหลือรวม <span class="kpi-info" title="ผลรวมคอลัมน์ Unrestricted ทุกแถวที่ตรงตัวกรอง">ⓘ</span></div>
+        <div class="kpi-value" id="kpiQty">–</div>
+        <div class="kpi-sub">&nbsp;</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">โรงงาน/พื้นที่ที่ใช้งาน <span class="kpi-info" title="จำนวน Factory/Location ที่มีสต็อกอยู่จริงตามข้อมูลปัจจุบัน">ⓘ</span></div>
+        <div class="kpi-value" id="kpiLocations">–</div>
+        <div class="kpi-sub">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="section-title">🏭 การใช้พื้นที่คลังตามโรงงาน (Area Utilization) <span class="tag">น้ำหนักสต็อก vs พื้นที่จัดเก็บจริง (ตัน)</span></div>
+    <div class="area-grid" id="areaGrid">
+      <div class="area-card"><div class="skeleton" style="height:70px;"></div></div>
+    </div>
+
+    <div class="filter-sticky">
+      <div class="filter-bar">
+        <input type="text" id="fSearch" placeholder="ค้นหา Material / รายละเอียด / Batch..." />
+        <select id="fGroupSale"><option value="">Group Sale ทั้งหมด</option></select>
+        <select id="fGroupProduct"><option value="">Group Product ทั้งหมด</option></select>
+        <select id="fProductType"><option value="">Product Type ทั้งหมด</option></select>
+        <select id="fLocation"><option value="">โรงงาน/Location ทั้งหมด</option></select>
+        <button class="btn btn-outline" id="btnClearFilters">✕ ล้างตัวกรอง</button>
+        <button class="btn btn-navy" id="btnExportCsv">⬇ Export CSV</button>
+        <button class="btn btn-outline" id="btnRefreshDashboard">↻ รีเฟรช</button>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:0;">
+      <table class="data-table" id="stockTable">
+        <thead>
+          <tr>
+            <th data-key="material">Material</th>
+            <th data-key="material_description">รายละเอียด</th>
+            <th data-key="batch">Batch</th>
+            <th data-key="unrestricted_qty" class="cell-num">จำนวน</th>
+            <th data-key="storage_location">Storage Loc.</th>
+            <th data-key="location_code">โรงงาน</th>
+            <th data-key="total_weight" class="cell-num">น้ำหนัก (ตัน)</th>
+            <th data-key="group_sale">Group Sale</th>
+            <th data-key="group_product">Group Product</th>
+            <th data-key="product_type">Product Type</th>
+          </tr>
+        </thead>
+        <tbody id="stockTbody">
+          <tr><td colspan="10"><div class="empty-state"><div class="icon">⏳</div>กำลังโหลดข้อมูล...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+
+  </div>
+
+  <!-- ============ IMPORT VIEW ============ -->
+  <div id="view-import" class="route-view">
+    <div class="section-title">📥 นำเข้าข้อมูล <span class="tag">อัปโหลดไฟล์ทั้ง 3 ประเภททุกครั้งที่มีข้อมูลใหม่ — ระบบจะแทนที่ข้อมูลเดิมของประเภทนั้นทั้งหมด</span></div>
+
+    <div class="import-grid">
+
+      <!-- Stock -->
+      <div class="import-card">
+        <h3>📦 รายการสินค้า / สต็อก</h3>
+        <div class="desc">ไฟล์ SAP Export แบบหน้าเว็บ (.mhtml / .htm) — คอลัมน์: Material, Material Description, Batch, Unrestricted, Storage Location, น้ำหนักรวม</div>
+        <label class="dropzone" id="dzStock">
+          <input type="file" id="fileStock" accept=".mhtml,.htm,.html" />
+          <div class="dz-icon">📄</div>
+          <div class="dz-text">คลิกหรือลากไฟล์ .mhtml/.htm มาวางที่นี่</div>
+        </label>
+        <div class="file-chip" id="chipStock" style="display:none;"></div>
+        <div class="progress-bar" id="pgStock"><div class="fill"></div></div>
+        <div class="import-log" id="logStock"></div>
+        <button class="btn btn-primary" id="btnImportStock" disabled>นำเข้าไฟล์สต็อก</button>
+        <div class="last-import-info" id="lastStock">ยังไม่เคยนำเข้าข้อมูล</div>
+      </div>
+
+      <!-- Area -->
+      <div class="import-card">
+        <h3>🏭 พื้นที่คลัง (Area)</h3>
+        <div class="desc">ไฟล์ Excel (.xlsx) — คอลัมน์: Location, พื้นที่จัดเก็บ ตรม. 100%, พื้นที่จัดเก็บ Tons. 100%, พื้นที่จัดเก็บจริง Tons.</div>
+        <label class="dropzone" id="dzArea">
+          <input type="file" id="fileArea" accept=".xlsx,.xls" />
+          <div class="dz-icon">📊</div>
+          <div class="dz-text">คลิกหรือลากไฟล์ .xlsx มาวางที่นี่</div>
+        </label>
+        <div class="file-chip" id="chipArea" style="display:none;"></div>
+        <div class="progress-bar" id="pgArea"><div class="fill"></div></div>
+        <div class="import-log" id="logArea"></div>
+        <button class="btn btn-primary" id="btnImportArea" disabled>นำเข้าไฟล์พื้นที่คลัง</button>
+        <div class="last-import-info" id="lastArea">ยังไม่เคยนำเข้าข้อมูล</div>
+      </div>
+
+      <!-- Group -->
+      <div class="import-card">
+        <h3>🏷️ กลุ่มสินค้า (Group)</h3>
+        <div class="desc">ไฟล์ Excel (.xlsx) — คอลัมน์: Mat.Code, Description, Group Sale, Group Product, Product Type, Sloc.</div>
+        <label class="dropzone" id="dzGroup">
+          <input type="file" id="fileGroup" accept=".xlsx,.xls" />
+          <div class="dz-icon">📊</div>
+          <div class="dz-text">คลิกหรือลากไฟล์ .xlsx มาวางที่นี่</div>
+        </label>
+        <div class="file-chip" id="chipGroup" style="display:none;"></div>
+        <div class="progress-bar" id="pgGroup"><div class="fill"></div></div>
+        <div class="import-log" id="logGroup"></div>
+        <button class="btn btn-primary" id="btnImportGroup" disabled>นำเข้าไฟล์กลุ่มสินค้า</button>
+        <div class="last-import-info" id="lastGroup">ยังไม่เคยนำเข้าข้อมูล</div>
+      </div>
+
+    </div>
+
+    <div class="section-title">🕒 ประวัติการนำเข้าข้อมูล <span class="tag" id="historyCount"></span></div>
+    <div class="history-table-wrap">
+      <table class="data-table" id="historyTable">
+        <thead><tr><th>วันเวลา</th><th>ประเภทไฟล์</th><th>ชื่อไฟล์</th><th class="cell-num">จำนวนแถว</th></tr></thead>
+        <tbody id="historyTbody"><tr><td colspan="4"><div class="empty-state">ยังไม่มีประวัติการนำเข้า</div></td></tr></tbody>
+      </table>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>Inventory Warehouse 2 · Powered by Supabase · TMT Steel</footer>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ============================================================
+   CONFIG
+============================================================ */
+const SUPABASE_URL = 'https://edtazbvyakoakzlsdubc.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_044krxYqD8DJG_zJRHtS6g_-kUJDC51';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const PAGE_SIZE = 50;
+
+/* ============================================================
+   UTILITIES
+============================================================ */
+function el(id){ return document.getElementById(id); }
+function escapeHtml(str){
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtNum(n, decimals=0){
+  if (n === null || n === undefined || isNaN(n)) return '-';
+  return Number(n).toLocaleString('en-US', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+}
+function fmtDateTime(iso){
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return d.toLocaleString('th-TH', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function debounce(fn, ms){
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+function toast(message, type='info'){
+  const wrap = el('toastWrap');
+  const div = document.createElement('div');
+  div.className = 'toast' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
+  div.textContent = message;
+  wrap.appendChild(div);
+  setTimeout(() => div.remove(), 4200);
+}
+function logLine(containerId, msg, cls=''){
+  const c = el(containerId);
+  const p = document.createElement('div');
+  if (cls) p.className = cls;
+  p.textContent = msg;
+  c.appendChild(p);
+  c.scrollTop = c.scrollHeight;
+}
+function clearLog(containerId){ el(containerId).innerHTML = ''; }
+function setProgress(barId, pct){
+  const bar = el(barId);
+  bar.style.display = 'block';
+  bar.querySelector('.fill').style.width = pct + '%';
+}
+function hideProgress(barId){
+  el(barId).style.display = 'none';
+  el(barId).querySelector('.fill').style.width = '0%';
+}
+
+/* ============================================================
+   ROUTER
+============================================================ */
+const Router = {
+  go(route){ window.location.hash = '#/' + route; },
+  current(){
+    const h = (window.location.hash || '').replace('#/', '').split('?')[0];
+    return ['dashboard','import'].includes(h) ? h : 'dashboard';
+  }
+};
+function handleRoute(){
+  const route = Router.current();
+  document.querySelectorAll('.route-view').forEach(v => v.classList.remove('visible'));
+  document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+  const view = el('view-' + route);
+  if (view) view.classList.add('visible');
+  const link = document.querySelector(`.nav-link[data-route="${route}"]`);
+  if (link) link.classList.add('active');
+  if (route === 'dashboard') DashboardPage.activate();
+  if (route === 'import') ImportPage.activate();
+}
+window.addEventListener('hashchange', handleRoute);
+
+/* ============================================================
+   fac_from_sloc — mirrors the SQL function public.fac_from_sloc
+   (used client-side only for quick previews; source of truth is the DB view)
+============================================================ */
+function facFromSloc(sloc){
+  if (!sloc || sloc.length < 2) return null;
+  const rest = sloc.slice(1);
+  const first = rest[0];
+  if (/[A-Za-z]/.test(first)) return 'Fac ' + first.toUpperCase();
+  return 'Fac ' + rest.slice(0,2);
+}
+
+/* ============================================================
+   DASHBOARD PAGE
+============================================================ */
+const DashboardPage = (() => {
+  let allRows = [];
+  let locUtil = [];
+  let filtered = [];
+  let currentPage = 1;
+  let sortKey = null;
+  let sortDir = 1;
+  let mounted = false;
+
+  function mount(){
+    if (mounted) return;
+    mounted = true;
+    el('fSearch').addEventListener('input', debounce(() => { currentPage = 1; applyFilters(); }, 220));
+    ['fGroupSale','fGroupProduct','fProductType','fLocation'].forEach(id => {
+      el(id).addEventListener('change', () => { currentPage = 1; applyFilters(); });
+    });
+    el('btnClearFilters').addEventListener('click', () => {
+      el('fSearch').value = '';
+      el('fGroupSale').value = '';
+      el('fGroupProduct').value = '';
+      el('fProductType').value = '';
+      el('fLocation').value = '';
+      currentPage = 1;
+      applyFilters();
+    });
+    el('btnExportCsv').addEventListener('click', exportCsv);
+    el('btnRefreshDashboard').addEventListener('click', loadData);
+    document.querySelectorAll('#stockTable thead th').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.key;
+        if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+        renderTable();
+      });
+    });
+  }
+
+  async function loadData(){
+    el('stockTbody').innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="icon">⏳</div>กำลังโหลดข้อมูล...</div></td></tr>';
+    try {
+      const [{data: stockData, error: stockErr}, {data: utilData, error: utilErr}] = await Promise.all([
+        sb.from('v_stock_enriched').select('*').limit(20000),
+        sb.from('v_location_utilization').select('*').order('location_code')
+      ]);
+      if (stockErr) throw stockErr;
+      if (utilErr) throw utilErr;
+      allRows = stockData || [];
+      locUtil = utilData || [];
+      populateFilterOptions();
+      renderKpis(allRows);
+      renderAreaGrid(locUtil);
+      applyFilters();
+    } catch (e) {
+      console.error(e);
+      el('stockTbody').innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="icon">⚠️</div>โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message||e)}</div></td></tr>`;
+      toast('โหลดข้อมูลแดชบอร์ดไม่สำเร็จ: ' + (e.message || e), 'error');
+    }
+  }
+
+  function uniqueSorted(arr){
+    return [...new Set(arr.filter(v => v !== null && v !== undefined && v !== ''))].sort((a,b) => String(a).localeCompare(String(b), 'th'));
+  }
+
+  function populateFilterOptions(){
+    const groupSales = uniqueSorted(allRows.map(r => r.group_sale));
+    const groupProducts = uniqueSorted(allRows.map(r => r.group_product));
+    const productTypes = uniqueSorted(allRows.map(r => r.product_type));
+    const locations = uniqueSorted(allRows.map(r => r.location_code));
+    fillSelect('fGroupSale', groupSales, 'Group Sale ทั้งหมด');
+    fillSelect('fGroupProduct', groupProducts, 'Group Product ทั้งหมด');
+    fillSelect('fProductType', productTypes, 'Product Type ทั้งหมด');
+    fillSelect('fLocation', locations, 'โรงงาน/Location ทั้งหมด');
+  }
+  function fillSelect(id, values, placeholder){
+    const sel = el(id);
+    const prevVal = sel.value;
+    sel.innerHTML = `<option value="">${placeholder}</option>` + values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    if (values.includes(prevVal)) sel.value = prevVal;
+  }
+
+  function renderKpis(rows){
+    const totalRecords = rows.length;
+    const skuSet = new Set(rows.map(r => r.material));
+    const totalWeightTon = rows.reduce((s,r) => s + (Number(r.total_weight)||0), 0) / 1000;
+    const totalQty = rows.reduce((s,r) => s + (Number(r.unrestricted_qty)||0), 0);
+    const locSet = new Set(rows.map(r => r.location_code).filter(Boolean));
+    el('kpiRecords').textContent = fmtNum(totalRecords);
+    el('kpiSku').textContent = fmtNum(skuSet.size);
+    el('kpiWeight').textContent = fmtNum(totalWeightTon, 2);
+    el('kpiQty').textContent = fmtNum(totalQty);
+    el('kpiLocations').textContent = fmtNum(locSet.size);
+  }
+
+  function renderAreaGrid(rows){
+    const grid = el('areaGrid');
+    if (!rows.length){
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">ยังไม่มีข้อมูลพื้นที่คลัง — กรุณานำเข้าไฟล์ Area ในหน้า "นำเข้าข้อมูล"</div>';
+      return;
+    }
+    grid.innerHTML = rows.map(r => {
+      const capacity = Number(r.actual_capacity_tons) || 0;
+      const used = Number(r.stock_weight_tons) || 0;
+      const pct = capacity > 0 ? Math.min(999, (used / capacity) * 100) : 0;
+      let color = 'var(--success)';
+      if (pct > 100) color = 'var(--danger)';
+      else if (pct > 80) color = 'var(--warning)';
+      return `
+        <div class="area-card">
+          <div class="af-name"><span>${escapeHtml(r.location_code)}</span><span class="af-pct" style="color:${color}">${pct.toFixed(0)}%</span></div>
+          <div class="area-track"><div class="area-fill" style="width:${Math.min(100,pct)}%;background:${color};"></div></div>
+          <div class="area-meta"><span>ใช้ ${fmtNum(used,1)} ตัน</span><span>จุได้ ${fmtNum(capacity,1)} ตัน</span></div>
+        </div>`;
+    }).join('');
+  }
+
+  function applyFilters(){
+    const search = el('fSearch').value.trim().toLowerCase();
+    const gs = el('fGroupSale').value;
+    const gp = el('fGroupProduct').value;
+    const pt = el('fProductType').value;
+    const loc = el('fLocation').value;
+
+    filtered = allRows.filter(r => {
+      if (gs && r.group_sale !== gs) return false;
+      if (gp && r.group_product !== gp) return false;
+      if (pt && r.product_type !== pt) return false;
+      if (loc && r.location_code !== loc) return false;
+      if (search){
+        const hay = `${r.material||''} ${r.material_description||''} ${r.batch||''}`.toLowerCase();
+        if (!hay.includes(search)) return false;
+      }
+      return true;
+    });
+    renderKpis(filtered);
+    renderTable();
+  }
+
+  function renderTable(){
+    let rows = filtered.slice();
+    if (sortKey){
+      rows.sort((a,b) => {
+        let av = a[sortKey], bv = b[sortKey];
+        if (['unrestricted_qty','total_weight'].includes(sortKey)){ av = Number(av)||0; bv = Number(bv)||0; }
+        else { av = (av||'').toString(); bv = (bv||'').toString(); }
+        if (av < bv) return -1*sortDir;
+        if (av > bv) return 1*sortDir;
+        return 0;
+      });
+    }
+    document.querySelectorAll('#stockTable thead th').forEach(th => {
+      th.innerHTML = th.textContent.replace(' ▲','').replace(' ▼','');
+      if (th.dataset.key === sortKey) th.innerHTML += sortDir === 1 ? ' ▲' : ' ▼';
+    });
+
+    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage-1) * PAGE_SIZE;
+    const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+    const tbody = el('stockTbody');
+    if (!pageRows.length){
+      tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="icon">🔍</div>ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div></td></tr>';
+    } else {
+      tbody.innerHTML = pageRows.map(r => `
+        <tr>
+          <td>${escapeHtml(r.material)}</td>
+          <td>${escapeHtml(r.material_description)}</td>
+          <td>${escapeHtml(r.batch)}</td>
+          <td class="cell-num">${fmtNum(r.unrestricted_qty)}</td>
+          <td><span class="badge badge-navy">${escapeHtml(r.storage_location)||'-'}</span></td>
+          <td>${r.location_code ? escapeHtml(r.location_code) : '<span class="cell-muted">ไม่ทราบ</span>'}</td>
+          <td class="cell-num">${fmtNum((r.total_weight||0)/1000, 2)}</td>
+          <td>${r.group_sale ? `<span class="badge badge-orange">${escapeHtml(r.group_sale)}</span>` : '<span class="cell-muted">-</span>'}</td>
+          <td>${escapeHtml(r.group_product)||'<span class="cell-muted">-</span>'}</td>
+          <td>${escapeHtml(r.product_type)||'<span class="cell-muted">-</span>'}</td>
+        </tr>`).join('');
+    }
+    renderPagination(totalPages, rows.length);
+  }
+
+  function renderPagination(totalPages, totalRows){
+    const p = el('pagination');
+    if (!totalRows){ p.innerHTML = ''; return; }
+    let btns = '';
+    const maxBtns = 7;
+    let startP = Math.max(1, currentPage - 3);
+    let endP = Math.min(totalPages, startP + maxBtns - 1);
+    startP = Math.max(1, endP - maxBtns + 1);
+    for (let i = startP; i <= endP; i++){
+      btns += `<button data-page="${i}" class="${i===currentPage?'active':''}">${i}</button>`;
+    }
+    p.innerHTML = `
+      <div>แสดง ${((currentPage-1)*PAGE_SIZE)+1}-${Math.min(currentPage*PAGE_SIZE, totalRows)} จาก ${fmtNum(totalRows)} รายการ</div>
+      <div class="pg-btns">
+        <button id="pgPrev" ${currentPage<=1?'disabled':''}>‹ ก่อนหน้า</button>
+        ${btns}
+        <button id="pgNext" ${currentPage>=totalPages?'disabled':''}>ถัดไป ›</button>
+      </div>`;
+    const prevBtn = el('pgPrev'); if (prevBtn) prevBtn.addEventListener('click', () => { currentPage--; renderTable(); });
+    const nextBtn = el('pgNext'); if (nextBtn) nextBtn.addEventListener('click', () => { currentPage++; renderTable(); });
+    p.querySelectorAll('button[data-page]').forEach(b => b.addEventListener('click', () => { currentPage = Number(b.dataset.page); renderTable(); }));
+  }
+
+  function exportCsv(){
+    if (!filtered.length){ toast('ไม่มีข้อมูลให้ export', 'error'); return; }
+    const headers = ['Material','Material Description','Batch','Unrestricted','Storage Location','โรงงาน','Weight (Ton)','Group Sale','Group Product','Product Type'];
+    const lines = [headers.join(',')];
+    filtered.forEach(r => {
+      const row = [
+        r.material, r.material_description, r.batch, r.unrestricted_qty, r.storage_location,
+        r.location_code, ((r.total_weight||0)/1000).toFixed(3), r.group_sale, r.group_product, r.product_type
+      ].map(v => `"${String(v===null||v===undefined?'':v).replace(/"/g,'""')}"`);
+      lines.push(row.join(','));
+    });
+    const blob = new Blob(['﻿' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wh2_stock_export_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function activate(){
+    mount();
+    loadData();
+  }
+
+  return { activate, mount };
+})();
+
+/* ============================================================
+   IMPORT PAGE
+============================================================ */
+const ImportPage = (() => {
+  let mounted = false;
+  let pendingFiles = { stock:null, area:null, group:null };
+
+  function mount(){
+    if (mounted) return;
+    mounted = true;
+
+    setupDropzone('dzStock', 'fileStock', 'chipStock', 'stock');
+    setupDropzone('dzArea', 'fileArea', 'chipArea', 'area');
+    setupDropzone('dzGroup', 'fileGroup', 'chipGroup', 'group');
+
+    el('btnImportStock').addEventListener('click', () => runImport('stock'));
+    el('btnImportArea').addEventListener('click', () => runImport('area'));
+    el('btnImportGroup').addEventListener('click', () => runImport('group'));
+  }
+
+  function setupDropzone(dzId, inputId, chipId, kind){
+    const dz = el(dzId);
+    const input = el(inputId);
+    dz.addEventListener('click', (e) => { if (e.target !== input) input.click(); });
+    dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', (e) => {
+      e.preventDefault(); dz.classList.remove('drag');
+      if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; handleFileSelect(kind, input.files[0], chipId); }
+    });
+    input.addEventListener('change', () => {
+      if (input.files.length) handleFileSelect(kind, input.files[0], chipId);
+    });
+  }
+
+  function handleFileSelect(kind, file, chipId){
+    pendingFiles[kind] = file;
+    const chip = el(chipId);
+    chip.style.display = 'flex';
+    chip.innerHTML = `<span>📎 ${escapeHtml(file.name)} (${(file.size/1024).toFixed(0)} KB)</span>`;
+    el('btnImport' + kind.charAt(0).toUpperCase() + kind.slice(1)).disabled = false;
+  }
+
+  /* ---------- Parsers ---------- */
+
+  function decodeQuotedPrintable(str){
+    str = str.replace(/=\r\n/g,'').replace(/=\n/g,'').replace(/=\r/g,'');
+    const bytes = [];
+    for (let i=0;i<str.length;i++){
+      if (str[i] === '=' && /[0-9A-Fa-f]{2}/.test(str.substr(i+1,2))){
+        bytes.push(parseInt(str.substr(i+1,2),16));
+        i += 2;
+      } else {
+        bytes.push(str.charCodeAt(i) & 0xFF);
+      }
+    }
+    try { return new TextDecoder('utf-8').decode(new Uint8Array(bytes)); }
+    catch(e){ return str; }
+  }
+
+  function normalizeHeader(h){ return (h||'').replace(/\s+/g,' ').trim(); }
+
+  async function parseStockFile(file){
+    let text = await file.text();
+    if (/Content-Transfer-Encoding:\s*quoted-printable/i.test(text)){
+      text = decodeQuotedPrintable(text);
+    }
+    const tableMatch = text.match(/<table[\s\S]*?<\/table>/i);
+    if (!tableMatch) throw new Error('ไม่พบตารางข้อมูลในไฟล์ที่อัปโหลด (ตรวจสอบว่าเป็นไฟล์ SAP export ที่ถูกต้อง)');
+    const parser = new DOMParser();
+    const doc = parser.parseFromString('<html><body>' + tableMatch[0] + '</body></html>', 'text/html');
+    const trs = Array.from(doc.querySelectorAll('tr'));
+    if (!trs.length) throw new Error('ตารางในไฟล์ไม่มีข้อมูล');
+    const headerCells = Array.from(trs[0].querySelectorAll('td,th')).map(td => normalizeHeader(td.textContent));
+
+    const idx = {};
+    headerCells.forEach((h, i) => {
+      const hl = h.toLowerCase();
+      if (h === 'Material') idx.material = i;
+      else if (hl.includes('description')) idx.description = i;
+      else if (h === 'Batch') idx.batch = i;
+      else if (hl.includes('unrestricted')) idx.unrestricted = i;
+      else if (hl.includes('storage location')) idx.storageLocation = i;
+      else if (h.includes('น้ำหนัก') || hl.includes('weight')) idx.weight = i;
+    });
+    if (idx.material === undefined) throw new Error('ไม่พบคอลัมน์ "Material" ในไฟล์');
+
+    const rows = [];
+    for (let i = 1; i < trs.length; i++){
+      const cells = Array.from(trs[i].querySelectorAll('td,th')).map(td => normalizeHeader(td.textContent));
+      if (!cells.length) continue;
+      const material = cells[idx.material];
+      if (!material) continue;
+      const parseNum = (v) => { if (v===undefined||v==='') return null; const n = parseFloat(String(v).replace(/,/g,'')); return isNaN(n) ? null : n; };
+      rows.push({
+        material: material,
+        material_description: idx.description!==undefined ? cells[idx.description] || null : null,
+        batch: idx.batch!==undefined ? cells[idx.batch] || null : null,
+        unrestricted_qty: idx.unrestricted!==undefined ? parseNum(cells[idx.unrestricted]) : null,
+        storage_location: idx.storageLocation!==undefined ? (cells[idx.storageLocation] || null) : null,
+        total_weight: idx.weight!==undefined ? parseNum(cells[idx.weight]) : null,
+      });
+    }
+    return rows;
+  }
+
+  async function readXlsxRows(file){
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(sheet, {defval:null, raw:true});
+  }
+
+  async function parseAreaFile(file){
+    const raw = await readXlsxRows(file);
+    if (!raw.length) throw new Error('ไฟล์ Area ไม่มีข้อมูล');
+    const sampleKeys = Object.keys(raw[0]).map(normalizeHeader);
+    const keyMap = {};
+    Object.keys(raw[0]).forEach(k => {
+      const nk = normalizeHeader(k);
+      if (nk === 'Location') keyMap.location = k;
+      else if (nk.includes('ตรม')) keyMap.sqm = k;
+      else if (nk.includes('จริง')) keyMap.actual = k;
+      else if (nk.includes('Tons')) keyMap.capacity100 = k;
+    });
+    if (!keyMap.location) throw new Error('ไม่พบคอลัมน์ "Location" ในไฟล์ Area');
+    const roundNum = (v) => { const n = Number(v); if (!n && n !== 0) return null; return Math.round(n * 1000) / 1000; };
+    return raw.filter(r => r[keyMap.location]).map(r => ({
+      location_code: String(r[keyMap.location]).trim(),
+      storage_area_sqm_100: keyMap.sqm ? roundNum(r[keyMap.sqm]) : null,
+      storage_capacity_tons_100: keyMap.capacity100 ? roundNum(r[keyMap.capacity100]) : null,
+      actual_capacity_tons: keyMap.actual ? roundNum(r[keyMap.actual]) : null,
+    }));
+  }
+
+  async function parseGroupFile(file){
+    const raw = await readXlsxRows(file);
+    if (!raw.length) throw new Error('ไฟล์ Group ไม่มีข้อมูล');
+    const keyMap = {};
+    Object.keys(raw[0]).forEach(k => {
+      const nk = normalizeHeader(k);
+      if (nk === 'Mat.Code' || nk.toLowerCase() === 'mat code' || nk.toLowerCase()==='matcode') keyMap.matCode = k;
+      else if (nk === 'Description') keyMap.description = k;
+      else if (nk === 'Group Sale') keyMap.groupSale = k;
+      else if (nk === 'Group Product') keyMap.groupProduct = k;
+      else if (nk === 'Product Type') keyMap.productType = k;
+      else if (nk.replace('.','').toLowerCase() === 'sloc') keyMap.sloc = k;
+    });
+    if (!keyMap.matCode) throw new Error('ไม่พบคอลัมน์ "Mat.Code" ในไฟล์ Group');
+    return raw.filter(r => r[keyMap.matCode]).map(r => ({
+      mat_code: String(r[keyMap.matCode]).trim(),
+      description: keyMap.description ? (r[keyMap.description] ?? null) : null,
+      group_sale: keyMap.groupSale ? (r[keyMap.groupSale] ?? null) : null,
+      group_product: keyMap.groupProduct ? (r[keyMap.groupProduct] ?? null) : null,
+      product_type: keyMap.productType ? (r[keyMap.productType] ?? null) : null,
+      sloc_code: keyMap.sloc ? (r[keyMap.sloc] != null ? String(r[keyMap.sloc]).trim() : null) : null,
+    }));
+  }
+
+  /* ---------- Chunked insert helper ---------- */
+  async function chunkInsert(table, records, chunkSize=300){
+    for (let i = 0; i < records.length; i += chunkSize){
+      const chunk = records.slice(i, i + chunkSize);
+      const { error } = await sb.from(table).insert(chunk);
+      if (error) throw error;
+    }
+  }
+
+  const TABLE_OF = { stock:'stock', area:'locations', group:'product_groups' };
+  const LABEL_OF = { stock:'สต็อก/รายการสินค้า', area:'พื้นที่คลัง', group:'กลุ่มสินค้า' };
+  const BATCH_TYPE_OF = { stock:'stock', area:'locations', group:'product_groups' };
+
+  async function runImport(kind){
+    const file = pendingFiles[kind];
+    if (!file){ toast('กรุณาเลือกไฟล์ก่อน', 'error'); return; }
+    const btnId = 'btnImport' + kind.charAt(0).toUpperCase() + kind.slice(1);
+    const logId = 'log' + kind.charAt(0).toUpperCase() + kind.slice(1);
+    const pgId = 'pg' + kind.charAt(0).toUpperCase() + kind.slice(1);
+    const table = TABLE_OF[kind];
+
+    el(btnId).disabled = true;
+    clearLog(logId);
+    setProgress(pgId, 10);
+    logLine(logId, `⏳ กำลังอ่านไฟล์ ${file.name} ...`);
+
+    try {
+      let rows;
+      if (kind === 'stock') rows = await parseStockFile(file);
+      else if (kind === 'area') rows = await parseAreaFile(file);
+      else rows = await parseGroupFile(file);
+
+      if (!rows.length) throw new Error('ไม่พบข้อมูลที่ import ได้ในไฟล์นี้');
+      logLine(logId, `✓ อ่านไฟล์สำเร็จ พบ ${rows.length.toLocaleString()} แถว`, 'ok');
+      setProgress(pgId, 35);
+
+      const importStartedAt = new Date().toISOString();
+
+      logLine(logId, `⏳ กำลังนำเข้าข้อมูลใหม่ (${rows.length.toLocaleString()} แถว) ...`);
+      try {
+        await chunkInsert(table, rows);
+      } catch (insertErr) {
+        logLine(logId, `✗ นำเข้าไม่สำเร็จ: ${insertErr.message || insertErr} — กำลังล้างข้อมูลที่ insert ไปบางส่วนของรอบนี้ทิ้ง...`, 'err');
+        await sb.from(table).delete().gte('imported_at', importStartedAt);
+        throw insertErr;
+      }
+      setProgress(pgId, 75);
+      logLine(logId, `✓ นำเข้าข้อมูลใหม่สำเร็จ`, 'ok');
+
+      logLine(logId, `⏳ กำลังลบข้อมูลเดิม (ก่อนรอบนี้) ...`);
+      const { error: delErr } = await sb.from(table).delete().lt('imported_at', importStartedAt);
+      if (delErr) throw delErr;
+      setProgress(pgId, 95);
+
+      await logImportBatch(BATCH_TYPE_OF[kind], file.name, rows.length);
+      setProgress(pgId, 100);
+      logLine(logId, `✅ เสร็จสมบูรณ์ — แทนที่ข้อมูล${LABEL_OF[kind]}เรียบร้อย (${rows.length.toLocaleString()} แถว)`, 'ok');
+      toast(`นำเข้าไฟล์${LABEL_OF[kind]}สำเร็จ (${rows.length.toLocaleString()} แถว)`, 'success');
+      setTimeout(() => hideProgress(pgId), 1200);
+
+      await loadLastImportInfo();
+      await loadImportHistory();
+    } catch (e) {
+      console.error(e);
+      logLine(logId, `✗ เกิดข้อผิดพลาด: ${e.message || e}`, 'err');
+      toast(`นำเข้าไฟล์${LABEL_OF[kind]}ไม่สำเร็จ: ${e.message || e}`, 'error');
+      hideProgress(pgId);
+    } finally {
+      el(btnId).disabled = false;
+    }
+  }
+
+  async function logImportBatch(fileType, fileName, rowCount){
+    await sb.from('import_batches').insert({ file_type: fileType, file_name: fileName, row_count: rowCount });
+  }
+
+  async function loadLastImportInfo(){
+    const { data, error } = await sb.from('import_batches').select('*').order('imported_at', {ascending:false}).limit(50);
+    if (error) return;
+    const byType = { stock:null, locations:null, product_groups:null };
+    (data||[]).forEach(b => { if (!byType[b.file_type]) byType[b.file_type] = b; });
+    setLastInfo('lastStock', byType.stock);
+    setLastInfo('lastArea', byType.locations);
+    setLastInfo('lastGroup', byType.product_groups);
+  }
+  function setLastInfo(elId, batch){
+    if (!batch){ el(elId).textContent = 'ยังไม่เคยนำเข้าข้อมูล'; return; }
+    el(elId).textContent = `นำเข้าล่าสุด: ${fmtDateTime(batch.imported_at)} · ${batch.file_name} · ${fmtNum(batch.row_count)} แถว`;
+  }
+
+  async function loadImportHistory(){
+    const { data, error } = await sb.from('import_batches').select('*').order('imported_at', {ascending:false}).limit(30);
+    const tbody = el('historyTbody');
+    if (error){
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">โหลดประวัติไม่สำเร็จ: ${escapeHtml(error.message)}</div></td></tr>`;
+      return;
+    }
+    if (!data || !data.length){
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">ยังไม่มีประวัติการนำเข้า</div></td></tr>';
+      el('historyCount').textContent = '';
+      return;
+    }
+    el('historyCount').textContent = `${data.length} รายการล่าสุด`;
+    const typeLabel = { stock:'สต็อก/รายการสินค้า', locations:'พื้นที่คลัง', product_groups:'กลุ่มสินค้า' };
+    tbody.innerHTML = data.map(b => `
+      <tr>
+        <td>${fmtDateTime(b.imported_at)}</td>
+        <td><span class="badge badge-navy">${escapeHtml(typeLabel[b.file_type]||b.file_type)}</span></td>
+        <td>${escapeHtml(b.file_name)}</td>
+        <td class="cell-num">${fmtNum(b.row_count)}</td>
+      </tr>`).join('');
+  }
+
+  function activate(){
+    mount();
+    loadLastImportInfo();
+    loadImportHistory();
+  }
+
+  return { activate, mount };
+})();
+
+/* ============================================================
+   BOOT
+============================================================ */
+function boot(){
+  if (!window.location.hash) window.location.hash = '#/dashboard';
+  handleRoute();
+}
+boot();
+</script>
+</body>
+</html>
