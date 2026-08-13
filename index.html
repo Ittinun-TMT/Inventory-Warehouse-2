@@ -200,13 +200,36 @@
     padding:14px 16px;box-shadow:var(--shadow);
     display:flex;flex-wrap:wrap;gap:10px;align-items:center;
   }
-  .filter-bar input[type=text], .filter-bar select{
+  .filter-bar input[type=text]{
     font-family:'Kanit', sans-serif;font-size:13.5px;
     border:1px solid var(--gray-200);border-radius:9px;padding:9px 12px;
     background:var(--gray-50);color:var(--navy-900);min-width:130px;
   }
-  .filter-bar input[type=text]:focus, .filter-bar select:focus{outline:2px solid var(--orange-400);background:var(--white);}
+  .filter-bar input[type=text]:focus{outline:2px solid var(--orange-400);background:var(--white);}
   .filter-bar input[type=text]{flex:1 1 220px;min-width:200px;}
+
+  /* ===== Multi-select filter (แทน <select> เดิม — เลือกได้มากกว่า 1 ตัวเลือกต่อฟิลด์) ===== */
+  .msel{position:relative;}
+  .msel-btn{
+    font-family:'Kanit', sans-serif;font-size:13px;border:1px solid var(--gray-200);border-radius:9px;
+    padding:9px 26px 9px 12px;background:var(--gray-50);color:var(--navy-900);cursor:pointer;
+    min-width:150px;text-align:left;position:relative;white-space:nowrap;
+  }
+  .msel-btn::after{content:'▾';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--gray-400);}
+  .msel-btn:focus{outline:2px solid var(--orange-400);background:var(--white);}
+  .msel-btn.msel-active{border-color:var(--orange-400);background:var(--orange-100);color:var(--orange-500);font-weight:600;}
+  .msel-panel{
+    display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:60;min-width:230px;max-width:320px;
+    background:var(--white);border:1px solid var(--gray-200);border-radius:10px;box-shadow:var(--shadow-lg);padding:8px;
+  }
+  .msel-panel.open{display:block;}
+  .msel-actions{display:flex;gap:12px;padding:2px 4px 8px;margin-bottom:6px;border-bottom:1px solid var(--gray-100);}
+  .msel-actions button{font-family:'Kanit', sans-serif;font-size:11.5px;border:none;background:none;color:var(--navy-700);cursor:pointer;text-decoration:underline;padding:0;}
+  .msel-list{max-height:240px;overflow-y:auto;}
+  .msel-option{display:flex;align-items:center;gap:8px;padding:6px 6px;font-size:13px;color:var(--navy-900);cursor:pointer;border-radius:6px;}
+  .msel-option:hover{background:var(--gray-50);}
+  .msel-option input{accent-color:var(--orange-500);cursor:pointer;}
+  .msel-empty{font-size:12px;color:var(--gray-400);padding:8px 6px;}
   .btn{
     font-size:13.5px;font-weight:500;border:none;border-radius:9px;padding:9px 16px;
     transition:.15s;display:inline-flex;align-items:center;gap:6px;
@@ -302,6 +325,24 @@
   .mgr-factory-share b{color:var(--navy-800);font-weight:600;font-size:12.5px;}
   .mgr-factory-row[data-location]{cursor:pointer;border-radius:8px;margin:0 -10px;padding:12px 10px;transition:background .15s ease;}
   .mgr-factory-row[data-location]:hover{background:var(--orange-100);}
+
+  /* ===== Material family cards (Flat / Pipe / Section) ===== */
+  .family-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:6px;}
+  @media (max-width:860px){ .family-grid{grid-template-columns:1fr;} }
+  .family-card{
+    background:var(--white);border:1px solid var(--gray-200);border-radius:14px;
+    padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.15s;
+  }
+  .family-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--family-color,var(--navy-700));}
+  .family-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);}
+  .family-head{display:flex;align-items:center;gap:10px;}
+  .family-icon{font-size:21px;line-height:1;}
+  .family-name{font-size:15px;font-weight:600;color:var(--navy-900);}
+  .family-value{font-size:26px;font-weight:600;color:var(--navy-900);margin-top:10px;font-variant-numeric:tabular-nums;}
+  .family-sub{font-size:12px;color:var(--gray-600);margin-top:3px;}
+  .family-track{height:8px;border-radius:6px;background:var(--gray-100);margin-top:12px;overflow:hidden;}
+  .family-fill{height:100%;border-radius:6px;transition:width .5s ease;}
+  .family-desc{font-size:10.5px;color:var(--gray-400);margin-top:10px;line-height:1.5;}
 
   /* ===== Material lookup view ===== */
   #lookupInput{width:100%;box-sizing:border-box;}
@@ -417,6 +458,13 @@
       </div>
     </div>
 
+    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe / Section — น้ำหนักรวมทั้งเครือข่าย</span></div>
+    <div class="family-grid" id="familyCards">
+      <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
+      <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
+      <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
+    </div>
+
     <div class="section-title" style="margin-top:26px;">🏭 รายโรงงานทั้งหมด <span class="tag">เรียงจากวิกฤตที่สุดก่อน · คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้าง</span></div>
     <div class="viz-block" id="mgrFactoryList"><div class="viz-empty">กำลังโหลด...</div></div>
 
@@ -452,10 +500,10 @@
     <div class="filter-sticky">
       <div class="filter-bar">
         <input type="text" id="fSearch" placeholder="ค้นหา Material / รายละเอียด / Batch..." />
-        <select id="fGroupSale"><option value="">Group Sale ทั้งหมด</option></select>
-        <select id="fGroupProduct"><option value="">Group Product ทั้งหมด</option></select>
-        <select id="fProductType"><option value="">Product Type ทั้งหมด</option></select>
-        <select id="fLocation"><option value="">โรงงาน/Location ทั้งหมด</option></select>
+        <div class="msel" id="fGroupSale"></div>
+        <div class="msel" id="fGroupProduct"></div>
+        <div class="msel" id="fProductType"></div>
+        <div class="msel" id="fLocation"></div>
         <button class="btn btn-outline" id="btnClearFilters">✕ ล้างตัวกรอง</button>
         <button class="btn btn-outline" id="btnRefreshDashboard">↻ รีเฟรช</button>
       </div>
@@ -635,6 +683,76 @@ function debounce(fn, ms){
   let t;
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
+
+/* ============================================================
+   Multi-select filter dropdown — checkbox list ในกล่องเดียว แทน <select> เดิม
+   (ผู้ใช้ขอให้ตัวกรองเลือกได้มากกว่า 1 ตัวเลือกพร้อมกัน)
+============================================================ */
+function createMultiSelect(containerId, placeholder){
+  const root = el(containerId);
+  root.classList.add('msel');
+  root.innerHTML = `<button type="button" class="msel-btn"></button><div class="msel-panel"></div>`;
+  const btn = root.querySelector('.msel-btn');
+  const panel = root.querySelector('.msel-panel');
+  let options = [];
+  let selected = new Set();
+  let changeCb = () => {};
+
+  function updateBtn(){
+    btn.textContent = selected.size ? `${placeholder} (${selected.size})` : placeholder;
+    btn.classList.toggle('msel-active', selected.size > 0);
+  }
+
+  function renderPanel(){
+    panel.innerHTML = `
+      <div class="msel-actions">
+        <button type="button" data-act="all">เลือกทั้งหมด</button>
+        <button type="button" data-act="clear">ล้าง</button>
+      </div>
+      <div class="msel-list">
+        ${options.length ? options.map(v => `
+          <label class="msel-option">
+            <input type="checkbox" value="${escapeHtml(v)}" ${selected.has(v) ? 'checked' : ''}/>
+            <span>${escapeHtml(v)}</span>
+          </label>`).join('') : '<div class="msel-empty">ไม่มีตัวเลือก</div>'}
+      </div>`;
+    panel.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) selected.add(cb.value); else selected.delete(cb.value);
+        updateBtn();
+        changeCb();
+      });
+    });
+    const allBtn = panel.querySelector('[data-act="all"]');
+    const clearBtn = panel.querySelector('[data-act="clear"]');
+    if (allBtn) allBtn.addEventListener('click', () => { selected = new Set(options); renderPanel(); updateBtn(); changeCb(); });
+    if (clearBtn) clearBtn.addEventListener('click', () => { selected = new Set(); renderPanel(); updateBtn(); changeCb(); });
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !panel.classList.contains('open');
+    document.querySelectorAll('.msel-panel.open').forEach(p => p.classList.remove('open'));
+    if (willOpen) panel.classList.add('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!root.contains(e.target)) panel.classList.remove('open');
+  });
+
+  updateBtn();
+  return {
+    setOptions(vals){
+      options = vals;
+      selected = new Set([...selected].filter(v => options.includes(v))); // ตัด selection เดิมที่หายไปจากข้อมูลใหม่ออก
+      renderPanel();
+      updateBtn();
+    },
+    getValues(){ return new Set(selected); },
+    setValues(vals){ selected = new Set(vals); renderPanel(); updateBtn(); },
+    clear(){ selected = new Set(); renderPanel(); updateBtn(); },
+    onChange(cb){ changeCb = cb; },
+  };
+}
 function toast(message, type='info'){
   const wrap = el('toastWrap');
   const div = document.createElement('div');
@@ -691,10 +809,15 @@ window.addEventListener('hashchange', handleRoute);
    fac_from_sloc — mirrors the SQL function public.fac_from_sloc
    (used client-side only for quick previews; source of truth is the DB view)
 ============================================================ */
+// ข้อยกเว้นที่ไม่ตรงกฎตัวอักษรทั่วไป ยืนยันจากผู้ใช้ (ตารางจริง): 2A08 อยู่ในพื้นที่ Fac B+E (ไม่ใช่ Fac A)
+const SLOC_EXCEPTIONS = { '2A08': 'Fac E' };
 function facFromSloc(sloc){
   if (!sloc || sloc.length < 2) return null;
+  if (SLOC_EXCEPTIONS[sloc]) return SLOC_EXCEPTIONS[sloc];
   const rest = sloc.slice(1);
   const first = rest[0];
+  // โค้ดที่ขึ้นต้นด้วย S (หลังตัดเลข "2" ตัวแรก) หมายถึง Scrap เสมอ ไม่ใช่ "Fac S"
+  if (/s/i.test(first)) return 'Scrap';
   if (/[A-Za-z]/.test(first)) return 'Fac ' + first.toUpperCase();
   return 'Fac ' + rest.slice(0,2);
 }
@@ -715,25 +838,62 @@ const DashboardPage = (() => {
     color(tier){ return tier === 'critical' ? 'var(--danger)' : tier === 'warn' ? 'var(--warning)' : 'var(--success)'; },
   };
 
+  // ผู้ใช้ยืนยันว่า Fac B กับ Fac E เป็นพื้นที่เดียวกันจริง ให้รวมแสดงเป็นก้อนเดียวทั่วทั้งหน้า Dashboard
+  // (พื้นที่/สต็อกของทั้งคู่ถูกบวกรวมกันก่อนแสดงผลทุกจุด — เพิ่ม/แก้กลุ่มในอนาคตได้ที่จุดเดียวนี้)
+  const LOCATION_MERGE_GROUPS = [
+    { display: 'Fac B+E', members: ['Fac B', 'Fac E'] },
+  ];
+  function locationDisplayCode(rawCode){
+    if (!rawCode) return rawCode;
+    const grp = LOCATION_MERGE_GROUPS.find(g => g.members.includes(rawCode));
+    return grp ? grp.display : rawCode;
+  }
+  function locationMembersOf(displayCode){
+    const grp = LOCATION_MERGE_GROUPS.find(g => g.display === displayCode);
+    return grp ? grp.members : [displayCode];
+  }
+  // รวมแถว v_location_utilization (1 แถวต่อ 1 Fac จริง) เข้าด้วยกันตามกลุ่มที่รวมพื้นที่ไว้ ก่อนคำนวณ % /สถานะใดๆ
+  function mergeLocationRows(rows){
+    const merged = {};
+    (rows||[]).forEach(r => {
+      const display = locationDisplayCode(r.location_code);
+      if (!merged[display]) merged[display] = { location_code: display, actual_capacity_tons: 0, stock_weight_tons: 0 };
+      merged[display].actual_capacity_tons += Number(r.actual_capacity_tons) || 0;
+      merged[display].stock_weight_tons += Number(r.stock_weight_tons) || 0;
+    });
+    return Object.values(merged);
+  }
+
+  // ตัวกรองแบบ multi-select (checkbox list) — เลือกได้มากกว่า 1 ค่าต่อฟิลด์
+  let msGroupSale, msGroupProduct, msProductType, msLocation;
+
   function mount(){
     if (mounted) return;
     mounted = true;
     el('fSearch').addEventListener('input', debounce(() => applyFilters(), 220));
-    ['fGroupSale','fGroupProduct','fProductType'].forEach(id => {
-      el(id).addEventListener('change', () => applyFilters());
-    });
-    // เลือกโรงงานจาก dropdown ปุ๊บ ให้กรองตารางสรุป + เปิด popup รายละเอียดของโรงงานนั้นทันที
-    el('fLocation').addEventListener('change', () => {
+
+    msGroupSale = createMultiSelect('fGroupSale', 'Group Sale ทั้งหมด');
+    msGroupProduct = createMultiSelect('fGroupProduct', 'Group Product ทั้งหมด');
+    msProductType = createMultiSelect('fProductType', 'Product Type ทั้งหมด');
+    msLocation = createMultiSelect('fLocation', 'โรงงาน/Location ทั้งหมด');
+
+    msGroupSale.onChange(() => applyFilters());
+    msGroupProduct.onChange(() => applyFilters());
+    msProductType.onChange(() => applyFilters());
+    // เลือกโรงงาน (checkbox) แล้ว ให้กรองตารางสรุปทันที + ถ้าเลือกอยู่แค่โรงงานเดียว ให้เปิด popup รายละเอียดของโรงงานนั้นด้วย
+    // (ถ้าเลือกหลายโรงงานพร้อมกัน ไม่เปิด popup เพราะไม่ชัดว่าจะให้แสดงของโรงงานไหน)
+    msLocation.onChange(() => {
       applyFilters();
-      const loc = el('fLocation').value;
-      if (loc) openLocationBreakdownModal(loc, allRows);
+      const sel = msLocation.getValues();
+      if (sel.size === 1) openLocationBreakdownModal([...sel][0], allRows);
     });
+
     el('btnClearFilters').addEventListener('click', () => {
       el('fSearch').value = '';
-      el('fGroupSale').value = '';
-      el('fGroupProduct').value = '';
-      el('fProductType').value = '';
-      el('fLocation').value = '';
+      msGroupSale.clear();
+      msGroupProduct.clear();
+      msProductType.clear();
+      msLocation.clear();
       applyFilters();
     });
     el('btnRefreshDashboard').addEventListener('click', loadData);
@@ -764,6 +924,7 @@ const DashboardPage = (() => {
       populateFilterOptions();
       renderKpis(allRows);
       renderCapacityOverview(locUtil);
+      renderFamilyCards(allRows);
       renderFactoryPanel(locUtil, allRows);
       applyFilters();
     } catch (e) {
@@ -781,17 +942,11 @@ const DashboardPage = (() => {
     const groupSales = uniqueSorted(allRows.map(r => r.group_sale));
     const groupProducts = uniqueSorted(allRows.map(r => r.group_product));
     const productTypes = uniqueSorted(allRows.map(r => r.product_type));
-    const locations = uniqueSorted(allRows.map(r => r.location_code));
-    fillSelect('fGroupSale', groupSales, 'Group Sale ทั้งหมด');
-    fillSelect('fGroupProduct', groupProducts, 'Group Product ทั้งหมด');
-    fillSelect('fProductType', productTypes, 'Product Type ทั้งหมด');
-    fillSelect('fLocation', locations, 'โรงงาน/Location ทั้งหมด');
-  }
-  function fillSelect(id, values, placeholder){
-    const sel = el(id);
-    const prevVal = sel.value;
-    sel.innerHTML = `<option value="">${placeholder}</option>` + values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-    if (values.includes(prevVal)) sel.value = prevVal;
+    const locations = uniqueSorted(allRows.map(r => locationDisplayCode(r.location_code)));
+    msGroupSale.setOptions(groupSales);
+    msGroupProduct.setOptions(groupProducts);
+    msProductType.setOptions(productTypes);
+    msLocation.setOptions(locations);
   }
 
   function renderKpis(rows){
@@ -799,7 +954,7 @@ const DashboardPage = (() => {
     const skuSet = new Set(rows.map(r => r.material));
     const totalWeightTon = rows.reduce((s,r) => s + (Number(r.total_weight)||0), 0) / 1000;
     const totalQty = rows.reduce((s,r) => s + (Number(r.unrestricted_qty)||0), 0);
-    const locSet = new Set(rows.map(r => r.location_code).filter(Boolean));
+    const locSet = new Set(rows.map(r => locationDisplayCode(r.location_code)).filter(Boolean));
     el('kpiRecords').textContent = fmtNum(totalRecords);
     el('kpiSku').textContent = fmtNum(skuSet.size);
     el('kpiWeight').textContent = fmtNum(totalWeightTon, 2);
@@ -809,7 +964,7 @@ const DashboardPage = (() => {
 
   // ===== การ์ดสรุปพื้นที่ภาพรวม (hero + gauge) — ไม่ผูกกับตัวกรอง แสดงสถานะจริงของทุกโรงงานเสมอ =====
   function renderCapacityOverview(rows){
-    const withPct = (rows||[]).map(r => {
+    const withPct = mergeLocationRows(rows).map(r => {
       const capacity = Number(r.actual_capacity_tons) || 0;
       const used = Number(r.stock_weight_tons) || 0;
       const pct = capacity > 0 ? (used / capacity) * 100 : 0;
@@ -845,10 +1000,41 @@ const DashboardPage = (() => {
     el('mgrGaugePct').textContent = overallPct.toFixed(1) + '%';
   }
 
+  // ===== การ์ดกลุ่มสินค้าหลัก (Flat / Pipe / Section) — จัดกลุ่มตาม Group Product จริงในฐานข้อมูล =====
+  // ยืนยันกับผู้ใช้แล้วว่า: Flat = Flat Bars + Plate + HS (แผ่นเหล็กรีดร้อน ขนาดเดียวกับ Plate),
+  // Pipe = Pipe + CH (ตัวซี), Section = Beam ทั้งหมด (มี AK/HB/IB/WF/UC/RB/RW/SB/SD/SR/Sheet Pile ฯลฯ อยู่แล้ว)
+  // รายการที่ไม่เข้าพวก 3 กลุ่มนี้ (Scrap, DUMMY_KG/PC, ไม่ระบุ) ไม่แสดงเป็นการ์ด แต่ยังถูกนับรวมในฐาน % ของทั้งหมด (ให้ % ตรงกับความจริง)
+  const FAMILY_DEFS = [
+    { key:'flat', label:'Flat', icon:'📄', color:'#2a78d6', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
+    { key:'pipe', label:'Pipe', icon:'⭕', color:'#eb6834', groupProducts:['Pipe','CH'], desc:'ท่อ + ตัวซี (Pipe / CH)' },
+    { key:'section', label:'Section', icon:'🏗️', color:'#1baf7a', groupProducts:['Beam'], desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
+  ];
+
+  function renderFamilyCards(rows){
+    const box = el('familyCards');
+    const allRowsForPct = rows || [];
+    const grandTotal = allRowsForPct.reduce((s,r) => s + (Number(r.total_weight)||0), 0);
+
+    box.innerHTML = FAMILY_DEFS.map(fam => {
+      const famRows = allRowsForPct.filter(r => fam.groupProducts.includes(r.group_product));
+      const weight = famRows.reduce((s,r) => s + (Number(r.total_weight)||0), 0);
+      const skuCount = new Set(famRows.map(r => r.material)).size;
+      const pct = grandTotal > 0 ? (weight / grandTotal) * 100 : 0;
+      return `
+        <div class="family-card" style="--family-color:${fam.color};">
+          <div class="family-head"><span class="family-icon">${fam.icon}</span><span class="family-name">${escapeHtml(fam.label)}</span></div>
+          <div class="family-value">${fmtNum(weight/1000,2)} ตัน</div>
+          <div class="family-sub"><b style="color:${fam.color};">${pct.toFixed(1)}%</b> ของสต็อกทั้งหมด · ${fmtNum(skuCount)} SKU</div>
+          <div class="family-track"><div class="family-fill" style="width:${Math.min(100,pct)}%;background:${fam.color};"></div></div>
+          <div class="family-desc">${escapeHtml(fam.desc)}</div>
+        </div>`;
+    }).join('');
+  }
+
   // ===== รายโรงงานแบบครอบคลุมทั้งหมด (ไม่ตัดโรงงานใดออก) — เรียงวิกฤตก่อน, คลิกเพื่อดูรายละเอียดสินค้า =====
   function renderFactoryPanel(rows, stockRows){
     const list = el('mgrFactoryList');
-    const visibleRows = rows || [];
+    const visibleRows = mergeLocationRows(rows);
     if (!visibleRows.length){
       list.innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลพื้นที่คลัง — กรุณานำเข้าไฟล์ Area ในหน้า "นำเข้าข้อมูล"</div>';
       return;
@@ -878,7 +1064,7 @@ const DashboardPage = (() => {
 
     list.querySelectorAll('.mgr-factory-row[data-location]').forEach(row => {
       row.addEventListener('click', () => {
-        el('fLocation').value = row.dataset.location;
+        msLocation.setValues([row.dataset.location]); // คลิกแถวโรงงาน = เลือกเฉพาะโรงงานนี้ (แทนที่ selection เดิม)
         applyFilters();
         openLocationBreakdownModal(row.dataset.location, stockRows);
       });
@@ -887,7 +1073,8 @@ const DashboardPage = (() => {
 
   // คำนวณสัดส่วน (%) ของ field ที่กำหนด (group_sale / product_type) ภายในโรงงานที่เลือก แล้วเปิด modal แสดงผล
   function openLocationBreakdownModal(locationCode, stockRows){
-    const rows = (stockRows||[]).filter(r => r.location_code === locationCode);
+    const members = locationMembersOf(locationCode);
+    const rows = (stockRows||[]).filter(r => members.includes(r.location_code));
     const grandTotalWeight = rows.reduce((s,r) => s + (Number(r.total_weight)||0), 0);
     const skuCount = new Set(rows.map(r => r.material)).size;
 
@@ -949,16 +1136,18 @@ const DashboardPage = (() => {
 
   function applyFilters(){
     const search = el('fSearch').value.trim().toLowerCase();
-    const gs = el('fGroupSale').value;
-    const gp = el('fGroupProduct').value;
-    const pt = el('fProductType').value;
-    const loc = el('fLocation').value;
+    const gsSet = msGroupSale.getValues();
+    const gpSet = msGroupProduct.getValues();
+    const ptSet = msProductType.getValues();
+    const locSet = msLocation.getValues(); // เซตของ "ชื่อที่แสดง" เช่น Fac B+E — ต้องแปลงเป็นรหัสจริงทั้งหมดก่อนเทียบ
+    // รวมรหัสโรงงานจริงทั้งหมดของทุกตัวเลือกที่ถูกเลือกไว้ (แต่ละตัวอาจเป็นกลุ่มรวมพื้นที่ เช่น Fac B+E = [Fac B, Fac E])
+    const locMembers = locSet.size ? new Set([...locSet].flatMap(loc => locationMembersOf(loc))) : null;
 
     filtered = allRows.filter(r => {
-      if (gs && r.group_sale !== gs) return false;
-      if (gp && r.group_product !== gp) return false;
-      if (pt && r.product_type !== pt) return false;
-      if (loc && r.location_code !== loc) return false;
+      if (gsSet.size && !gsSet.has(r.group_sale)) return false;
+      if (gpSet.size && !gpSet.has(r.group_product)) return false;
+      if (ptSet.size && !ptSet.has(r.product_type)) return false;
+      if (locMembers && !locMembers.has(r.location_code)) return false;
       if (search){
         const hay = `${r.material||''} ${r.material_description||''} ${r.batch||''}`.toLowerCase();
         if (!hay.includes(search)) return false;
@@ -969,12 +1158,20 @@ const DashboardPage = (() => {
     renderSummaries(filtered);
   }
 
+  // ค่า key ของแถวสำหรับฟิลด์ที่กำหนด — location_code จะถูกแปลงผ่าน locationDisplayCode() ก่อนเสมอ
+  // (รวม Fac B/E เป็น "Fac B+E" ให้ตรงกับรายโรงงาน/capacity hero ทุกจุดของหน้า Dashboard)
+  function keyFor(row, field){
+    const raw = row[field];
+    if (field === 'location_code') return locationDisplayCode(raw) || 'ไม่ระบุ';
+    return raw || 'ไม่ระบุ';
+  }
+
   // จัดกลุ่ม + สรุปยอด (SKU/น้ำหนัก/จำนวน/% ของทั้งหมด) ตามฟิลด์ที่กำหนด เช่น location_code / group_sale / product_type
   function groupSummary(rows, field){
     const map = {};
     let totalWeight = 0;
     rows.forEach(r => {
-      const key = r[field] || 'ไม่ระบุ';
+      const key = keyFor(r, field);
       if (!map[key]) map[key] = { skuSet: new Set(), weight: 0, qty: 0 };
       map[key].skuSet.add(r.material);
       map[key].weight += Number(r.total_weight) || 0;
@@ -996,13 +1193,13 @@ const DashboardPage = (() => {
   function groupSummaryCross(rows, field1, field2){
     const totalsByF1 = {};
     rows.forEach(r => {
-      const k1 = r[field1] || 'ไม่ระบุ';
+      const k1 = keyFor(r, field1);
       totalsByF1[k1] = (totalsByF1[k1] || 0) + (Number(r.total_weight) || 0);
     });
     const map = {};
     rows.forEach(r => {
-      const k1 = r[field1] || 'ไม่ระบุ';
-      const k2 = r[field2] || 'ไม่ระบุ';
+      const k1 = keyFor(r, field1);
+      const k2 = keyFor(r, field2);
       const key = k1 + '' + k2;
       if (!map[key]) map[key] = { k1, k2, skuSet: new Set(), weight: 0, qty: 0 };
       map[key].skuSet.add(r.material);
