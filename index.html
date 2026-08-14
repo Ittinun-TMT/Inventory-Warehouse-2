@@ -379,6 +379,7 @@
   .family-name{font-size:15px;font-weight:600;color:var(--navy-900);letter-spacing:.1px;}
   .family-value{font-size:27px;font-weight:600;color:var(--navy-900);margin-top:11px;font-variant-numeric:tabular-nums;letter-spacing:.2px;}
   .family-sub{font-size:12px;color:var(--gray-600);margin-top:3px;}
+  .family-capacity-line{font-size:11.5px;color:var(--gray-600);margin-top:6px;}
   .family-track{height:8px;border-radius:6px;background:var(--gray-100);margin-top:12px;overflow:hidden;}
   .family-fill{height:100%;border-radius:6px;transition:width .5s ease;}
   .family-desc{font-size:10.5px;color:var(--gray-400);margin-top:10px;line-height:1.5;}
@@ -1007,7 +1008,7 @@ const DashboardPage = (() => {
       populateFilterOptions();
       renderKpis(allRows);
       const capacitySummary = renderCapacityOverview(locUtil);
-      renderFamilyCards(allRows, capacitySummary);
+      renderFamilyCards(allRows, locUtil, capacitySummary);
       renderFactoryPanel(locUtil, allRows);
       applyFilters();
     } catch (e) {
@@ -1095,7 +1096,7 @@ const DashboardPage = (() => {
     { key:'section', label:'Section', icon:'🏗️', color:'#1baf7a', groupProducts:['Beam'], desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
   ];
 
-  function renderFamilyCards(rows, capacitySummary){
+  function renderFamilyCards(rows, locRows, capacitySummary){
     const box = el('familyCards');
     const allRowsForPct = rows || [];
     const grandTotal = allRowsForPct.reduce((s,r) => s + (Number(r.total_weight)||0), 0);
@@ -1115,18 +1116,38 @@ const DashboardPage = (() => {
       }
     }
 
+    // ความจุต่อกลุ่มสินค้า (Flat/Pipe/Section) — คำนวณจากข้อมูลจริงเสมอ ไม่ hardcode ว่าโรงงานไหนเป็นของกลุ่มไหน:
+    // หาโรงงานที่ "มีสต็อกของกลุ่มนี้จัดเก็บอยู่จริง" จาก allRows แล้วรวมความจุ (actual_capacity_tons) ของโรงงานเหล่านั้น
+    // หมายเหตุ: ถ้าในอนาคตมีโรงงานที่เก็บสินค้าหลายกลุ่มปนกัน ความจุของโรงงานนั้นจะถูกนับซ้ำในมากกว่า 1 กลุ่ม (แจ้งผู้ใช้ผ่านหมายเหตุใต้การ์ด)
+    const capacityByLocation = {};
+    mergeLocationRows(locRows || []).forEach(r => { capacityByLocation[r.location_code] = Number(r.actual_capacity_tons) || 0; });
+
     box.innerHTML = FAMILY_DEFS.map(fam => {
       const famRows = allRowsForPct.filter(r => fam.groupProducts.includes(r.group_product));
       const weight = famRows.reduce((s,r) => s + (Number(r.total_weight)||0), 0);
       const skuCount = new Set(famRows.map(r => r.material)).size;
       const pct = grandTotal > 0 ? (weight / grandTotal) * 100 : 0;
+
+      const famLocations = Array.from(new Set(famRows.map(r => locationDisplayCode(r.location_code)).filter(Boolean))).sort();
+      const famCapacity = famLocations.reduce((s, loc) => s + (capacityByLocation[loc] || 0), 0);
+      const famUsedTons = weight / 1000;
+      const famRemain = famCapacity - famUsedTons;
+      const famRemainCls = famRemain < 0 ? 'over' : 'ok';
+      const famRemainText = famRemain >= 0
+        ? `เหลือ ${fmtNum(famRemain,1)} ตัน`
+        : `เกินพิกัด ${fmtNum(Math.abs(famRemain),1)} ตัน`;
+
       return `
         <div class="family-card" style="--family-color:${fam.color};">
           <div class="family-head"><span class="family-icon">${fam.icon}</span><span class="family-name">${escapeHtml(fam.label)}</span></div>
           <div class="family-value">${fmtNum(weight/1000,2)} ตัน</div>
           <div class="family-sub"><b style="color:${fam.color};">${pct.toFixed(1)}%</b> ของสต็อกทั้งหมด · ${fmtNum(skuCount)} SKU</div>
+          <div class="family-capacity-line">
+            เก็บได้ <b>${fmtNum(famCapacity,1)} ตัน</b> · <span class="mgr-factory-remaining ${famRemainCls}" style="display:inline;">${famRemainText}</span>
+          </div>
           <div class="family-track"><div class="family-fill" style="width:${Math.min(100,pct)}%;background:${fam.color};"></div></div>
           <div class="family-desc">${escapeHtml(fam.desc)}</div>
+          <div class="family-desc" style="margin-top:2px;">อ้างอิงความจุจากโรงงานที่มีสต็อกกลุ่มนี้จริง: ${famLocations.length ? escapeHtml(famLocations.join(', ')) : '—'}</div>
         </div>`;
     }).join('');
   }
