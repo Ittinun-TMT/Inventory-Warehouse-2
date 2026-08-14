@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
     --navy-900:#081c38;
@@ -116,6 +117,10 @@
     font-size:11.5px;font-weight:400;color:var(--gray-600);background:var(--gray-100);
     padding:3px 11px;border-radius:20px;border:1px solid var(--gray-200);
   }
+  /* section-title บางอันมีปุ่มแทรกด้านขวา (เช่น "แคปรูปส่งอีเมล") — จอแคบต้องยอมให้ตกบรรทัด ไม่งั้นล้นแนวนอนอีก */
+  @media (max-width:640px){
+    .section-title{flex-wrap:wrap;row-gap:8px;}
+  }
 
   /* ===== KPI cards ===== */
   .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
@@ -181,6 +186,25 @@
   .gs-track{height:8px;border-radius:6px;background:var(--gray-100);overflow:hidden;}
   .gs-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--navy-800),var(--gold-500));transition:width .3s ease;}
   .gs-sub{font-size:11px;color:var(--gray-500);margin-top:3px;}
+
+  /* ===== Email snapshot modal (ฟอร์มแนวตั้งช่องเดียว ต่างจาก modal 2 คอลัมน์ด้านบน) ===== */
+  .modal-form-field{margin-bottom:16px;}
+  .modal-form-field:last-of-type{margin-bottom:0;}
+  .modal-form-field label{display:block;font-size:12.5px;font-weight:600;color:var(--navy-900);margin-bottom:6px;}
+  .modal-form-field input[type=email],
+  .modal-form-field input[type=text],
+  .modal-form-field textarea{
+    width:100%;box-sizing:border-box;font-family:'Kanit',sans-serif;font-size:13.5px;
+    border:1px solid var(--gray-200);border-radius:9px;padding:10px 12px;
+    background:var(--gray-50);color:var(--navy-900);resize:vertical;
+  }
+  .modal-form-field input:focus,
+  .modal-form-field textarea:focus{outline:2px solid var(--orange-400);background:var(--white);}
+  .modal-note{
+    font-size:12px;color:var(--gray-600);line-height:1.6;background:var(--gray-50);
+    border:1px solid var(--gray-200);border-radius:10px;padding:12px 14px;margin-bottom:14px;
+  }
+  .modal-note b{color:var(--navy-900);}
 
   /* ===== Dashboard summary sections (creative viz, no tables) ===== */
   .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
@@ -407,7 +431,8 @@
   .family-icon{
     font-size:19px;line-height:1;width:36px;height:36px;border-radius:10px;
     display:flex;align-items:center;justify-content:center;flex:none;
-    background:color-mix(in srgb, var(--family-color,var(--navy-700)) 14%, white);
+    background:var(--gray-100); /* ค่า fallback — ค่าจริงคำนวณเป็น inline style (tintHex) แทน CSS color-mix()
+      เพราะ color-mix() เป็น CSS ใหม่ที่ html2canvas (ใช้ตอนแคปรูปส่งอีเมล) และเบราว์เซอร์เก่ายังไม่รองรับ */
   }
   .family-name{font-size:15px;font-weight:600;color:var(--navy-900);letter-spacing:.1px;}
   .family-value{font-size:27px;font-weight:600;color:var(--navy-900);margin-top:11px;font-variant-numeric:tabular-nums;letter-spacing:.2px;}
@@ -490,7 +515,10 @@
   <!-- ============ DASHBOARD VIEW (รวมภาพรวมผู้จัดการ + สรุปสต็อก) ============ -->
   <div id="view-dashboard" class="route-view">
 
-    <div class="section-title">👔 ภาพรวมคลังสินค้า <span class="tag">พื้นที่ทั้งหมด / ใช้งานปัจจุบัน / คงเหลือ — ทุกโรงงาน แบบเรียลไทม์</span></div>
+    <div class="section-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:9px;">👔 ภาพรวมคลังสินค้า <span class="tag">พื้นที่ทั้งหมด / ใช้งานปัจจุบัน / คงเหลือ — ทุกโรงงาน แบบเรียลไทม์</span></span>
+      <button class="btn btn-navy btn-sm" id="btnEmailSnapshot" style="font-size:12.5px;">📧 แคปรูปส่งอีเมล</button>
+    </div>
 
     <div class="mgr-hero">
       <div class="mgr-card">
@@ -762,6 +790,15 @@ function escapeHtml(str){
   if (str === null || str === undefined) return '';
   return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+// ผสมสี hex กับสีขาวแบบ tint เอง (แทนการพึ่ง CSS color-mix() ซึ่งเป็นฟีเจอร์ใหม่ที่เบราว์เซอร์เก่า
+// และ html2canvas — ใช้ตอนแคปรูป Dashboard ส่งอีเมล — ยังไม่รองรับ แล้วจะทำให้แคปภาพล้มเหลวทั้งหน้า)
+function tintHex(hex, pct){
+  const h = (hex||'').replace('#','');
+  if (h.length !== 6) return hex;
+  const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+  const mix = (c) => Math.round(c*pct + 255*(1-pct));
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+}
 function fmtNum(n, decimals=0){
   if (n === null || n === undefined || isNaN(n)) return '-';
   return Number(n).toLocaleString('en-US', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
@@ -1015,6 +1052,7 @@ const DashboardPage = (() => {
       applyFilters();
     });
     el('btnRefreshDashboard').addEventListener('click', loadData);
+    el('btnEmailSnapshot').addEventListener('click', openEmailSnapshotModal);
   }
 
   function setSummaryLoading(){
@@ -1172,7 +1210,7 @@ const DashboardPage = (() => {
 
       return `
         <div class="family-card" style="--family-color:${fam.color};">
-          <div class="family-head"><span class="family-icon">${fam.icon}</span><span class="family-name">${escapeHtml(fam.label)}</span></div>
+          <div class="family-head"><span class="family-icon" style="background:${tintHex(fam.color,0.14)};">${fam.icon}</span><span class="family-name">${escapeHtml(fam.label)}</span></div>
           <div class="family-value">${fmtNum(weight/1000,2)} ตัน</div>
           <div class="family-sub"><b style="color:${fam.color};">${pct.toFixed(1)}%</b> ของสต็อกทั้งหมด · ${fmtNum(skuCount)} SKU</div>
           <div class="family-capacity-line">
@@ -1294,6 +1332,127 @@ const DashboardPage = (() => {
     document.addEventListener('keydown', function escHandler(e){
       if (e.key === 'Escape'){ close(); document.removeEventListener('keydown', escHandler); }
     });
+  }
+
+  // ===== แคปรูป Dashboard ส่งอีเมล =====
+  // เลือกวิธีนี้ (แคป+ดาวน์โหลด+เปิด mailto: ให้แนบเอง) แทนการส่งอีเมลอัตโนมัติ เพราะ mailto: ไม่รองรับการแนบไฟล์
+  // และการส่งอัตโนมัติจริงต้องพึ่งบริการอีเมลภายนอก (เช่น Resend/SendGrid) ซึ่งต้องมี API key — ผู้ใช้เลือกวิธีนี้แทน
+  function openEmailSnapshotModal(){
+    const lastEmail = localStorage.getItem('wh2_last_email_recipient') || '';
+    const todayThai = new Date().toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' });
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box" style="max-width:520px;">
+        <div class="modal-head">
+          <div>
+            <h3>📧 แคปรูป Dashboard ส่งอีเมล</h3>
+            <div class="modal-sub">แคปภาพหน้า Dashboard ทั้งหมด ดาวน์โหลดเป็นไฟล์ PNG แล้วเปิดอีเมลค้างไว้ให้แนบเอง</div>
+          </div>
+          <button class="modal-close" aria-label="ปิด">&times;</button>
+        </div>
+        <div class="modal-body" style="flex-direction:column;padding:22px 24px;">
+          <div class="modal-form-field">
+            <label for="emailSnapshotTo">อีเมลผู้รับ <span style="color:var(--danger);">*</span></label>
+            <input type="email" id="emailSnapshotTo" placeholder="name@company.com" value="${escapeHtml(lastEmail)}" autocomplete="email">
+          </div>
+          <div class="modal-form-field">
+            <label for="emailSnapshotSubject">หัวข้ออีเมล</label>
+            <input type="text" id="emailSnapshotSubject" value="รายงานคลังสินค้า WH2 - ${escapeHtml(todayThai)}">
+          </div>
+          <div class="modal-form-field">
+            <label for="emailSnapshotMessage">ข้อความเพิ่มเติม (ถ้ามี)</label>
+            <textarea id="emailSnapshotMessage" rows="3" placeholder="เช่น เรียน... ส่งภาพรวมคลังสินค้าประจำวันมาให้ตรวจสอบครับ"></textarea>
+          </div>
+          <div class="modal-note">
+            📌 <b>วิธีใช้:</b> กดปุ่ม "แคปรูป + ดาวน์โหลด + เปิดอีเมล" ระบบจะแคปภาพหน้า Dashboard ทั้งหมดและดาวน์โหลดไฟล์ภาพให้อัตโนมัติ จากนั้นโปรแกรมอีเมลของคุณจะเปิดขึ้นพร้อมหัวข้อ/เนื้อหาที่กรอกไว้ — <b>อย่าลืมแนบไฟล์ภาพที่เพิ่งดาวน์โหลดก่อนกดส่ง</b> (mailto: ไม่สามารถแนบไฟล์ให้อัตโนมัติได้)
+          </div>
+          <div class="btn-row" style="justify-content:flex-end;">
+            <button class="btn btn-outline" id="btnEmailSnapshotCancel">ยกเลิก</button>
+            <button class="btn btn-primary" id="btnEmailSnapshotConfirm">📥 แคปรูป + ดาวน์โหลด + เปิดอีเมล</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    overlay.querySelector('.modal-close').addEventListener('click', close);
+    overlay.querySelector('#btnEmailSnapshotCancel').addEventListener('click', close);
+    document.addEventListener('keydown', function escHandler(e){
+      if (e.key === 'Escape'){ close(); document.removeEventListener('keydown', escHandler); }
+    });
+
+    const btnConfirm = overlay.querySelector('#btnEmailSnapshotConfirm');
+    btnConfirm.addEventListener('click', () => captureAndOpenEmail(overlay, btnConfirm));
+    // กด Enter ในช่องอีเมล = ยืนยันเลย (พิมพ์เสร็จกด Enter ได้ทันทีไม่ต้องเอื้อมไปกดปุ่ม)
+    overlay.querySelector('#emailSnapshotTo').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter'){ e.preventDefault(); btnConfirm.click(); }
+    });
+  }
+
+  // แคปภาพ #view-dashboard ทั้งหมด (ไม่จำกัดแค่ viewport ที่มองเห็น) → ดาวน์โหลดเป็น PNG → เปิด mailto: ค้างไว้ให้แนบเอง
+  async function captureAndOpenEmail(overlay, btnConfirm){
+    const emailInput = overlay.querySelector('#emailSnapshotTo');
+    const subjectInput = overlay.querySelector('#emailSnapshotSubject');
+    const messageInput = overlay.querySelector('#emailSnapshotMessage');
+
+    const email = emailInput.value.trim();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailPattern.test(email)){
+      toast('กรุณากรอกอีเมลผู้รับให้ถูกต้อง', 'error');
+      emailInput.focus();
+      return;
+    }
+    const subject = subjectInput.value.trim() || 'รายงานคลังสินค้า WH2';
+    const message = messageInput.value.trim();
+
+    const originalLabel = btnConfirm.textContent;
+    btnConfirm.disabled = true;
+    btnConfirm.textContent = '⏳ กำลังแคปภาพ...';
+
+    try {
+      const target = document.getElementById('view-dashboard');
+      const canvas = await html2canvas(target, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+      });
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('ไม่สามารถสร้างไฟล์ภาพได้');
+
+      const dateKey = new Date().toISOString().slice(0,10);
+      const fileName = `dashboard-wh2-${dateKey}.png`;
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objUrl), 4000);
+
+      localStorage.setItem('wh2_last_email_recipient', email); // จำอีเมลล่าสุดไว้ให้ครั้งหน้า
+
+      const bodyLines = [
+        message || 'ส่งภาพรวมคลังสินค้า WH2 (Dashboard) มาให้ตรวจสอบครับ/ค่ะ',
+        '',
+        `📎 กรุณาแนบไฟล์ภาพที่เพิ่งดาวน์โหลด (${fileName}) ก่อนกดส่งอีเมล`,
+        '',
+        `สร้างจากระบบ Inventory Warehouse 2 เมื่อ ${new Date().toLocaleString('th-TH')}`,
+      ].join('\n');
+      const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines)}`;
+      window.location.href = mailtoUrl;
+
+      toast('ดาวน์โหลดรูปแล้ว — อย่าลืมแนบไฟล์ในอีเมลที่เปิดขึ้นมาด้วยนะครับ', 'success');
+      overlay.remove();
+    } catch(err){
+      console.error(err);
+      toast('แคปภาพไม่สำเร็จ: ' + (err && err.message ? err.message : err), 'error');
+      btnConfirm.disabled = false;
+      btnConfirm.textContent = originalLabel;
+    }
   }
 
   function applyFilters(){
