@@ -344,7 +344,7 @@
     content:"";position:absolute;top:0;left:0;right:0;height:3px;
     background:var(--gradient-gold);
   }
-  .mgr-label{font-size:12.5px;color:var(--gray-600);font-weight:500;letter-spacing:.1px;}
+  .mgr-label{font-size:12.5px;color:var(--gray-600);font-weight:500;letter-spacing:.1px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
   .mgr-value{font-size:26px;font-weight:600;color:var(--navy-900);margin-top:7px;font-variant-numeric:tabular-nums;letter-spacing:.2px;}
   .mgr-sub{font-size:11.5px;color:var(--gray-400);margin-top:2px;}
 
@@ -542,22 +542,22 @@
 
     <div class="mgr-hero">
       <div class="mgr-card">
-        <div class="mgr-label">พื้นที่ทั้งหมด (ตัน)</div>
+        <div class="mgr-label">พื้นที่ทั้งหมด (ตัน) <span class="kpi-info" title="ผลรวมพื้นที่จัดเก็บจริง (actual_capacity_tons) ของทุกโรงงานในไฟล์ Area — เป็นค่าคงที่ ไม่ขึ้นกับวันที่ที่เลือกหรือตัวกรองใดๆ">ⓘ</span></div>
         <div class="mgr-value" id="mgrTotalCapacity">–</div>
         <div class="mgr-sub">รวมทุกโรงงาน/พื้นที่จัดเก็บ</div>
       </div>
       <div class="mgr-card">
-        <div class="mgr-label">ใช้งานปัจจุบัน (ตัน)</div>
+        <div class="mgr-label">ใช้งานปัจจุบัน (ตัน) <span class="kpi-info" title="ผลรวมน้ำหนักสต็อก (total_weight) ทุกแถวของโรงงานทั้งหมด เฉพาะ 'วันที่นำเข้า' ที่เลือกไว้ด้านบนเท่านั้น (÷1000 เพราะข้อมูลดิบเก็บเป็นกิโลกรัม) — ไม่ผูกกับตัวกรอง Group Sale/Product Type/โรงงานด้านล่าง">ⓘ</span></div>
         <div class="mgr-value" id="mgrTotalUsed">–</div>
         <div class="mgr-sub" id="mgrTotalUsedSub">&nbsp;</div>
       </div>
       <div class="mgr-card">
-        <div class="mgr-label">พื้นที่คงเหลือ (ตัน)</div>
+        <div class="mgr-label">พื้นที่คงเหลือ (ตัน) <span class="kpi-info" title="พื้นที่ทั้งหมด − ใช้งานปัจจุบัน — ถ้าติดลบแปลว่ารวมทุกโรงงานแล้วใช้พื้นที่เกินความจุรวมทั้งเครือข่าย">ⓘ</span></div>
         <div class="mgr-value" id="mgrTotalRemain">–</div>
         <div class="mgr-sub" id="mgrTotalRemainSub">&nbsp;</div>
       </div>
       <div class="mgr-card">
-        <div class="mgr-label">สถานะโรงงาน</div>
+        <div class="mgr-label">สถานะโรงงาน <span class="kpi-info" title="นับจำนวนโรงงานแบ่งตามเกณฑ์ % ใช้พื้นที่ของโรงงานนั้นๆ เทียบความจุของตัวเอง (ไม่ใช่เทียบความจุรวม) — ดูเกณฑ์แบ่งระดับที่ช่องด้านขวามือ">ⓘ</span></div>
         <div class="mgr-status-row" id="mgrStatusCounts" style="margin-top:10px;">–</div>
       </div>
     </div>
@@ -572,6 +572,8 @@
       </div>
       <div style="flex:1;min-width:240px;">
         <div style="font-size:13.5px;color:var(--gray-600);line-height:1.8;">
+          <b style="color:var(--navy-900);">% ใช้พื้นที่รวม</b> = ใช้งานปัจจุบันทั้งหมด ÷ พื้นที่ทั้งหมด × 100
+          <span class="cell-muted" style="font-size:12px;">(คำนวณจากผลรวมทั้งเครือข่ายทีเดียว ไม่ใช่ค่าเฉลี่ย % ของแต่ละโรงงาน)</span><br/>
           เกณฑ์แบ่งระดับต่อโรงงาน:<br/>
           <span class="mgr-status-pill normal" style="margin-right:8px;">✅ ปกติ</span>ใช้พื้นที่ไม่เกิน 80%<br/>
           <span class="mgr-status-pill warn" style="margin-right:8px;margin-top:6px;display:inline-flex;">⚠️ ใกล้เต็ม</span>ใช้พื้นที่ 80–100%<br/>
@@ -580,7 +582,7 @@
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe / Section — น้ำหนักรวมทั้งเครือข่าย</span></div>
+    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe / Section — น้ำหนักรวมทั้งเครือข่าย · ชี้ที่ ⓘ เพื่อดูวิธีคำนวณ</span></div>
     <div class="family-capacity-context" id="familyCapacityContext">กำลังโหลด...</div>
     <div class="family-grid" id="familyCards">
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
@@ -588,7 +590,7 @@
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
     </div>
 
-    <div class="section-title" style="margin-top:26px;">🏭 รายโรงงานทั้งหมด <span class="tag">เรียงจากวิกฤตที่สุดก่อน · คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้าง</span></div>
+    <div class="section-title" style="margin-top:26px;">🏭 รายโรงงานทั้งหมด <span class="tag">เรียงจากวิกฤตที่สุดก่อน · คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้าง · ชี้ที่ตัวเลขเพื่อดูวิธีคำนวณ</span></div>
     <div class="viz-block" id="mgrFactoryList"><div class="viz-empty">กำลังโหลด...</div></div>
 
     <div class="section-title" style="margin-top:26px;">📊 ตัวเลขสต็อก <span class="tag">ตามตัวกรองด้านล่าง</span></div>
@@ -1365,9 +1367,13 @@ const DashboardPage = (() => {
         ? `เหลือ ${fmtNum(famRemain,1)} ตัน`
         : `เกินพิกัด ${fmtNum(Math.abs(famRemain),1)} ตัน`;
 
+      const famInfoTitle = `น้ำหนัก ${fmtNum(weight/1000,2)} ตัน = ผลรวม total_weight ของทุกแถวที่ Group Product อยู่ในกลุ่ม: ${fam.groupProducts.join(', ')} (เฉพาะวันที่นำเข้าที่เลือกไว้)\n`
+        + `% ของสต็อกทั้งหมด = น้ำหนักกลุ่มนี้ ÷ น้ำหนักสต็อกรวมทุกกลุ่ม (รวม Scrap/อื่นๆ ที่ไม่ใช่ 3 กลุ่มนี้ด้วย) × 100\n`
+        + `เก็บได้ ${fmtNum(famCapacity,1)} ตัน = ผลรวมความจุ (actual_capacity_tons) เฉพาะโรงงานที่มีสต็อกกลุ่มนี้จัดเก็บอยู่จริง: ${famLocations.length ? famLocations.join(', ') : '—'}\n`
+        + `${famRemain >= 0 ? 'เหลือ' : 'เกินพิกัด'} = ความจุของกลุ่มนี้ − น้ำหนักที่ใช้ของกลุ่มนี้`;
       return `
         <div class="family-card" style="--family-color:${fam.color};">
-          <div class="family-head"><span class="family-icon" style="background:${tintHex(fam.color,0.14)};">${fam.icon}</span><span class="family-name">${escapeHtml(fam.label)}</span></div>
+          <div class="family-head"><span class="family-icon" style="background:${tintHex(fam.color,0.14)};">${fam.icon}</span><span class="family-name">${escapeHtml(fam.label)}</span><span class="kpi-info" title="${escapeHtml(famInfoTitle)}">ⓘ</span></div>
           <div class="family-value">${fmtNum(weight/1000,2)} ตัน</div>
           <div class="family-sub"><b style="color:${fam.color};">${pct.toFixed(1)}%</b> ของสต็อกทั้งหมด · ${fmtNum(skuCount)} SKU</div>
           <div class="family-capacity-line">
@@ -1406,15 +1412,21 @@ const DashboardPage = (() => {
       const remainingText = r.remaining >= 0
         ? `เหลือ ${fmtNum(r.remaining,1)} ตัน`
         : `เกินพื้นที่ ${fmtNum(Math.abs(r.remaining),1)} ตัน`;
+      // ⚠️ 2 เปอร์เซ็นต์นี้ตอบคำถามคนละแบบกัน — ต้องแยกให้ชัดในคำอธิบาย (title) เพราะสับสนกันได้ง่ายมาก:
+      // pct   = "โรงงานนี้ใช้พื้นที่ตัวเองไปกี่ %" (เทียบความจุของโรงงานนี้เอง)
+      // share = "โรงงานนี้ถือครองสต็อกกี่ % ของทั้งเครือข่าย" (เทียบผลรวมที่ใช้จริงของทุกโรงงาน)
+      const pctTitle = `% ใช้พื้นที่ = ใช้ ${fmtNum(r.used,1)} ตัน ÷ ความจุของโรงงานนี้ ${fmtNum(r.capacity,1)} ตัน × 100 = ${r.pct.toFixed(1)}% (เทียบกับความจุของโรงงานนี้เอง)`;
+      const shareTitle = `สัดส่วนรวม = น้ำหนักที่ใช้ในโรงงานนี้ ${fmtNum(r.used,1)} ตัน ÷ น้ำหนักที่ใช้รวมทุกโรงงาน ${fmtNum(grandTotalUsed,1)} ตัน × 100 = ${r.share.toFixed(1)}%\nคือ "โรงงานนี้ถือครองสต็อกกี่ % ของสต็อกทั้งเครือข่าย" — คนละความหมายกับ % ใช้พื้นที่ด้านซ้าย (ซึ่งเทียบความจุของโรงงานนี้เองเท่านั้น)`;
+      const remainingTitle = `${r.remaining >= 0 ? 'เหลือ' : 'เกินพื้นที่'} = ความจุของโรงงานนี้ ${fmtNum(r.capacity,1)} ตัน − ใช้ไปแล้ว ${fmtNum(r.used,1)} ตัน`;
       return `
         <div class="mgr-factory-row" data-location="${escapeHtml(r.location_code)}" title="คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้างในโรงงานนี้">
           <div class="mgr-factory-name">${escapeHtml(r.location_code)}</div>
           <div class="mgr-factory-track"><div class="mgr-factory-fill" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div></div>
-          <div class="mgr-factory-nums">
+          <div class="mgr-factory-nums" title="${escapeHtml(pctTitle)}">
             <b>${r.pct.toFixed(0)}%</b> · ใช้ ${fmtNum(r.used,1)} / ${fmtNum(r.capacity,1)} ตัน
-            <div class="mgr-factory-remaining ${remainingCls}">${remainingText}</div>
+            <div class="mgr-factory-remaining ${remainingCls}" title="${escapeHtml(remainingTitle)}">${remainingText}</div>
           </div>
-          <div class="mgr-factory-share">สัดส่วนรวม<br/><b>${r.share.toFixed(1)}%</b></div>
+          <div class="mgr-factory-share" title="${escapeHtml(shareTitle)}">สัดส่วนรวม<br/><b>${r.share.toFixed(1)}%</b></div>
           <span class="mgr-status-pill ${r.tier}" style="flex:none;">${Tier.label(r.tier)}</span>
         </div>`;
     }).join('');
