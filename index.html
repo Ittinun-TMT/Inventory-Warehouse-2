@@ -19,7 +19,7 @@ a:hover{color:#E85D04;}
 @keyframes fadeinA{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 @keyframes fadeinB{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 @keyframes shimmer{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
-@keyframes rise{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+@keyframes spin{to{transform:rotate(360deg);}}
 ::-webkit-scrollbar{height:9px;width:9px;}
 ::-webkit-scrollbar-thumb{background:#c8d0dc;border-radius:9px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -50,8 +50,8 @@ a:hover{color:#E85D04;}
       <div style="font-size:10.5px;color:#8fa5c4;letter-spacing:.4px;text-transform:uppercase;font-weight:500">ข้อมูลล่าสุด</div>
       <div style="font-size:12.5px;color:#e3ebf6;margin-top:5px">{{ lastImport }}</div>
       <div style="display:flex;align-items:center;gap:7px;margin-top:12px;font-size:11.5px;color:#9db2d0">
-        <span style="width:7px;height:7px;border-radius:50%;background:#2fbf83;box-shadow:0 0 0 3px rgba(47,191,131,.18)"></span>
-        เชื่อมต่อ Supabase แล้ว
+        <span style="width:7px;height:7px;border-radius:50%;background:{{ connDot }};box-shadow:0 0 0 3px rgba(47,191,131,.18)"></span>
+        {{ connText }}
       </div>
     </div>
   </aside>
@@ -63,19 +63,31 @@ a:hover{color:#E85D04;}
         <div style="font-size:11.5px;color:#7a8698;font-weight:300;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pageSub }}</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex:none">
-        <div style="display:flex;align-items:center;gap:7px;background:#f7f8fb;border:1px solid #e7ebf1;border-radius:10px;padding:7px 12px;font-size:12.5px;font-weight:500">
-          <span style="font-size:13px">📅</span>{{ activeDate }}
-          <span style="color:#adb5bd;font-size:10px">▾</span>
+        <div style="display:flex;align-items:center;gap:7px;background:#f7f8fb;border:1px solid #e7ebf1;border-radius:10px;padding:6px 10px 6px 12px;font-size:12.5px;font-weight:500">
+          <span style="font-size:13px">📅</span>
+          <select value="{{ selectedDate }}" onChange="{{ pickDate }}" style="font-family:Kanit,sans-serif;font-size:12.5px;font-weight:500;color:#081C38;border:none;background:transparent;outline:none;cursor:pointer;max-width:190px">
+            <sc-for list="{{ dateOptions }}" as="d" hint-placeholder-count="3">
+              <option value="{{ d.key }}">{{ d.label }}</option>
+            </sc-for>
+          </select>
         </div>
-        <button onClick="{{ replay }}" style="font-family:Kanit,sans-serif;font-size:12.5px;font-weight:500;border:none;border-radius:10px;padding:9px 15px;color:#fff;background:linear-gradient(95deg,#E85D04,#FA7E19);box-shadow:0 3px 12px rgba(232,93,4,.3);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease" style-hover="transform:translateY(-1px);box-shadow:0 6px 18px rgba(232,93,4,.4)">📷 แคปรูป Dashboard</button>
+        <button onClick="{{ reload }}" style="font-family:Kanit,sans-serif;font-size:12.5px;font-weight:500;border:none;border-radius:10px;padding:9px 15px;color:#fff;background:linear-gradient(95deg,#E85D04,#FA7E19);box-shadow:0 3px 12px rgba(232,93,4,.3);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease" style-hover="transform:translateY(-1px);box-shadow:0 6px 18px rgba(232,93,4,.4)">↻ โหลดข้อมูลใหม่</button>
       </div>
     </header>
 
     <div style="padding:24px 26px 56px;animation:{{ fadeAnim }} .34s cubic-bezier(.2,.7,.3,1)">
 
+      <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff1e6;border:1px solid #FA7E19;border-radius:12px;padding:13px 16px;font-size:13px;color:#8a3d00;margin-bottom:18px;line-height:1.6">⚠️ โหลดข้อมูลจาก Supabase ไม่สำเร็จ: {{ errorText }}</div>
+      </sc-if>
+
       <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
         <div>
-          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+          <sc-if value="{{ isHistorical }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(201,151,31,.12);border:1px solid #E4B84A;border-radius:11px;padding:10px 16px;font-size:12.5px;color:#7a5a00;margin-bottom:16px">⏱️ กำลังดูข้อมูลย้อนหลังวันที่ <b style="color:#081C38">{{ selectedDateLabel }}</b> — ไม่ใช่ข้อมูลล่าสุด</div>
+          </sc-if>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(216px,1fr));gap:16px">
             <sc-for list="{{ heroCards }}" as="c" hint-placeholder-count="4">
               <div style="background:#fff;border:1px solid #e7ebf1;border-radius:16px;padding:18px 19px 16px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(8,28,56,.04);transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s ease,border-color .22s ease" style-hover="transform:translateY(-4px);box-shadow:0 14px 32px rgba(8,28,56,.12);border-color:#f3c99f">
                 <span style="position:absolute;top:0;left:0;right:0;height:3px;background:{{ c.accent }}"></span>
@@ -84,25 +96,25 @@ a:hover{color:#E85D04;}
                   <div style="height:34px;margin-top:8px;border-radius:8px;background:linear-gradient(90deg,#eef1f6 25%,#e3e8f0 37%,#eef1f6 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite"></div>
                 </sc-if>
                 <sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
-                  <div style="font-size:27px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:.2px">{{ c.value }}</div>
+                  <div style="font-size:clamp(19px,1.75vw,27px);font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:.2px;line-height:1.25;overflow-wrap:anywhere">{{ c.value }}</div>
                 </sc-if>
                 <div style="font-size:11.5px;color:#a3adbb;margin-top:3px">{{ c.sub }}</div>
               </div>
             </sc-for>
           </div>
 
-          <div style="display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;margin-top:18px;background:#fff;border:1px solid #e7ebf1;border-radius:16px;padding:24px 26px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
-            <div style="display:flex;align-items:center;justify-content:center;position:relative">
+          <div style="display:flex;flex-wrap:wrap;gap:18px 26px;align-items:center;margin-top:18px;background:#fff;border:1px solid #e7ebf1;border-radius:16px;padding:24px 26px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
+            <div style="flex:0 0 240px;display:flex;align-items:center;justify-content:center;position:relative">
               <svg viewBox="0 0 160 160" width="168" height="168" style="transform:rotate(-90deg)">
                 <circle cx="80" cy="80" r="70" fill="none" stroke="#eef1f6" stroke-width="16"></circle>
-                <circle cx="80" cy="80" r="70" fill="none" stroke="#E85D04" stroke-width="16" stroke-linecap="round" stroke-dasharray="440" stroke-dashoffset="{{ gaugeOffset }}" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.7,.3,1)"></circle>
+                <circle cx="80" cy="80" r="70" fill="none" stroke="{{ gaugeColor }}" stroke-width="16" stroke-linecap="round" stroke-dasharray="440" stroke-dashoffset="{{ gaugeOffset }}" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.7,.3,1),stroke .3s ease"></circle>
               </svg>
               <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
                 <b style="font-size:29px;font-weight:600;font-variant-numeric:tabular-nums">{{ gaugePct }}</b>
                 <span style="font-size:11.5px;color:#7a8698;margin-top:2px">ใช้พื้นที่รวม</span>
               </div>
             </div>
-            <div style="font-size:13px;color:#63707f;line-height:1.95;align-self:center">
+            <div style="flex:1 1 300px;min-width:0;font-size:13px;color:#63707f;line-height:1.95">
               <b style="color:#081C38;font-weight:600">% ใช้พื้นที่รวม</b> = ใช้งานปัจจุบันทั้งหมด ÷ พื้นที่ทั้งหมด × 100
               <span style="color:#a3adbb;font-size:12px">(คำนวณจากผลรวมทั้งเครือข่ายทีเดียว ไม่ใช่ค่าเฉลี่ย % ของแต่ละโรงงาน)</span>
               <div style="display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:12px">
@@ -118,7 +130,7 @@ a:hover{color:#E85D04;}
             <span style="font-size:16px;font-weight:600">🧱 ภาพรวมตามกลุ่มสินค้าหลัก</span>
             <span style="font-size:11.5px;font-weight:300;color:#7a8698;background:#fff;border:1px solid #e7ebf1;border-radius:20px;padding:3px 11px">Flat / Pipe / Section — น้ำหนักรวมทั้งเครือข่าย</span>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:16px">
             <sc-for list="{{ families }}" as="f" hint-placeholder-count="3">
               <div style="background:#fff;border:1px solid #e7ebf1;border-radius:16px;padding:19px 21px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(8,28,56,.04);transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s ease" style-hover="transform:translateY(-4px);box-shadow:0 14px 32px rgba(8,28,56,.12)">
                 <span style="position:absolute;top:0;left:0;right:0;height:3px;background:{{ f.color }}"></span>
@@ -140,20 +152,20 @@ a:hover{color:#E85D04;}
           <div style="display:flex;align-items:center;gap:10px;margin:30px 0 14px">
             <span style="width:4px;height:18px;border-radius:3px;background:linear-gradient(180deg,#E85D04,#C9971F)"></span>
             <span style="font-size:16px;font-weight:600">🏭 รายโรงงานทั้งหมด</span>
-            <span style="font-size:11.5px;font-weight:300;color:#7a8698;background:#fff;border:1px solid #e7ebf1;border-radius:20px;padding:3px 11px">เรียงจากวิกฤตที่สุดก่อน · คลิกเพื่อดูรายละเอียด</span>
+            <span style="font-size:11.5px;font-weight:300;color:#7a8698;background:#fff;border:1px solid #e7ebf1;border-radius:20px;padding:3px 11px">เรียงจากวิกฤตที่สุดก่อน</span>
           </div>
           <div style="background:#fff;border:1px solid #e7ebf1;border-radius:16px;padding:8px 20px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
             <sc-for list="{{ factories }}" as="r" hint-placeholder-count="6">
-              <div style="display:flex;align-items:center;gap:14px;padding:13px 12px;margin:0 -12px;border-radius:11px;border-bottom:1px solid #f1f4f8;cursor:pointer;transition:background .18s ease" style-hover="background:#fdf7ef">
-                <div style="flex:0 0 92px;font-size:13.5px;font-weight:600">{{ r.code }}</div>
-                <div style="flex:1 1 auto;min-width:60px;height:20px;background:#eef1f6;border-radius:10px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(8,28,56,.06)">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:13px 12px;margin:0 -12px;border-radius:11px;border-bottom:1px solid #f1f4f8;cursor:pointer;transition:background .18s ease" style-hover="background:#fdf7ef">
+                <div style="flex:1 1 92px;font-size:13.5px;font-weight:600">{{ r.code }}</div>
+                <div style="flex:1 1 220px;order:9;min-width:120px;height:20px;background:#eef1f6;border-radius:10px;overflow:hidden;box-shadow:inset 0 1px 2px rgba(8,28,56,.06)">
                   <div style="height:100%;border-radius:10px;background:{{ r.color }};width:{{ r.w }};transition:width 1.1s cubic-bezier(.2,.7,.3,1)"></div>
                 </div>
-                <div style="flex:0 0 190px;text-align:right;font-size:11.5px;color:#7a8698;font-variant-numeric:tabular-nums">
+                <div style="flex:0 1 190px;min-width:150px;text-align:right;font-size:11.5px;color:#7a8698;font-variant-numeric:tabular-nums">
                   <b style="color:#081C38;font-weight:600">{{ r.used }}</b> / {{ r.cap }} ตัน
                   <div style="margin-top:3px;font-size:11px;font-weight:600;color:{{ r.remainColor }}">{{ r.remainText }}</div>
                 </div>
-                <div style="flex:0 0 104px;text-align:right;font-size:11px;color:#a3adbb;line-height:1.5">
+                <div style="flex:0 1 104px;min-width:88px;text-align:right;font-size:11px;color:#a3adbb;line-height:1.5">
                   <b style="color:#0F3460;font-weight:600;font-size:12.5px">{{ r.pctText }}</b>
                   <div>{{ r.shareText }}</div>
                 </div>
@@ -167,26 +179,30 @@ a:hover{color:#E85D04;}
             <span style="font-size:16px;font-weight:600">📊 ตัวเลขสต็อก</span>
             <span style="font-size:11.5px;font-weight:300;color:#7a8698;background:#fff;border:1px solid #e7ebf1;border-radius:20px;padding:3px 11px">ตามตัวกรองด้านล่าง</span>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(184px,1fr));gap:14px">
             <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
               <div style="background:#fff;border:1px solid #e7ebf1;border-radius:14px;padding:16px 17px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(8,28,56,.04);transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s ease" style-hover="transform:translateY(-3px);box-shadow:0 12px 26px rgba(8,28,56,.1)">
                 <span style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#0F3460,#1a4a8a)"></span>
                 <div style="font-size:11.5px;color:#7a8698;font-weight:500">{{ k.label }}</div>
-                <div style="font-size:23px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums">{{ k.value }}</div>
+                <div style="font-size:clamp(17px,1.45vw,22px);font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.3;overflow-wrap:anywhere">{{ k.value }}</div>
                 <div style="font-size:11px;color:#a3adbb;margin-top:2px">{{ k.sub }}</div>
               </div>
             </sc-for>
           </div>
 
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#fff;border:1px solid #e7ebf1;border-radius:14px;padding:14px 16px;margin-top:18px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
-            <input type="text" placeholder="ค้นหา Material / รายละเอียด / Batch..." style="font-family:Kanit,sans-serif;font-size:13.5px;border:1px solid #e7ebf1;border-radius:10px;padding:10px 13px;background:#f7f8fb;color:#081C38;flex:1 1 240px;min-width:200px;outline:none" style-focus="outline:2px solid #FA7E19;background:#fff" />
+            <input type="text" value="{{ search }}" onInput="{{ setSearch }}" placeholder="ค้นหา Material / รายละเอียด / Batch..." style="font-family:Kanit,sans-serif;font-size:13.5px;border:1px solid #e7ebf1;border-radius:10px;padding:10px 13px;background:#f7f8fb;color:#081C38;flex:1 1 240px;min-width:200px;outline:none" style-focus="outline:2px solid #FA7E19;background:#fff" />
             <sc-for list="{{ filterChips }}" as="chip" hint-placeholder-count="4">
-              <button style="font-family:Kanit,sans-serif;font-size:13px;font-weight:500;border:1px solid {{ chip.border }};border-radius:10px;padding:10px 14px;background:{{ chip.bg }};color:{{ chip.fg }};cursor:pointer;white-space:nowrap;transition:background .16s ease" style-hover="background:#f0f3f8">{{ chip.label }} ▾</button>
+              <select value="{{ chip.value }}" onChange="{{ chip.onChange }}" style="font-family:Kanit,sans-serif;font-size:13px;font-weight:500;border:1px solid {{ chip.border }};border-radius:10px;padding:10px 12px;background:{{ chip.bg }};color:{{ chip.fg }};cursor:pointer;outline:none;max-width:190px">
+                <sc-for list="{{ chip.options }}" as="o" hint-placeholder-count="3">
+                  <option value="{{ o.value }}">{{ o.label }}</option>
+                </sc-for>
+              </select>
             </sc-for>
-            <button style="font-family:Kanit,sans-serif;font-size:13px;font-weight:500;border:1px solid #e7ebf1;border-radius:10px;padding:10px 14px;background:#fff;color:#0F3460;cursor:pointer" style-hover="background:#f0f3f8">✕ ล้างตัวกรอง</button>
+            <button onClick="{{ clearFilters }}" style="font-family:Kanit,sans-serif;font-size:13px;font-weight:500;border:1px solid #e7ebf1;border-radius:10px;padding:10px 14px;background:#fff;color:#0F3460;cursor:pointer" style-hover="background:#f0f3f8">✕ ล้างตัวกรอง</button>
           </div>
 
-          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:18px;margin-top:18px">
             <sc-for list="{{ rankBlocks }}" as="b" hint-placeholder-count="2">
               <div style="background:#fff;border:1px solid #e7ebf1;border-radius:16px;padding:18px 20px 12px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
                 <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px">
@@ -196,11 +212,11 @@ a:hover{color:#E85D04;}
                 <sc-for list="{{ b.rows }}" as="e" hint-placeholder-count="5">
                   <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #f4f6fa">
                     <div style="flex:none;width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;background:{{ e.badgeBg }};color:{{ e.badgeFg }}">{{ e.rank }}</div>
-                    <div style="flex:0 0 116px;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</div>
+                    <div style="flex:0 1 116px;min-width:64px;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</div>
                     <div style="flex:1 1 auto;min-width:40px;height:15px;background:#eef1f6;border-radius:8px;overflow:hidden">
                       <div style="height:100%;border-radius:8px;background:{{ e.color }};width:{{ e.w }};transition:width 1s cubic-bezier(.2,.7,.3,1)"></div>
                     </div>
-                    <div style="flex:none;width:124px;text-align:right;font-size:11.5px;color:#7a8698;font-variant-numeric:tabular-nums"><b style="color:#081C38;font-weight:600;font-size:12.5px">{{ e.value }}</b> ตัน · {{ e.pct }}</div>
+                    <div style="flex:0 0 auto;min-width:96px;text-align:right;font-size:11.5px;color:#7a8698;font-variant-numeric:tabular-nums"><b style="color:#081C38;font-weight:600;font-size:12.5px">{{ e.value }}</b> ตัน · {{ e.pct }}</div>
                   </div>
                 </sc-for>
               </div>
@@ -282,13 +298,13 @@ a:hover{color:#E85D04;}
             </div>
           </div>
 
-          <div style="border:1px solid #e7ebf1;border-radius:16px;overflow:hidden;margin-top:18px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
-            <div style="display:grid;grid-template-columns:1.1fr .9fr .9fr .8fr .8fr .8fr .8fr;background:linear-gradient(100deg,#081C38,#0F3460);color:#fff;font-size:12.5px;font-weight:500;padding:12px 16px;border-bottom:2px solid #C9971F">
+          <div style="border:1px solid #e7ebf1;border-radius:16px;overflow:auto;margin-top:18px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
+            <div style="min-width:760px;display:grid;grid-template-columns:1.1fr .9fr .9fr .8fr .8fr .8fr .8fr;background:linear-gradient(100deg,#081C38,#0F3460);color:#fff;font-size:12.5px;font-weight:500;padding:12px 16px;border-bottom:2px solid #C9971F">
               <span>วันที่</span><span style="text-align:right">น้ำหนักรวม (ตัน)</span><span style="text-align:right">เปลี่ยนแปลง</span><span style="text-align:right">Flat</span><span style="text-align:right">Pipe</span><span style="text-align:right">Section</span><span style="text-align:right">จำนวน SKU</span>
             </div>
             <div style="background:#fff">
               <sc-for list="{{ trendRows }}" as="t" hint-placeholder-count="8">
-                <div style="display:grid;grid-template-columns:1.1fr .9fr .9fr .8fr .8fr .8fr .8fr;font-size:13px;padding:10px 16px;border-bottom:1px solid #f4f6fa;background:{{ t.bg }};font-variant-numeric:tabular-nums;transition:background .16s ease" style-hover="background:#fdf7ef">
+                <div style="min-width:760px;display:grid;grid-template-columns:1.1fr .9fr .9fr .8fr .8fr .8fr .8fr;font-size:13px;padding:10px 16px;border-bottom:1px solid #f4f6fa;background:{{ t.bg }};font-variant-numeric:tabular-nums;transition:background .16s ease" style-hover="background:#fdf7ef">
                   <span>{{ t.date }}</span>
                   <span style="text-align:right;font-weight:500">{{ t.total }}</span>
                   <span style="text-align:right;font-weight:600;color:{{ t.deltaColor }}">{{ t.delta }}</span>
@@ -307,10 +323,10 @@ a:hover{color:#E85D04;}
         <div>
           <div style="background:#fff;border:1px solid #e7ebf1;border-radius:16px;padding:20px 22px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
             <div style="font-size:12.5px;color:#63707f;line-height:1.6">พิมพ์หรือวางรหัส Material ได้เลย (Copy มาจาก Excel ได้ — รองรับหลายรายการ คั่นด้วยขึ้นบรรทัดใหม่, comma หรือ tab)</div>
-            <textarea rows="4" placeholder="เช่น&#10;1BP0012-020-0058&#10;3RP01005018-0233" style="width:100%;margin-top:12px;font-family:Kanit,sans-serif;font-size:13.5px;border:1px solid #e7ebf1;border-radius:11px;padding:12px 14px;background:#f7f8fb;color:#081C38;resize:vertical;outline:none" style-focus="outline:2px solid #FA7E19;background:#fff"></textarea>
+            <textarea rows="4" value="{{ lookupText }}" onInput="{{ setLookupText }}" placeholder="เช่น&#10;1BP0012-020-0058&#10;3RP01005018-0233" style="width:100%;margin-top:12px;font-family:Kanit,sans-serif;font-size:13.5px;border:1px solid #e7ebf1;border-radius:11px;padding:12px 14px;background:#f7f8fb;color:#081C38;resize:vertical;outline:none" style-focus="outline:2px solid #FA7E19;background:#fff"></textarea>
             <div style="display:flex;gap:10px;margin-top:12px">
-              <button onClick="{{ replay }}" style="font-family:Kanit,sans-serif;font-size:13.5px;font-weight:500;border:none;border-radius:10px;padding:10px 18px;color:#fff;background:linear-gradient(95deg,#E85D04,#FA7E19);box-shadow:0 3px 12px rgba(232,93,4,.28);cursor:pointer;transition:transform .18s ease" style-hover="transform:translateY(-1px)">🔎 ค้นหา</button>
-              <button style="font-family:Kanit,sans-serif;font-size:13.5px;font-weight:500;border:1px solid #e7ebf1;border-radius:10px;padding:10px 18px;background:#fff;color:#0F3460;cursor:pointer" style-hover="background:#f0f3f8">✕ ล้าง</button>
+              <button onClick="{{ doLookup }}" style="font-family:Kanit,sans-serif;font-size:13.5px;font-weight:500;border:none;border-radius:10px;padding:10px 18px;color:#fff;background:linear-gradient(95deg,#E85D04,#FA7E19);box-shadow:0 3px 12px rgba(232,93,4,.28);cursor:pointer;transition:transform .18s ease" style-hover="transform:translateY(-1px)">🔎 ค้นหา</button>
+              <button onClick="{{ clearLookup }}" style="font-family:Kanit,sans-serif;font-size:13.5px;font-weight:500;border:1px solid #e7ebf1;border-radius:10px;padding:10px 18px;background:#fff;color:#0F3460;cursor:pointer" style-hover="background:#f0f3f8">✕ ล้าง</button>
             </div>
           </div>
 
@@ -319,7 +335,9 @@ a:hover{color:#E85D04;}
             <span style="font-size:16px;font-weight:600">ผลการค้นหา</span>
             <span style="font-size:11.5px;font-weight:300;color:#7a8698;background:#fff;border:1px solid #e7ebf1;border-radius:20px;padding:3px 11px">{{ lookupCount }}</span>
           </div>
-          <div style="background:#fff1e6;border:1px solid #FA7E19;border-radius:11px;padding:11px 15px;font-size:12.5px;color:#8a3d00;margin-bottom:14px">ไม่พบข้อมูล 1 รหัส: <b>3RP01005018-0233</b></div>
+          <sc-if value="{{ hasNotFound }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff1e6;border:1px solid #FA7E19;border-radius:11px;padding:11px 15px;font-size:12.5px;color:#8a3d00;margin-bottom:14px">ไม่พบข้อมูล: <b>{{ notFoundText }}</b></div>
+          </sc-if>
 
           <div style="border:1px solid #e7ebf1;border-radius:16px;overflow:auto;box-shadow:0 1px 2px rgba(8,28,56,.04)">
             <div style="min-width:1020px">
@@ -362,18 +380,18 @@ a:hover{color:#E85D04;}
           </div>
 
           <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#fff;border:1px solid #e7ebf1;border-radius:14px;padding:14px 16px;margin-top:16px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
-            <input type="text" placeholder="ค้นหา Material / รายละเอียด..." style="font-family:Kanit,sans-serif;font-size:13.5px;border:1px solid #e7ebf1;border-radius:10px;padding:10px 13px;background:#f7f8fb;color:#081C38;flex:1 1 240px;min-width:200px;outline:none" style-focus="outline:2px solid #FA7E19;background:#fff" />
+            <input type="text" value="{{ unmatchedSearch }}" onInput="{{ setUnmatchedSearch }}" placeholder="ค้นหา Material / รายละเอียด..." style="font-family:Kanit,sans-serif;font-size:13.5px;border:1px solid #e7ebf1;border-radius:10px;padding:10px 13px;background:#f7f8fb;color:#081C38;flex:1 1 240px;min-width:200px;outline:none" style-focus="outline:2px solid #FA7E19;background:#fff" />
             <button style="font-family:Kanit,sans-serif;font-size:13px;font-weight:500;border:none;border-radius:10px;padding:10px 16px;background:linear-gradient(100deg,#081C38,#0F3460);color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(8,28,56,.25);transition:transform .18s ease" style-hover="transform:translateY(-1px)">⬇ Export CSV</button>
-            <button style="font-family:Kanit,sans-serif;font-size:13px;font-weight:500;border:1px solid #e7ebf1;border-radius:10px;padding:10px 16px;background:#fff;color:#0F3460;cursor:pointer" style-hover="background:#f0f3f8">↻ รีเฟรช</button>
+            <button onClick="{{ reload }}" style="font-family:Kanit,sans-serif;font-size:13px;font-weight:500;border:1px solid #e7ebf1;border-radius:10px;padding:10px 16px;background:#fff;color:#0F3460;cursor:pointer" style-hover="background:#f0f3f8">↻ รีเฟรช</button>
           </div>
 
-          <div style="border:1px solid #e7ebf1;border-radius:16px;overflow:hidden;margin-top:16px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
-            <div style="display:grid;grid-template-columns:1.2fr 2fr .9fr 1fr 1.2fr;background:linear-gradient(100deg,#081C38,#0F3460);color:#fff;font-size:12.5px;font-weight:500;padding:12px 16px;border-bottom:2px solid #C9971F">
+          <div style="border:1px solid #e7ebf1;border-radius:16px;overflow:auto;margin-top:16px;box-shadow:0 1px 2px rgba(8,28,56,.04)">
+            <div style="min-width:820px;display:grid;grid-template-columns:1.2fr 2fr .9fr 1fr 1.2fr;background:linear-gradient(100deg,#081C38,#0F3460);color:#fff;font-size:12.5px;font-weight:500;padding:12px 16px;border-bottom:2px solid #C9971F">
               <span>Material</span><span>รายละเอียด (ตัวอย่าง)</span><span style="text-align:right">แบทช์/แถว</span><span style="text-align:right">น้ำหนักรวม (ตัน)</span><span>พบในโรงงาน</span>
             </div>
             <div style="background:#fff">
               <sc-for list="{{ unmatchedRows }}" as="u" hint-placeholder-count="6">
-                <div style="display:grid;grid-template-columns:1.2fr 2fr .9fr 1fr 1.2fr;font-size:13px;padding:10px 16px;border-bottom:1px solid #f4f6fa;background:{{ u.bg }};font-variant-numeric:tabular-nums;transition:background .16s ease" style-hover="background:#fdf7ef">
+                <div style="min-width:820px;display:grid;grid-template-columns:1.2fr 2fr .9fr 1fr 1.2fr;font-size:13px;padding:10px 16px;border-bottom:1px solid #f4f6fa;background:{{ u.bg }};font-variant-numeric:tabular-nums;transition:background .16s ease" style-hover="background:#fdf7ef">
                   <span style="font-weight:500">{{ u.material }}</span>
                   <span style="color:#63707f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.desc }}</span>
                   <span style="text-align:right">{{ u.rows }}</span>
@@ -388,7 +406,7 @@ a:hover{color:#E85D04;}
 
       <sc-if value="{{ isImport }}" hint-placeholder-val="{{ false }}">
         <div>
-          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
             <sc-for list="{{ importCards }}" as="c" hint-placeholder-count="3">
               <div style="background:#fff;border:1px solid #e7ebf1;border-radius:16px;padding:20px 21px;display:flex;flex-direction:column;gap:11px;box-shadow:0 1px 2px rgba(8,28,56,.04);transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s ease" style-hover="transform:translateY(-3px);box-shadow:0 14px 30px rgba(8,28,56,.1)">
                 <div style="display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600">{{ c.icon }} {{ c.title }}</div>
@@ -458,6 +476,10 @@ a:hover{color:#E85D04;}
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1000}}">
+const SB_URL = 'https://edtazbvyakoakzlsdubc.supabase.co/rest/v1/';
+const SB_KEY = 'sb_publishable_044krxYqD8DJG_zJRHtS6g_-kUJDC51';
+const HEADERS = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+
 const NAV = [
   { key:'dashboard', icon:'📊', label:'แดชบอร์ด', title:'👔 ภาพรวมคลังสินค้า', sub:'พื้นที่ทั้งหมด / ใช้งานปัจจุบัน / คงเหลือ — ทุกโรงงาน แบบเรียลไทม์' },
   { key:'trends', icon:'📈', label:'แนวโน้ม', title:'📈 แนวโน้มสต็อกรายวัน', sub:'เปรียบเทียบน้ำหนักสต็อกของแต่ละวันที่นำเข้าข้อมูล' },
@@ -466,289 +488,458 @@ const NAV = [
   { key:'import', icon:'📥', label:'นำเข้าข้อมูล', title:'📥 นำเข้าข้อมูล', sub:'สต็อก = เพิ่มต่อจากเดิม · พื้นที่คลัง/กลุ่มสินค้า = แทนที่ข้อมูลเดิมทั้งหมด' },
 ];
 
-const FAMILIES = [
-  { key:'flat', label:'Flat', icon:'📄', color:'#2a78d6', tint:'rgb(226,236,248)', tons:24180, cap:31000, desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
-  { key:'pipe', label:'Pipe', icon:'⭕', color:'#eb6834', tint:'rgb(253,233,225)', tons:15760, cap:21500, desc:'ท่อ + ตัวซี (Pipe / CH)' },
-  { key:'section', label:'Section', icon:'🏗️', color:'#1baf7a', tint:'rgb(226,246,239)', tons:11300, cap:16000, desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
+const FAMILY_DEFS = [
+  { key:'flat', label:'Flat', icon:'📄', color:'#2a78d6', tint:'rgb(226,236,248)', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
+  { key:'pipe', label:'Pipe', icon:'⭕', color:'#eb6834', tint:'rgb(253,233,225)', groupProducts:['Pipe','CH'], desc:'ท่อ + ตัวซี (Pipe / CH)' },
+  { key:'section', label:'Section', icon:'🏗️', color:'#1baf7a', tint:'rgb(226,246,239)', groupProducts:['Beam'], desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
 ];
 
-const FACTORIES = [
-  { code:'TMT-A1', cap:9800, used:10420 },
-  { code:'TMT-A2', cap:12500, used:11190 },
-  { code:'TMT-B1', cap:8600, used:7240 },
-  { code:'TMT-B2', cap:14200, used:10380 },
-  { code:'TMT-C1', cap:11400, used:7150 },
-  { code:'TMT-C2', cap:12000, used:4860 },
-];
+const LOCATION_MERGE_GROUPS = [{ display:'Fac B+E', members:['Fac B','Fac E'] }];
+function displayLoc(code) {
+  if (!code) return code;
+  const g = LOCATION_MERGE_GROUPS.find(x => x.members.indexOf(code) >= 0);
+  return g ? g.display : code;
+}
 
-const GROUP_SALE = [
-  { name:'Domestic', color:'#0F3460' },
-  { name:'Project', color:'#E85D04' },
-  { name:'Export', color:'#C9971F' },
-  { name:'Retail', color:'#1a4a8a' },
-];
+const SERIES_COLORS = ['#0F3460','#E85D04','#C9971F','#1a6fbf','#eb6834','#1baf7a','#7a8698'];
 
-const STACKS = [
-  { name:'TMT-A1', total:10420, parts:[46,27,17,10] },
-  { name:'TMT-A2', total:11190, parts:[38,31,19,12] },
-  { name:'TMT-B2', total:10380, parts:[52,18,21,9] },
-  { name:'TMT-C1', total:7150, parts:[33,36,14,17] },
-];
-
-const TRENDS = [
-  { date:'11 ส.ค.', total:48620, flat:22740, pipe:15020, section:10860, sku:3042 },
-  { date:'12 ส.ค.', total:49180, flat:23010, pipe:15140, section:11030, sku:3061 },
-  { date:'14 ส.ค.', total:47950, flat:22380, pipe:14790, section:10780, sku:3018 },
-  { date:'17 ส.ค.', total:50240, flat:23620, pipe:15410, section:11210, sku:3080 },
-  { date:'19 ส.ค.', total:51610, flat:24310, pipe:15760, section:11540, sku:3112 },
-  { date:'21 ส.ค.', total:50980, flat:23980, pipe:15620, section:11380, sku:3096 },
-  { date:'22 ส.ค.', total:52140, flat:24560, pipe:16020, section:11560, sku:3128 },
-  { date:'24 ส.ค.', total:51240, flat:24180, pipe:15760, section:11300, sku:3104 },
-];
-
-const LOOKUP = [
-  { material:'1BP0012-020-0058', desc:'PIPE BLACK 1/2" x 2.0MM x 6M', batch:'B2408A', qty:'1,240', sloc:'SL02', factory:'TMT-A1', tons:'38.42', share:'0.37%' },
-  { material:'1BP0012-020-0061', desc:'PIPE BLACK 3/4" x 2.0MM x 6M', batch:'B2408A', qty:'880', sloc:'SL02', factory:'TMT-A1', tons:'27.15', share:'0.26%' },
-  { material:'2FL0450-600-0012', desc:'FLAT BAR 45 x 6.0MM x 6M', batch:'B2407C', qty:'2,410', sloc:'SL05', factory:'TMT-B2', tons:'112.80', share:'1.09%' },
-  { material:'2PL1200-600-0008', desc:'PLATE 1200 x 6.0MM x 2400', batch:'B2408B', qty:'640', sloc:'SL07', factory:'TMT-B2', tons:'86.30', share:'0.83%' },
-  { material:'4BM1500-750-0021', desc:'H-BEAM 150 x 75 x 6M', batch:'B2406D', qty:'320', sloc:'SL11', factory:'TMT-C1', tons:'54.90', share:'0.77%' },
-  { material:'3CH1000-500-0044', desc:'C-CHANNEL 100 x 50 x 6M', batch:'B2408A', qty:'1,150', sloc:'SL09', factory:'TMT-C1', tons:'41.60', share:'0.58%' },
-];
-
-const UNMATCHED = [
-  { material:'9DM0000-000-0001', desc:'DUMMY_KG ADJUSTMENT', rows:'42', tons:'186.40', factories:'TMT-A1, TMT-B2' },
-  { material:'8SC0250-300-0004', desc:'SCRAP MIXED STEEL', rows:'28', tons:'142.10', factories:'TMT-C2' },
-  { material:'1BP0019-025-0117', desc:'PIPE BLACK 3/4" x 2.5MM x 6M', rows:'11', tons:'64.80', factories:'TMT-A2' },
-  { material:'2FL0300-450-0090', desc:'FLAT BAR 30 x 4.5MM x 6M', rows:'9', tons:'38.60', factories:'TMT-B1, TMT-B2' },
-  { material:'4BM2000-100-0007', desc:'H-BEAM 200 x 100 x 6M', rows:'6', tons:'27.30', factories:'TMT-C1' },
-  { material:'3CH0750-400-0018', desc:'C-CHANNEL 75 x 40 x 6M', rows:'4', tons:'15.90', factories:'TMT-A1' },
-];
-
-const IMPORT_CARDS = [
-  { icon:'📦', title:'รายการสินค้า / สต็อก', desc:'ไฟล์ SAP Export แบบหน้าเว็บ (.mhtml / .htm) — คอลัมน์: Material, Material Description, Batch, Unrestricted, Storage Location, น้ำหนักรวม', warn:true, warnText:'📌 นำเข้าแบบ "วางเติม" — ข้อมูลเดิมจะไม่ถูกลบ ระบบบันทึกวันที่นำเข้าไว้ทุกแถว ลบย้อนหลังตามวันที่ได้', dzIcon:'📄', dzText:'คลิกหรือลากไฟล์ .mhtml/.htm มาวางที่นี่', primary:'➕ เพิ่มข้อมูลสต็อก', last:'นำเข้าล่าสุด 24 ส.ค. 2569 08:12 · 18,432 แถว' },
-  { icon:'🏭', title:'พื้นที่คลัง (Area)', desc:'ไฟล์ Excel (.xlsx) — คอลัมน์: Location, พื้นที่จัดเก็บ ตรม. 100%, พื้นที่จัดเก็บ Tons. 100%, พื้นที่จัดเก็บจริง Tons.', warn:false, warnText:'', dzIcon:'📊', dzText:'คลิกหรือลากไฟล์ .xlsx มาวางที่นี่', primary:'นำเข้าไฟล์พื้นที่คลัง', last:'นำเข้าล่าสุด 12 ส.ค. 2569 17:40 · 12 แถว' },
-  { icon:'🏷️', title:'กลุ่มสินค้า (Group)', desc:'ไฟล์ Excel (.xlsx) — คอลัมน์: Mat.Code, Description, Group Sale, Group Product, Product Type, Sloc.', warn:false, warnText:'', dzIcon:'📊', dzText:'คลิกหรือลากไฟล์ .xlsx มาวางที่นี่', primary:'นำเข้าไฟล์กลุ่มสินค้า', last:'นำเข้าล่าสุด 19 ส.ค. 2569 09:26 · 3,486 แถว' },
-];
-
-const IMPORT_DATES = [
-  { date:'24 ส.ค. 2569', rows:'18,432', tons:'51,240.68' },
-  { date:'22 ส.ค. 2569', rows:'18,308', tons:'52,140.22' },
-  { date:'21 ส.ค. 2569', rows:'18,214', tons:'50,980.14' },
-  { date:'19 ส.ค. 2569', rows:'18,096', tons:'51,610.90' },
-  { date:'17 ส.ค. 2569', rows:'17,940', tons:'50,240.36' },
-];
-
-const HISTORY = [
-  { when:'24 ส.ค. 2569 08:12', kind:'สต็อก', file:'WH2_STOCK_20260824.mhtml', rows:'18,432' },
-  { when:'22 ส.ค. 2569 08:05', kind:'สต็อก', file:'WH2_STOCK_20260822.mhtml', rows:'18,308' },
-  { when:'19 ส.ค. 2569 09:26', kind:'กลุ่มสินค้า', file:'GroupMaster_Aug2026.xlsx', rows:'3,486' },
-  { when:'19 ส.ค. 2569 08:03', kind:'สต็อก', file:'WH2_STOCK_20260819.mhtml', rows:'18,096' },
-  { when:'12 ส.ค. 2569 17:40', kind:'พื้นที่คลัง', file:'Area_Capacity_2026.xlsx', rows:'12' },
+const IMPORT_CARD_COPY = [
+  { icon:'📦', title:'รายการสินค้า / สต็อก', type:'stock', desc:'ไฟล์ SAP Export แบบหน้าเว็บ (.mhtml / .htm) — คอลัมน์: Material, Material Description, Batch, Unrestricted, Storage Location, น้ำหนักรวม', warn:true, warnText:'📌 นำเข้าแบบ "วางเติม" — ข้อมูลเดิมจะไม่ถูกลบ ระบบบันทึกวันที่นำเข้าไว้ทุกแถว ลบย้อนหลังตามวันที่ได้', dzIcon:'📄', dzText:'คลิกหรือลากไฟล์ .mhtml/.htm มาวางที่นี่', primary:'➕ เพิ่มข้อมูลสต็อก' },
+  { icon:'🏭', title:'พื้นที่คลัง (Area)', type:'locations', desc:'ไฟล์ Excel (.xlsx) — คอลัมน์: Location, พื้นที่จัดเก็บ ตรม. 100%, พื้นที่จัดเก็บ Tons. 100%, พื้นที่จัดเก็บจริง Tons.', warn:false, warnText:'', dzIcon:'📊', dzText:'คลิกหรือลากไฟล์ .xlsx มาวางที่นี่', primary:'นำเข้าไฟล์พื้นที่คลัง' },
+  { icon:'🏷️', title:'กลุ่มสินค้า (Group)', type:'product_groups', desc:'ไฟล์ Excel (.xlsx) — คอลัมน์: Mat.Code, Description, Group Sale, Group Product, Product Type, Sloc.', warn:false, warnText:'', dzIcon:'📊', dzText:'คลิกหรือลากไฟล์ .xlsx มาวางที่นี่', primary:'นำเข้าไฟล์กลุ่มสินค้า' },
 ];
 
 function fmt(n, d) {
   if (n === null || n === undefined || isNaN(n)) return '-';
   return Number(n).toLocaleString('en-US', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
 }
+function dateKeyOf(iso) {
+  if (!iso) return 'ไม่ระบุ';
+  const d = new Date(iso);
+  if (isNaN(d)) return 'ไม่ระบุ';
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + m + '-' + day;
+}
+function fmtDateKey(key) {
+  if (!key || key === 'ไม่ระบุ') return 'ไม่ระบุ';
+  const p = key.split('-').map(Number);
+  return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+}
+function fmtDateTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return isNaN(d) ? '-' : d.toLocaleString('th-TH', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+async function getRows(path) {
+  const res = await fetch(SB_URL + path, { headers: HEADERS });
+  if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + (await res.text()).slice(0, 160));
+  return res.json();
+}
+async function getAll(view, select) {
+  const PAGE = 1000;
+  let out = [], from = 0;
+  for (;;) {
+    const res = await fetch(SB_URL + view + '?select=' + encodeURIComponent(select), {
+      headers: Object.assign({}, HEADERS, { Range: from + '-' + (from + PAGE - 1) }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + (await res.text()).slice(0, 160));
+    const page = await res.json();
+    out = out.concat(page);
+    if (page.length < PAGE) break;
+    from += PAGE;
+  }
+  return out;
+}
 
 class Component extends DCLogic {
-  state = { route: 'dashboard', loading: true, grown: false, p: 0, range: 'all', flip: false };
+  state = {
+    route:'dashboard', flip:false, loading:true, grown:false, p:0, error:'',
+    stock:[], util:[], batches:[],
+    dateKey:'', range:'all', search:'', gs:'', gp:'', pt:'', loc:'',
+    lookupText:'', lookupCodes:[], unmatchedSearch:'',
+  };
 
-  componentDidMount() { this.start(); }
+  componentDidMount() { this.load(); }
   componentWillUnmount() { clearTimeout(this._t); cancelAnimationFrame(this._raf); }
 
-  start() {
-    clearTimeout(this._t);
+  async load() {
     cancelAnimationFrame(this._raf);
-    this.setState({ loading: true, grown: false, p: 0 });
-    this._t = setTimeout(() => {
-      this.setState({ loading: false });
-      requestAnimationFrame(() => this.setState({ grown: true }));
-      const t0 = performance.now();
-      const step = (now) => {
-        const raw = Math.min(1, (now - t0) / 1100);
-        const p = 1 - Math.pow(1 - raw, 3);
-        this.setState({ p });
-        if (raw < 1) this._raf = requestAnimationFrame(step);
-      };
-      this._raf = requestAnimationFrame(step);
-    }, 620);
+    this.setState({ loading:true, grown:false, p:0, error:'' });
+    try {
+      const [stock, util, batches] = await Promise.all([
+        getAll('v_stock_enriched', 'material,material_description,batch,unrestricted_qty,storage_location,location_code,total_weight,group_sale,group_product,product_type,imported_at'),
+        getRows('v_location_utilization?select=*&order=location_code'),
+        getRows('import_batches?select=*&order=imported_at.desc&limit=30'),
+      ]);
+      const keys = Array.from(new Set(stock.map(r => dateKeyOf(r.imported_at)))).filter(k => k !== 'ไม่ระบุ').sort((a, b) => b.localeCompare(a));
+      this.setState({ stock, util, batches, dateKey: keys[0] || '', loading:false }, () => this.animate());
+    } catch (e) {
+      this.setState({ loading:false, error: String(e.message || e) });
+    }
+  }
+
+  animate() {
+    requestAnimationFrame(() => this.setState({ grown:true }));
+    const t0 = performance.now();
+    const step = (now) => {
+      const raw = Math.min(1, (now - t0) / 1100);
+      this.setState({ p: 1 - Math.pow(1 - raw, 3) });
+      if (raw < 1) this._raf = requestAnimationFrame(step);
+    };
+    this._raf = requestAnimationFrame(step);
+  }
+
+  replay() {
+    cancelAnimationFrame(this._raf);
+    this.setState({ grown:false, p:0 }, () => this.animate());
   }
 
   go(key) {
     if (key === this.state.route) return;
-    this.setState({ route: key, flip: !this.state.flip });
-    this.start();
+    this.setState({ route:key, flip:!this.state.flip });
+    this.replay();
   }
 
   renderVals() {
-    const { route, loading, grown, p } = this.state;
-    const nav = NAV.find(n => n.key === route) || NAV[0];
-    const totalCap = FACTORIES.reduce((s, f) => s + f.cap, 0);
-    const totalUsed = FACTORIES.reduce((s, f) => s + f.used, 0);
-    const remain = totalCap - totalUsed;
-    const usePct = totalUsed / totalCap * 100;
-    const grow = (pct) => (grown ? Math.max(0, Math.min(100, pct)) : 0).toFixed(2) + '%';
-    const tierOf = (pct) => pct > 100
-      ? { label: '⛔ เกินพิกัด', bg: 'rgba(232,93,4,.12)', fg: '#c14a00', color: 'linear-gradient(90deg,#c14a00,#E85D04)' }
-      : pct > 80
-        ? { label: '⚠️ ใกล้เต็ม', bg: 'rgba(201,151,31,.16)', fg: '#8a6300', color: 'linear-gradient(90deg,#C9971F,#E4B84A)' }
-        : { label: '✅ ปกติ', bg: 'rgba(25,135,84,.11)', fg: '#198754', color: 'linear-gradient(90deg,#0F3460,#1a6fbf)' };
+    const S = this.state;
+    const nav = NAV.find(n => n.key === S.route) || NAV[0];
+    const grow = (pct) => (S.grown ? Math.max(0, Math.min(100, pct || 0)) : 0).toFixed(2) + '%';
+    const p = S.p;
 
-    const famTotal = FAMILIES.reduce((s, f) => s + f.tons, 0);
-    const maxTrend = Math.max.apply(null, TRENDS.map(d => d.total));
-    const trendSlice = this.state.range === '7' ? TRENDS.slice(-4) : TRENDS;
-    const lastTwo = TRENDS.slice(-2);
-    const delta = lastTwo[1].total - lastTwo[0].total;
+    const dateKeys = Array.from(new Set(S.stock.map(r => dateKeyOf(r.imported_at)))).filter(k => k !== 'ไม่ระบุ').sort((a, b) => b.localeCompare(a));
+    const scoped = S.dateKey ? S.stock.filter(r => dateKeyOf(r.imported_at) === S.dateKey) : S.stock;
+    const tons = (rows) => rows.reduce((s, r) => s + (Number(r.total_weight) || 0), 0) / 1000;
+
+    // ความจุต่อโรงงาน (รวมกลุ่มที่ผู้ใช้ยืนยันว่าเป็นพื้นที่เดียวกัน)
+    const capByLoc = {};
+    S.util.forEach(r => {
+      const k = displayLoc(r.location_code);
+      capByLoc[k] = (capByLoc[k] || 0) + (Number(r.actual_capacity_tons) || 0);
+    });
+    const usedByLoc = {};
+    scoped.forEach(r => {
+      const k = displayLoc(r.location_code);
+      if (!k) return;
+      usedByLoc[k] = (usedByLoc[k] || 0) + (Number(r.total_weight) || 0) / 1000;
+    });
+    const locRows = Object.keys(capByLoc).map(k => ({ code:k, cap:capByLoc[k], used:usedByLoc[k] || 0 }));
+    const totalCap = locRows.reduce((s, r) => s + r.cap, 0);
+    const totalUsed = locRows.reduce((s, r) => s + r.used, 0);
+    const usePct = totalCap > 0 ? totalUsed / totalCap * 100 : 0;
+    const tierOf = (pct) => pct > 100
+      ? { label:'⛔ เกินพิกัด', bg:'rgba(232,93,4,.12)', fg:'#c14a00', color:'linear-gradient(90deg,#c14a00,#E85D04)' }
+      : pct > 80
+        ? { label:'⚠️ ใกล้เต็ม', bg:'rgba(201,151,31,.16)', fg:'#8a6300', color:'linear-gradient(90deg,#C9971F,#E4B84A)' }
+        : { label:'✅ ปกติ', bg:'rgba(25,135,84,.11)', fg:'#198754', color:'linear-gradient(90deg,#0F3460,#1a6fbf)' };
+    const counts = { normal:0, warn:0, critical:0 };
+    locRows.forEach(r => {
+      const pct = r.cap > 0 ? r.used / r.cap * 100 : 0;
+      counts[pct > 100 ? 'critical' : pct > 80 ? 'warn' : 'normal']++;
+    });
+
+    // ตัวกรอง
+    const uniq = (field) => Array.from(new Set(scoped.map(r => r[field]).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'th'));
+    const q = S.search.trim().toLowerCase();
+    const filtered = scoped.filter(r => {
+      if (S.gs && r.group_sale !== S.gs) return false;
+      if (S.gp && r.group_product !== S.gp) return false;
+      if (S.pt && r.product_type !== S.pt) return false;
+      if (S.loc && displayLoc(r.location_code) !== S.loc) return false;
+      if (q) {
+        const hay = ((r.material || '') + ' ' + (r.material_description || '') + ' ' + (r.batch || '')).toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+    const filteredTons = tons(filtered);
+
+    // กลุ่มสินค้าหลัก
+    const famTotalWeight = scoped.reduce((s, r) => s + (Number(r.total_weight) || 0), 0);
+    const families = FAMILY_DEFS.map(fam => {
+      const rows = scoped.filter(r => fam.groupProducts.indexOf(r.group_product) >= 0);
+      const t = tons(rows);
+      const locs = Array.from(new Set(rows.map(r => displayLoc(r.location_code)).filter(Boolean)));
+      const cap = locs.reduce((s, l) => s + (capByLoc[l] || 0), 0);
+      const skus = new Set(rows.map(r => r.material)).size;
+      return {
+        label:fam.label, icon:fam.icon, color:fam.color, tint:fam.tint, desc:fam.desc,
+        value: fmt(t * p, 2) + ' ตัน',
+        sub: fmt(skus) + ' SKU · เก็บได้ ' + fmt(cap, 1) + ' ตัน · ' + (cap - t >= 0 ? 'เหลือ ' : 'เกินพิกัด ') + fmt(Math.abs(cap - t), 1) + ' ตัน',
+        pctText: (famTotalWeight > 0 ? (rows.reduce((s, r) => s + (Number(r.total_weight) || 0), 0) / famTotalWeight * 100) : 0).toFixed(1) + '%',
+        w: grow(cap > 0 ? t / cap * 100 : 0),
+        tons: t,
+      };
+    });
+
+    // อันดับ
+    const rankOf = (map, cap) => {
+      const entries = Object.keys(map).map(k => ({ name:k, tons:map[k] })).sort((a, b) => b.tons - a.tons).slice(0, cap);
+      const max = entries.length ? entries[0].tons : 0;
+      const sum = Object.keys(map).reduce((s, k) => s + map[k], 0);
+      return entries.map((e, i) => ({
+        rank:i + 1, name:e.name, value: fmt(e.tons * p, 0),
+        pct: (sum > 0 ? e.tons / sum * 100 : 0).toFixed(1) + '%',
+        w: grow(max > 0 ? e.tons / max * 100 : 0),
+        color: i === 0 ? 'linear-gradient(90deg,#E85D04,#FA7E19)' : 'linear-gradient(90deg,#0F3460,#1a6fbf)',
+        badgeBg: i === 0 ? '#E85D04' : i === 1 ? '#0F3460' : i === 2 ? '#e8edf5' : '#eef1f6',
+        badgeFg: i < 2 ? '#fff' : '#63707f',
+      }));
+    };
+    const sumBy = (rows, keyFn) => {
+      const m = {};
+      rows.forEach(r => {
+        const k = keyFn(r) || 'ไม่ระบุ';
+        m[k] = (m[k] || 0) + (Number(r.total_weight) || 0) / 1000;
+      });
+      return m;
+    };
+    const byLoc = sumBy(filtered, r => displayLoc(r.location_code));
+    const byGs = sumBy(filtered, r => r.group_sale);
+    const byPt = sumBy(filtered, r => r.product_type);
+
+    // สัดส่วน Group Sale ต่อโรงงาน (4 โรงงานที่มีน้ำหนักมากสุด)
+    const gsOrder = Object.keys(byGs).sort((a, b) => byGs[b] - byGs[a]).slice(0, 6);
+    const gsColor = {};
+    gsOrder.forEach((n, i) => { gsColor[n] = SERIES_COLORS[i % SERIES_COLORS.length]; });
+    const topLocs = Object.keys(byLoc).sort((a, b) => byLoc[b] - byLoc[a]).slice(0, 4);
+    const stacks = topLocs.map(locName => {
+      const rows = filtered.filter(r => displayLoc(r.location_code) === locName);
+      const total = tons(rows);
+      const m = sumBy(rows, r => r.group_sale);
+      const segs = Object.keys(m).sort((a, b) => m[b] - m[a]).slice(0, 6).map(name => {
+        const pct = total > 0 ? m[name] / total * 100 : 0;
+        return { color: gsColor[name] || '#7a8698', w: grow(pct), label: pct >= 12 ? name + ' ' + pct.toFixed(0) + '%' : '' };
+      });
+      return { name:locName, total: fmt(total, 0), segs };
+    });
+
+    // แนวโน้มรายวัน
+    const dayMap = {};
+    S.stock.forEach(r => {
+      const k = dateKeyOf(r.imported_at);
+      if (k === 'ไม่ระบุ') return;
+      if (!dayMap[k]) dayMap[k] = { total:0, flat:0, pipe:0, section:0, skus:new Set() };
+      const w = (Number(r.total_weight) || 0) / 1000;
+      dayMap[k].total += w;
+      FAMILY_DEFS.forEach(f => { if (f.groupProducts.indexOf(r.group_product) >= 0) dayMap[k][f.key] += w; });
+      dayMap[k].skus.add(r.material);
+    });
+    const daily = Object.keys(dayMap).sort().map(k => ({
+      key:k, label: fmtDateKey(k).replace(/ \d{4}$/, ''),
+      total: dayMap[k].total, flat: dayMap[k].flat, pipe: dayMap[k].pipe, section: dayMap[k].section, sku: dayMap[k].skus.size,
+    }));
+    const limit = S.range === '7' ? 7 : S.range === '30' ? 30 : daily.length;
+    const slice = daily.slice(-limit);
+    const maxTrend = slice.reduce((m, d) => Math.max(m, d.total), 0);
+    const delta = daily.length > 1 ? daily[daily.length - 1].total - daily[daily.length - 2].total : 0;
+
+    // ค้นหา Material
+    const codes = S.lookupCodes;
+    const codeSet = new Set(codes.map(c => c.toUpperCase()));
+    const matched = codes.length ? S.stock.filter(r => codeSet.has(String(r.material || '').toUpperCase())) : [];
+    const foundSet = new Set(matched.map(r => String(r.material || '').toUpperCase()));
+    const notFound = codes.filter(c => !foundSet.has(c.toUpperCase()));
+
+    // Code ที่ยังไม่จับคู่กลุ่มสินค้า
+    const unmatchedRaw = S.stock.filter(r => !r.group_sale);
+    const byMat = {};
+    unmatchedRaw.forEach(r => {
+      const k = r.material || 'ไม่ทราบ';
+      if (!byMat[k]) byMat[k] = { material:k, desc:r.material_description || '', rows:0, weight:0, locs:new Set() };
+      byMat[k].rows++;
+      byMat[k].weight += Number(r.total_weight) || 0;
+      if (r.location_code) byMat[k].locs.add(displayLoc(r.location_code));
+      if (!byMat[k].desc && r.material_description) byMat[k].desc = r.material_description;
+    });
+    const uq = S.unmatchedSearch.trim().toLowerCase();
+    const unmatchedList = Object.keys(byMat).map(k => byMat[k])
+      .filter(u => !uq || (u.material + ' ' + u.desc).toLowerCase().indexOf(uq) >= 0)
+      .sort((a, b) => b.weight - a.weight);
+    const allWeight = S.stock.reduce((s, r) => s + (Number(r.total_weight) || 0), 0);
+    const unmatchedWeight = unmatchedRaw.reduce((s, r) => s + (Number(r.total_weight) || 0), 0);
+    const unmatchedShare = allWeight > 0 ? unmatchedWeight / allWeight * 100 : 0;
+
+    // นำเข้าข้อมูล
+    const importByDate = {};
+    S.stock.forEach(r => {
+      const k = dateKeyOf(r.imported_at);
+      if (!importByDate[k]) importByDate[k] = { rows:0, weight:0 };
+      importByDate[k].rows++;
+      importByDate[k].weight += Number(r.total_weight) || 0;
+    });
+    const lastByType = {};
+    S.batches.forEach(b => { if (!lastByType[b.file_type]) lastByType[b.file_type] = b; });
+
+    const selectEl = (fn) => (e) => this.setState(fn(e.target.value));
 
     return {
       navItems: NAV.map(n => ({
-        href: '#/' + n.key, icon: n.icon, label: n.label, go: (e) => { e.preventDefault(); this.go(n.key); },
-        fg: n.key === route ? '#fff' : '#b6c6dd',
-        bg: n.key === route ? 'linear-gradient(95deg,#E85D04,#FA7E19)' : 'transparent',
-        shadow: n.key === route ? '0 4px 14px rgba(232,93,4,.35)' : 'none',
-        dot: n.key === route ? 'rgba(255,255,255,.75)' : 'transparent',
+        href:'#/' + n.key, icon:n.icon, label:n.label, go:(e) => { e.preventDefault(); this.go(n.key); },
+        fg: n.key === S.route ? '#fff' : '#b6c6dd',
+        bg: n.key === S.route ? 'linear-gradient(95deg,#E85D04,#FA7E19)' : 'transparent',
+        shadow: n.key === S.route ? '0 4px 14px rgba(232,93,4,.35)' : 'none',
+        dot: n.key === S.route ? 'rgba(255,255,255,.75)' : 'transparent',
       })),
-      pageTitle: nav.title, pageSub: nav.sub,
-      activeDate: '24 ส.ค. 2569',
-      lastImport: '24 ส.ค. 2569 08:12 · 18,432 แถว',
-      fadeAnim: this.state.flip ? 'fadeinB' : 'fadeinA',
-      loading, ready: !loading,
-      replay: () => this.start(),
-      isDashboard: route === 'dashboard', isTrends: route === 'trends', isLookup: route === 'lookup',
-      isUnmatched: route === 'unmatched', isImport: route === 'import',
+      pageTitle:nav.title, pageSub:nav.sub,
+      lastImport: S.loading ? 'กำลังโหลด...' : (lastByType.stock ? fmtDateTime(lastByType.stock.imported_at) + ' · ' + fmt(lastByType.stock.row_count) + ' แถว' : 'ยังไม่เคยนำเข้าข้อมูล'),
+      connDot: S.error ? '#dc3545' : '#2fbf83',
+      connText: S.error ? 'เชื่อมต่อ Supabase ไม่สำเร็จ' : S.loading ? 'กำลังโหลดข้อมูลจริง...' : 'ข้อมูลจริงจาก Supabase · ' + fmt(S.stock.length) + ' แถว',
+      fadeAnim: S.flip ? 'fadeinB' : 'fadeinA',
+      loading: S.loading, ready: !S.loading,
+      hasError: !!S.error, errorText: S.error,
+      reload: () => this.load(),
+
+      dateOptions: dateKeys.length ? dateKeys.map((k, i) => ({ key:k, label: fmtDateKey(k) + (i === 0 ? ' (ล่าสุด)' : '') })) : [{ key:'', label:'ไม่มีข้อมูลวันที่นำเข้า' }],
+      selectedDate: S.dateKey,
+      selectedDateLabel: fmtDateKey(S.dateKey),
+      isHistorical: !!S.dateKey && dateKeys.length > 0 && S.dateKey !== dateKeys[0],
+      pickDate: (e) => { this.setState({ dateKey: e.target.value }); this.replay(); },
+
+      isDashboard: S.route === 'dashboard', isTrends: S.route === 'trends', isLookup: S.route === 'lookup',
+      isUnmatched: S.route === 'unmatched', isImport: S.route === 'import',
 
       heroCards: [
-        { label: 'พื้นที่ทั้งหมด (ตัน)', value: fmt(totalCap * p), sub: 'รวมทุกโรงงาน/พื้นที่จัดเก็บ', accent: 'linear-gradient(90deg,#0F3460,#1a4a8a)' },
-        { label: 'ใช้งานปัจจุบัน (ตัน)', value: fmt(totalUsed * p), sub: 'ณ วันที่นำเข้า 24 ส.ค. 2569', accent: 'linear-gradient(90deg,#E85D04,#FA7E19)' },
-        { label: 'พื้นที่คงเหลือ (ตัน)', value: fmt(remain * p), sub: 'คิดเป็น ' + (100 - usePct).toFixed(1) + '% ของพื้นที่ทั้งหมด', accent: 'linear-gradient(90deg,#C9971F,#E4B84A)' },
-        { label: 'สถานะโรงงาน', value: '1 ⛔ · 1 ⚠️ · 4 ✅', sub: 'เกินพิกัด · ใกล้เต็ม · ปกติ', accent: 'linear-gradient(90deg,#0F3460,#E85D04)' },
+        { label:'พื้นที่ทั้งหมด (ตัน)', value: fmt(totalCap * p, 1), sub:'รวมทุกโรงงาน/พื้นที่จัดเก็บ', accent:'linear-gradient(90deg,#0F3460,#1a4a8a)' },
+        { label:'ใช้งานปัจจุบัน (ตัน)', value: fmt(totalUsed * p, 1), sub:'ณ วันที่นำเข้า ' + fmtDateKey(S.dateKey), accent:'linear-gradient(90deg,#E85D04,#FA7E19)' },
+        { label:'พื้นที่คงเหลือ (ตัน)', value: fmt((totalCap - totalUsed) * p, 1), sub:'คิดเป็น ' + (100 - usePct).toFixed(1) + '% ของพื้นที่ทั้งหมด', accent:'linear-gradient(90deg,#C9971F,#E4B84A)' },
+        { label:'สถานะโรงงาน', value: counts.critical + ' ⛔ · ' + counts.warn + ' ⚠️ · ' + counts.normal + ' ✅', sub:'เกินพิกัด · ใกล้เต็ม · ปกติ', accent:'linear-gradient(90deg,#0F3460,#E85D04)' },
       ],
-      gaugeOffset: 440 - 440 * (grown ? usePct / 100 : 0),
+      gaugeOffset: 440 - 440 * (S.grown ? Math.min(1, usePct / 100) : 0),
+      gaugeColor: usePct > 100 ? '#c14a00' : usePct > 80 ? '#C9971F' : '#E85D04',
       gaugePct: (usePct * p).toFixed(1) + '%',
 
-      families: FAMILIES.map(f => ({
-        label: f.label, icon: f.icon, color: f.color, tint: f.tint, desc: f.desc,
-        value: fmt(f.tons * p, 2) + ' ตัน',
-        sub: 'ความจุกลุ่มนี้ ' + fmt(f.cap) + ' ตัน · เหลือ ' + fmt(f.cap - f.tons) + ' ตัน',
-        pctText: (f.tons / famTotal * 100).toFixed(1) + '%',
-        w: grow(f.tons / f.cap * 100),
-      })),
+      families,
 
-      factories: FACTORIES.slice().sort((a, b) => (b.used / b.cap) - (a.used / a.cap)).map(f => {
-        const pct = f.used / f.cap * 100;
+      factories: locRows.slice().sort((a, b) => (b.cap > 0 ? b.used / b.cap : 0) - (a.cap > 0 ? a.used / a.cap : 0)).map(f => {
+        const pct = f.cap > 0 ? f.used / f.cap * 100 : 0;
         const t = tierOf(pct);
         const rem = f.cap - f.used;
         return {
-          code: f.code, used: fmt(f.used * p), cap: fmt(f.cap), color: t.color, w: grow(pct),
+          code:f.code, used: fmt(f.used * p, 1), cap: fmt(f.cap, 1), color:t.color, w: grow(pct),
           pctText: (pct * p).toFixed(1) + '%',
-          shareText: 'ของสต็อกรวม ' + (f.used / totalUsed * 100).toFixed(1) + '%',
-          remainText: rem >= 0 ? 'เหลือ ' + fmt(rem) + ' ตัน' : 'เกินพิกัด ' + fmt(-rem) + ' ตัน',
+          shareText: 'ของสต็อกรวม ' + (totalUsed > 0 ? f.used / totalUsed * 100 : 0).toFixed(1) + '%',
+          remainText: rem >= 0 ? 'เหลือ ' + fmt(rem, 1) + ' ตัน' : 'เกินพิกัด ' + fmt(-rem, 1) + ' ตัน',
           remainColor: rem >= 0 ? '#198754' : '#dc3545',
-          tierLabel: t.label, tierBg: t.bg, tierFg: t.fg,
+          tierLabel:t.label, tierBg:t.bg, tierFg:t.fg,
         };
       }),
 
       kpis: [
-        { label: 'รายการทั้งหมด', value: fmt(18432 * p), sub: 'Material × Batch × Storage' },
-        { label: 'จำนวน SKU', value: fmt(3104 * p), sub: 'รหัสไม่ซ้ำ' },
-        { label: 'น้ำหนักรวม (ตัน)', value: fmt(totalUsed * p, 2), sub: 'ตามตัวกรอง' },
-        { label: 'จำนวนคงเหลือรวม', value: fmt(214880 * p), sub: 'Unrestricted' },
-        { label: 'โรงงาน/พื้นที่ใช้งาน', value: fmt(12 * p), sub: 'มีสต็อกอยู่จริง' },
+        { label:'รายการทั้งหมด', value: fmt(filtered.length * p), sub:'Material × Batch × Storage' },
+        { label:'จำนวน SKU', value: fmt(new Set(filtered.map(r => r.material)).size * p), sub:'รหัสไม่ซ้ำ' },
+        { label:'น้ำหนักรวม (ตัน)', value: fmt(filteredTons * p, 2), sub:'ตามตัวกรอง' },
+        { label:'จำนวนคงเหลือรวม', value: fmt(filtered.reduce((s, r) => s + (Number(r.unrestricted_qty) || 0), 0) * p), sub:'Unrestricted' },
+        { label:'โรงงาน/พื้นที่ใช้งาน', value: fmt(new Set(filtered.map(r => displayLoc(r.location_code)).filter(Boolean)).size * p), sub:'มีสต็อกอยู่จริง' },
       ],
+      search: S.search,
+      setSearch: (e) => this.setState({ search: e.target.value }),
       filterChips: [
-        { label: 'Group Sale (2)', bg: '#fff1e6', fg: '#c14a00', border: '#f7c9a4' },
-        { label: 'Group Product', bg: '#f7f8fb', fg: '#0F3460', border: '#e7ebf1' },
-        { label: 'Product Type', bg: '#f7f8fb', fg: '#0F3460', border: '#e7ebf1' },
-        { label: 'โรงงาน', bg: '#f7f8fb', fg: '#0F3460', border: '#e7ebf1' },
-      ],
+        { key:'gs', label:'Group Sale', field:'group_sale' },
+        { key:'gp', label:'Group Product', field:'group_product' },
+        { key:'pt', label:'Product Type', field:'product_type' },
+        { key:'loc', label:'โรงงาน', field:'__loc' },
+      ].map(c => {
+        const opts = c.field === '__loc'
+          ? Array.from(new Set(scoped.map(r => displayLoc(r.location_code)).filter(Boolean))).sort()
+          : uniq(c.field);
+        const active = !!S[c.key];
+        return {
+          value: S[c.key], onChange: selectEl(v => { const o = {}; o[c.key] = v; return o; }),
+          bg: active ? '#fff1e6' : '#f7f8fb', fg: active ? '#c14a00' : '#0F3460', border: active ? '#f7c9a4' : '#e7ebf1',
+          options: [{ value:'', label: c.label + ' (ทั้งหมด)' }].concat(opts.map(o => ({ value:o, label:o }))),
+        };
+      }),
+      clearFilters: () => this.setState({ search:'', gs:'', gp:'', pt:'', loc:'' }),
 
       rankBlocks: [
-        {
-          title: '🏭 สรุปตามโรงงาน', note: 'อันดับตามน้ำหนัก',
-          rows: FACTORIES.slice().sort((a, b) => b.used - a.used).map((f, i) => ({
-            rank: i + 1, name: f.code, value: fmt(f.used * p), pct: (f.used / totalUsed * 100).toFixed(1) + '%',
-            w: grow(f.used / FACTORIES[1].cap * 100),
-            color: i === 0 ? 'linear-gradient(90deg,#E85D04,#FA7E19)' : 'linear-gradient(90deg,#0F3460,#1a6fbf)',
-            badgeBg: i === 0 ? '#E85D04' : i === 1 ? '#0F3460' : i === 2 ? '#e8edf5' : '#eef1f6',
-            badgeFg: i < 2 ? '#fff' : '#63707f',
-          })),
-        },
-        {
-          title: '🏷️ สรุปตาม Group Sale', note: 'อันดับตามน้ำหนัก',
-          rows: [
-            { name: 'Domestic', tons: 22140 }, { name: 'Project', tons: 13860 },
-            { name: 'Export', tons: 9240 }, { name: 'Retail', tons: 6000 },
-          ].map((g, i) => ({
-            rank: i + 1, name: g.name, value: fmt(g.tons * p), pct: (g.tons / totalUsed * 100).toFixed(1) + '%',
-            w: grow(g.tons / 22140 * 100),
-            color: i === 0 ? 'linear-gradient(90deg,#E85D04,#FA7E19)' : 'linear-gradient(90deg,#0F3460,#1a6fbf)',
-            badgeBg: i === 0 ? '#E85D04' : i === 1 ? '#0F3460' : i === 2 ? '#e8edf5' : '#eef1f6',
-            badgeFg: i < 2 ? '#fff' : '#63707f',
-          })),
-        },
-      ],
+        { title:'🏭 สรุปตามโรงงาน', note:'อันดับตามน้ำหนัก', rows: rankOf(byLoc, 8) },
+        { title:'🏷️ สรุปตาม Group Sale', note:'อันดับตามน้ำหนัก', rows: rankOf(byGs, 8) },
+        { title:'📦 สรุปตาม Product Type', note:'อันดับตามน้ำหนัก', rows: rankOf(byPt, 8) },
+      ].slice(0, 2),
+      stacks,
+      legend: gsOrder.map(n => ({ name:n, color: gsColor[n] })),
 
-      stacks: STACKS.map(s => ({
-        name: s.name, total: fmt(s.total, 0),
-        segs: s.parts.map((pct, i) => ({
-          color: GROUP_SALE[i].color, w: grow(pct),
-          label: pct >= 12 ? GROUP_SALE[i].name + ' ' + pct + '%' : '',
+      ranges: [{ key:'7', label:'7 วันล่าสุด' }, { key:'30', label:'30 วันล่าสุด' }, { key:'all', label:'ทั้งหมด' }].map(r => ({
+        label:r.label, go: () => { this.setState({ range:r.key }); this.replay(); },
+        bg: S.range === r.key ? 'linear-gradient(100deg,#081C38,#0F3460)' : '#fff',
+        fg: S.range === r.key ? '#fff' : '#0F3460',
+        border: S.range === r.key ? 'transparent' : '#e7ebf1',
+        shadow: S.range === r.key ? '0 3px 10px rgba(8,28,56,.22)' : 'none',
+      })),
+      trendDeltaText: daily.length > 1 ? (delta >= 0 ? '▲ +' : '▼ ') + fmt(delta, 0) + ' ตัน เทียบวันก่อนหน้า' : 'มีข้อมูลวันเดียว',
+      trendDeltaColor: delta >= 0 ? '#0F3460' : '#E85D04',
+      trendBars: slice.map((d, i) => ({
+        date:d.label, value: fmt(d.total * p, 0),
+        h: S.grown && maxTrend > 0 ? (d.total / maxTrend * 100).toFixed(1) + '%' : '0%',
+        color: i === slice.length - 1 ? 'linear-gradient(180deg,#FA7E19,#E85D04)' : 'linear-gradient(180deg,#1a4a8a,#0F3460)',
+        parts: FAMILY_DEFS.map(f => ({
+          color:f.color,
+          h: S.grown && maxTrend > 0 ? (d[f.key] / maxTrend * 100).toFixed(1) + '%' : '0%',
         })),
       })),
-      legend: GROUP_SALE,
-
-      ranges: [
-        { key: '7', label: '7 วันล่าสุด' }, { key: '30', label: '30 วันล่าสุด' }, { key: 'all', label: 'ทั้งหมด' },
-      ].map(r => ({
-        label: r.label, go: () => this.setState({ range: r.key }),
-        bg: this.state.range === r.key ? 'linear-gradient(100deg,#081C38,#0F3460)' : '#fff',
-        fg: this.state.range === r.key ? '#fff' : '#0F3460',
-        border: this.state.range === r.key ? 'transparent' : '#e7ebf1',
-        shadow: this.state.range === r.key ? '0 3px 10px rgba(8,28,56,.22)' : 'none',
-      })),
-      trendDeltaText: (delta >= 0 ? '▲ +' : '▼ ') + fmt(delta, 0) + ' ตัน เทียบวันก่อนหน้า',
-      trendDeltaColor: delta >= 0 ? '#0F3460' : '#E85D04',
-      trendBars: trendSlice.map((d, i) => ({
-        date: d.date, value: fmt(d.total * p),
-        h: grown ? (d.total / maxTrend * 100).toFixed(1) + '%' : '0%',
-        color: i === trendSlice.length - 1 ? 'linear-gradient(180deg,#FA7E19,#E85D04)' : 'linear-gradient(180deg,#1a4a8a,#0F3460)',
-        parts: [
-          { color: FAMILIES[0].color, h: grown ? (d.flat / maxTrend * 100).toFixed(1) + '%' : '0%' },
-          { color: FAMILIES[1].color, h: grown ? (d.pipe / maxTrend * 100).toFixed(1) + '%' : '0%' },
-          { color: FAMILIES[2].color, h: grown ? (d.section / maxTrend * 100).toFixed(1) + '%' : '0%' },
-        ],
-      })),
-      trendRows: TRENDS.slice().reverse().map((d, i, arr) => {
+      trendRows: daily.slice().reverse().map((d, i, arr) => {
         const prev = arr[i + 1];
         const diff = prev ? d.total - prev.total : 0;
         return {
-          date: d.date, total: fmt(d.total, 2), flat: fmt(d.flat, 0), pipe: fmt(d.pipe, 0), section: fmt(d.section, 0), sku: fmt(d.sku),
+          date: fmtDateKey(d.key), total: fmt(d.total, 2), flat: fmt(d.flat, 0), pipe: fmt(d.pipe, 0), section: fmt(d.section, 0), sku: fmt(d.sku),
           delta: prev ? (diff >= 0 ? '▲ +' : '▼ ') + fmt(diff, 0) : '—',
           deltaColor: !prev ? '#a3adbb' : diff >= 0 ? '#0F3460' : '#E85D04',
           bg: i % 2 ? '#fbfcfe' : '#fff',
         };
       }),
 
-      lookupCount: 'พบ 6 รายการ จาก 7 รหัสที่ค้นหา',
-      lookupRows: LOOKUP.map((r, i) => Object.assign({}, r, { bg: i % 2 ? '#fbfcfe' : '#fff' })),
+      lookupText: S.lookupText,
+      setLookupText: (e) => this.setState({ lookupText: e.target.value }),
+      doLookup: () => this.setState({ lookupCodes: S.lookupText.split(/[\n,\t;]+/).map(c => c.trim()).filter(Boolean) }),
+      clearLookup: () => this.setState({ lookupText:'', lookupCodes:[] }),
+      lookupCount: codes.length ? 'พบ ' + fmt(matched.length) + ' แถว จาก ' + codes.length + ' รหัสที่ค้นหา' : 'ยังไม่ได้ค้นหา',
+      hasNotFound: notFound.length > 0,
+      notFoundText: notFound.join(', '),
+      lookupRows: matched.slice(0, 200).map((r, i) => {
+        const locName = displayLoc(r.location_code);
+        const locTotal = usedByLoc[locName] || 0;
+        const t = (Number(r.total_weight) || 0) / 1000;
+        return {
+          material:r.material, desc:r.material_description || '-', batch:r.batch || '-',
+          qty: fmt(r.unrestricted_qty), sloc: r.storage_location || '-', factory: locName || 'ไม่ทราบ',
+          tons: fmt(t, 3), share: locTotal > 0 ? (t / locTotal * 100).toFixed(2) + '%' : '-',
+          bg: i % 2 ? '#fbfcfe' : '#fff',
+        };
+      }),
 
       unmatchedStats: [
-        { label: 'จำนวน Material ที่ไม่จับคู่', value: fmt(83 * p), sub: 'จาก 3,104 SKU', color: '#E85D04' },
-        { label: 'จำนวนแถวที่เกี่ยวข้อง', value: fmt(412 * p), sub: 'จาก 18,432 แถว', color: '#081C38' },
-        { label: 'น้ำหนักรวม (ตัน)', value: fmt(624.6 * p, 1), sub: 'ยังไม่ถูกจัดกลุ่ม', color: '#081C38' },
+        { label:'จำนวน Material ที่ไม่จับคู่', value: fmt(Object.keys(byMat).length * p), sub:'จาก ' + fmt(new Set(S.stock.map(r => r.material)).size) + ' SKU', color:'#E85D04' },
+        { label:'จำนวนแถวที่เกี่ยวข้อง', value: fmt(unmatchedRaw.length * p), sub:'จาก ' + fmt(S.stock.length) + ' แถว', color:'#081C38' },
+        { label:'น้ำหนักรวม (ตัน)', value: fmt(unmatchedWeight / 1000 * p, 1), sub:'ยังไม่ถูกจัดกลุ่ม', color:'#081C38' },
       ],
-      unmatchedPct: '1.2%',
-      unmatchedW: grow(1.2 * 12),
-      unmatchedRows: UNMATCHED.map((u, i) => Object.assign({}, u, { bg: i % 2 ? '#fbfcfe' : '#fff' })),
-
-      importCards: IMPORT_CARDS,
-      importDates: IMPORT_DATES.map((d, i) => Object.assign({}, d, { bg: i % 2 ? '#fbfcfe' : '#fff' })),
-      historyRows: HISTORY.map((h, i) => Object.assign({}, h, {
+      unmatchedPct: unmatchedShare.toFixed(2) + '%',
+      unmatchedW: grow(Math.min(100, unmatchedShare * 10)),
+      unmatchedSearch: S.unmatchedSearch,
+      setUnmatchedSearch: (e) => this.setState({ unmatchedSearch: e.target.value }),
+      unmatchedRows: unmatchedList.slice(0, 100).map((u, i) => ({
+        material:u.material, desc:u.desc || '-', rows: fmt(u.rows), tons: fmt(u.weight / 1000, 2),
+        factories: Array.from(u.locs).sort().join(', ') || '-',
         bg: i % 2 ? '#fbfcfe' : '#fff',
-        tagBg: h.kind === 'สต็อก' ? '#fff1e6' : h.kind === 'พื้นที่คลัง' ? '#e8edf5' : 'rgba(201,151,31,.16)',
-        tagFg: h.kind === 'สต็อก' ? '#c14a00' : h.kind === 'พื้นที่คลัง' ? '#0F3460' : '#8a6300',
       })),
+
+      importCards: IMPORT_CARD_COPY.map(c => {
+        const b = lastByType[c.type];
+        return Object.assign({}, c, { last: b ? 'นำเข้าล่าสุด ' + fmtDateTime(b.imported_at) + ' · ' + fmt(b.row_count) + ' แถว' : 'ยังไม่เคยนำเข้าข้อมูล' });
+      }),
+      importDates: Object.keys(importByDate).sort((a, b) => b.localeCompare(a)).map((k, i) => ({
+        date: fmtDateKey(k), rows: fmt(importByDate[k].rows), tons: fmt(importByDate[k].weight / 1000, 2),
+        bg: i % 2 ? '#fbfcfe' : '#fff',
+      })),
+      historyRows: S.batches.map((b, i) => {
+        const kind = b.file_type === 'stock' ? 'สต็อก' : b.file_type === 'locations' ? 'พื้นที่คลัง' : b.file_type === 'product_groups' ? 'กลุ่มสินค้า' : (b.file_type || '-');
+        return {
+          when: fmtDateTime(b.imported_at), kind, file: b.file_name || '-', rows: fmt(b.row_count),
+          bg: i % 2 ? '#fbfcfe' : '#fff',
+          tagBg: kind === 'สต็อก' ? '#fff1e6' : kind === 'พื้นที่คลัง' ? '#e8edf5' : 'rgba(201,151,31,.16)',
+          tagFg: kind === 'สต็อก' ? '#c14a00' : kind === 'พื้นที่คลัง' ? '#0F3460' : '#8a6300',
+        };
+      }),
     };
   }
 }
