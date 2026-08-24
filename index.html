@@ -474,6 +474,37 @@
   @keyframes shimmer{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
 
   footer{text-align:center;color:var(--gray-400);font-size:11.5px;padding:20px 0 30px;}
+
+  /* ===== Date filter (Dashboard) — เลือกดูข้อมูลของวันที่นำเข้าใดวันหนึ่ง ค่าเริ่มต้น = วันล่าสุดเสมอ ===== */
+  .date-filter-wrap{
+    display:flex;align-items:center;gap:6px;background:var(--white);
+    border:1px solid var(--gray-200);border-radius:9px;padding:4px 10px 4px 12px;box-shadow:var(--shadow);
+  }
+  .date-filter-icon{font-size:13px;flex:none;}
+  .date-filter-select{
+    font-family:'Kanit', sans-serif;font-size:12.5px;font-weight:500;color:var(--navy-900);
+    border:none;background:transparent;padding:4px 2px;cursor:pointer;outline:none;max-width:190px;
+  }
+  .date-filter-select:disabled{color:var(--gray-400);cursor:not-allowed;}
+  .historical-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    background:var(--gold-100);border:1px solid var(--gold-400);border-radius:10px;
+    padding:10px 16px;font-size:12.5px;color:#7a5a00;margin:-6px 0 16px;
+  }
+  .historical-banner b{color:var(--navy-900);}
+
+  /* ===== Trends page (แนวโน้มสต็อกรายวัน) ===== */
+  .trend-range-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+  .trend-range-btn{
+    font-family:'Kanit', sans-serif;font-size:12.5px;font-weight:500;color:var(--navy-800);
+    background:var(--white);border:1px solid var(--gray-200);border-radius:20px;padding:6px 16px;cursor:pointer;transition:.15s;
+  }
+  .trend-range-btn:hover{background:var(--gray-100);}
+  .trend-range-btn.active{background:var(--gradient-navy);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(8,28,56,.22);}
+  /* ขึ้น/ลง ของน้ำหนักสต็อกไม่ได้แปลว่าดี/แย่เสมอไป (ต่างจากยอดขาย) — ใช้สีกลางของแบรนด์แยกทิศทาง ไม่ใช้เขียว/แดงเชิงตัดสิน */
+  .trend-up{color:var(--navy-800);font-weight:600;}
+  .trend-down{color:var(--orange-500);font-weight:600;}
+  .trend-flat{color:var(--gray-400);}
 </style>
 </head>
 <body>
@@ -485,6 +516,7 @@
   </a>
   <div class="nav-links">
     <a href="#/dashboard" class="nav-link" data-route="dashboard">แดชบอร์ด</a>
+    <a href="#/trends" class="nav-link" data-route="trends">📈 แนวโน้ม</a>
     <a href="#/lookup" class="nav-link" data-route="lookup">ค้นหา Material</a>
     <a href="#/unmatched" class="nav-link" data-route="unmatched">⚠️ Code ไม่พบข้อมูล</a>
     <a href="#/import" class="nav-link" data-route="import">นำเข้าข้อมูล</a>
@@ -498,8 +530,15 @@
 
     <div class="section-title" style="justify-content:space-between;">
       <span style="display:flex;align-items:center;gap:9px;">👔 ภาพรวมคลังสินค้า <span class="tag">พื้นที่ทั้งหมด / ใช้งานปัจจุบัน / คงเหลือ — ทุกโรงงาน แบบเรียลไทม์</span></span>
-      <button class="btn btn-navy btn-sm" id="btnCaptureSnapshot" style="font-size:12.5px;">📷 แคปรูป Dashboard</button>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="date-filter-wrap">
+          <span class="date-filter-icon">📅</span>
+          <select id="fDateKey" class="date-filter-select" title="เลือกดูข้อมูลของวันที่นำเข้า"></select>
+        </div>
+        <button class="btn btn-navy btn-sm" id="btnCaptureSnapshot" style="font-size:12.5px;">📷 แคปรูป Dashboard</button>
+      </div>
     </div>
+    <div class="historical-banner" id="historicalBanner" style="display:none;"></div>
 
     <div class="mgr-hero">
       <div class="mgr-card">
@@ -750,6 +789,34 @@
 
   </div>
 
+  <!-- ============ TRENDS VIEW (แนวโน้มสต็อกรายวัน) ============ -->
+  <div id="view-trends" class="route-view">
+    <div class="section-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:9px;">📈 แนวโน้มสต็อกรายวัน <span class="tag">เปรียบเทียบน้ำหนักสต็อกของแต่ละวันที่นำเข้าข้อมูล</span></span>
+      <button class="btn btn-outline btn-sm" id="btnRefreshTrends">↻ รีเฟรช</button>
+    </div>
+
+    <div class="trend-range-row" id="trendRangeRow">
+      <button type="button" class="trend-range-btn" data-range="7">7 วันล่าสุด</button>
+      <button type="button" class="trend-range-btn" data-range="30">30 วันล่าสุด</button>
+      <button type="button" class="trend-range-btn active" data-range="all">ทั้งหมด</button>
+    </div>
+
+    <div class="section-title" style="margin-top:22px;">น้ำหนักรวมทั้งหมด <span class="tag">ตัน ต่อวันที่นำเข้า</span></div>
+    <div class="viz-block" id="trendTotalChart"><div class="viz-empty">กำลังโหลด...</div></div>
+
+    <div class="section-title" style="margin-top:26px;">แยกตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe / Section</span></div>
+    <div class="viz-block" id="trendFamilyChart"><div class="viz-empty">กำลังโหลด...</div></div>
+
+    <div class="section-title" style="margin-top:26px;">ตารางข้อมูลรายวัน <span class="tag">พร้อมส่วนต่างเทียบวันก่อนหน้า</span></div>
+    <div class="history-table-wrap">
+      <table class="data-table" id="trendTable">
+        <thead><tr><th>วันที่</th><th class="cell-num">น้ำหนักรวม (ตัน)</th><th class="cell-num">เปลี่ยนแปลง</th><th class="cell-num">Flat (ตัน)</th><th class="cell-num">Pipe (ตัน)</th><th class="cell-num">Section (ตัน)</th><th class="cell-num">จำนวน SKU</th></tr></thead>
+        <tbody id="trendTbody"><tr><td colspan="7"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
 </main>
 
 <footer>Inventory Warehouse 2 · Powered by Supabase · TMT Steel</footer>
@@ -897,7 +964,7 @@ const Router = {
   go(route){ window.location.hash = '#/' + route; },
   current(){
     const h = (window.location.hash || '').replace('#/', '').split('?')[0];
-    return ['dashboard','lookup','unmatched','import'].includes(h) ? h : 'dashboard';
+    return ['dashboard','trends','lookup','unmatched','import'].includes(h) ? h : 'dashboard';
   }
 };
 function handleRoute(){
@@ -909,6 +976,7 @@ function handleRoute(){
   const link = document.querySelector(`.nav-link[data-route="${route}"]`);
   if (link) link.classList.add('active');
   if (route === 'dashboard') DashboardPage.activate();
+  if (route === 'trends') TrendsPage.activate();
   if (route === 'lookup') LookupPage.activate();
   if (route === 'unmatched') UnmatchedPage.activate();
   if (route === 'import') ImportPage.activate();
@@ -959,6 +1027,39 @@ async function fetchAllRows(table, selectCols, orderCol){
 }
 
 /* ============================================================
+   DATE-KEY HELPERS — ใช้ร่วมกันทั้งหน้า Dashboard / Import / แนวโน้ม
+   แปลง imported_at (ISO/UTC) ให้เป็น "คีย์วันที่ตามเวลาท้องถิ่นของเครื่องผู้ใช้" เช่น '2026-08-13'
+   ใช้จัดกลุ่ม/กรองข้อมูลสต็อกที่นำเข้าในวันเดียวกัน (ไม่สนใจเวลา ชม./นาที/วินาที)
+============================================================ */
+function localDateKey(iso){
+  if (!iso) return 'ไม่ระบุ';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return 'ไม่ระบุ';
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function fmtDateKey(dateKey){
+  if (dateKey === 'ไม่ระบุ') return dateKey;
+  const [y, m, day] = dateKey.split('-').map(Number);
+  const d = new Date(y, m - 1, day);
+  return d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+}
+
+/* ============================================================
+   FAMILY_DEFS — นิยามกลุ่มสินค้าหลัก ใช้ร่วมกันทั้งหน้า Dashboard และหน้าแนวโน้ม
+   ยืนยันกับผู้ใช้แล้วว่า: Flat = Flat Bars + Plate + HS (แผ่นเหล็กรีดร้อน ขนาดเดียวกับ Plate),
+   Pipe = Pipe + CH (ตัวซี), Section = Beam ทั้งหมด (มี AK/HB/IB/WF/UC/RB/RW/SB/SD/SR/Sheet Pile ฯลฯ อยู่แล้ว)
+   รายการที่ไม่เข้าพวก 3 กลุ่มนี้ (Scrap, DUMMY_KG/PC, ไม่ระบุ) ไม่แสดงเป็นการ์ด/เส้นแนวโน้ม
+============================================================ */
+const FAMILY_DEFS = [
+  { key:'flat', label:'Flat', icon:'📄', color:'#2a78d6', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
+  { key:'pipe', label:'Pipe', icon:'⭕', color:'#eb6834', groupProducts:['Pipe','CH'], desc:'ท่อ + ตัวซี (Pipe / CH)' },
+  { key:'section', label:'Section', icon:'🏗️', color:'#1baf7a', groupProducts:['Beam'], desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
+];
+
+/* ============================================================
    DASHBOARD PAGE
 ============================================================ */
 const DashboardPage = (() => {
@@ -966,6 +1067,9 @@ const DashboardPage = (() => {
   let locUtil = [];
   let filtered = [];
   let mounted = false;
+  // รองรับข้อมูลหลายวันที่ (โหมด "วางเติม") — ภาพรวมแสดงวันล่าสุดเสมอ เลือกดูย้อนหลังได้ผ่าน dropdown
+  let availableDateKeys = []; // เรียงล่าสุดก่อน เช่น ['2026-08-24','2026-08-20',...]
+  let selectedDateKey = null;
 
   // เกณฑ์ระดับการใช้พื้นที่ต่อโรงงาน: ปกติ ≤80% / ใกล้เต็ม 80–100% / เกินพิกัด >100%
   const Tier = {
@@ -1000,6 +1104,76 @@ const DashboardPage = (() => {
     return Object.values(merged);
   }
 
+  // ===== การกรองตามวันที่นำเข้า (append-mode รองรับหลายวันที่สะสมอยู่ในตาราง stock) =====
+  // คืนเฉพาะแถวของวันที่ที่กำลังเลือกอยู่ (selectedDateKey) — ถ้าไม่มีวันที่เลย (ข้อมูลเก่าก่อนมีฟีเจอร์นี้ ไม่มี imported_at)
+  // ให้คืนข้อมูลทั้งหมดแทน กันไม่ให้ Dashboard ว่างเปล่าไปเฉยๆ
+  function getScopedRows(){
+    if (!selectedDateKey) return allRows;
+    return allRows.filter(r => localDateKey(r.imported_at) === selectedDateKey);
+  }
+
+  // v_location_utilization.stock_weight_tons คำนวณจาก "ทั้งตาราง stock" (ทุกวันที่รวมกัน) โดย SQL view
+  // ดังนั้นจะกรองตามวันที่แบบง่ายๆ (filter array ฝั่ง client) กับฟิลด์นี้ไม่ได้เลย ต้องคำนวณ "ใช้ไปกี่ตัน/โรงงาน" ใหม่เองจากแถวที่กรองวันที่แล้ว (scopedRows)
+  // ส่วนความจุ (actual_capacity_tons) เป็นค่าคงที่ไม่ขึ้นกับวันที่ ยังคงอ้างอิงจาก locUtil ของจริงตามเดิม
+  function buildScopedLocUtil(scopedRows){
+    const usedByLoc = {};
+    (scopedRows || []).forEach(r => {
+      const loc = r.location_code;
+      if (!loc) return;
+      usedByLoc[loc] = (usedByLoc[loc] || 0) + ((Number(r.total_weight) || 0) / 1000);
+    });
+    return (locUtil || []).map(r => ({
+      location_code: r.location_code,
+      actual_capacity_tons: Number(r.actual_capacity_tons) || 0,
+      stock_weight_tons: usedByLoc[r.location_code] || 0,
+    }));
+  }
+
+  // เติม/รีเฟรช dropdown เลือกวันที่ + แถบแจ้งเตือนเมื่อกำลังดูข้อมูลย้อนหลัง (ไม่ใช่วันล่าสุด)
+  function renderDateFilterUI(){
+    const sel = el('fDateKey');
+    const banner = el('historicalBanner');
+    if (!sel || !banner) return;
+    if (!availableDateKeys.length){
+      sel.innerHTML = '<option value="">ไม่มีข้อมูลวันที่นำเข้า</option>';
+      sel.disabled = true;
+      banner.style.display = 'none';
+      banner.innerHTML = '';
+      return;
+    }
+    sel.disabled = false;
+    sel.innerHTML = availableDateKeys.map((k, i) => {
+      const label = fmtDateKey(k) + (i === 0 ? ' (ล่าสุด)' : '');
+      return `<option value="${escapeHtml(k)}" ${k === selectedDateKey ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+    }).join('');
+
+    if (selectedDateKey && selectedDateKey !== availableDateKeys[0]){
+      banner.style.display = 'flex';
+      banner.innerHTML = `<span>⏱️ กำลังดูข้อมูลย้อนหลังวันที่ <b>${escapeHtml(fmtDateKey(selectedDateKey))}</b> — ไม่ใช่ข้อมูลล่าสุด</span><button type="button" class="btn btn-outline btn-sm" id="btnBackToLatest">กลับไปวันล่าสุด</button>`;
+      const btn = el('btnBackToLatest');
+      if (btn) btn.addEventListener('click', () => {
+        selectedDateKey = availableDateKeys[0];
+        renderDateFilterUI();
+        renderScoped();
+      });
+    } else {
+      banner.style.display = 'none';
+      banner.innerHTML = '';
+    }
+  }
+
+  // ===== รีเฟรชทุกส่วนของ Dashboard ให้ตรงกับ selectedDateKey ปัจจุบัน =====
+  function renderScoped(){
+    const scopedRows = getScopedRows();
+    const scopedLocUtil = buildScopedLocUtil(scopedRows);
+    populateFilterOptions(scopedRows);
+    renderKpis(scopedRows);
+    const capacitySummary = renderCapacityOverview(scopedLocUtil);
+    renderFamilyCards(scopedRows, scopedLocUtil, capacitySummary);
+    renderFactoryPanel(scopedLocUtil, scopedRows);
+    applyFilters();
+  }
+
   // ตัวกรองแบบ multi-select (checkbox list) — เลือกได้มากกว่า 1 ค่าต่อฟิลด์
   let msGroupSale, msGroupProduct, msProductType, msLocation;
 
@@ -1007,6 +1181,11 @@ const DashboardPage = (() => {
     if (mounted) return;
     mounted = true;
     el('fSearch').addEventListener('input', debounce(() => applyFilters(), 220));
+    el('fDateKey').addEventListener('change', (e) => {
+      selectedDateKey = e.target.value || null;
+      renderDateFilterUI();
+      renderScoped();
+    });
 
     msGroupSale = createMultiSelect('fGroupSale', 'Group Sale ทั้งหมด');
     msGroupProduct = createMultiSelect('fGroupProduct', 'Group Product ทั้งหมด');
@@ -1021,7 +1200,7 @@ const DashboardPage = (() => {
     msLocation.onChange(() => {
       applyFilters();
       const sel = msLocation.getValues();
-      if (sel.size === 1) openLocationBreakdownModal([...sel][0], allRows);
+      if (sel.size === 1) openLocationBreakdownModal([...sel][0], getScopedRows());
     });
 
     el('btnClearFilters').addEventListener('click', () => {
@@ -1057,12 +1236,17 @@ const DashboardPage = (() => {
       if (utilErr) throw utilErr;
       allRows = stockData || [];
       locUtil = utilData || [];
-      populateFilterOptions();
-      renderKpis(allRows);
-      const capacitySummary = renderCapacityOverview(locUtil);
-      renderFamilyCards(allRows, locUtil, capacitySummary);
-      renderFactoryPanel(locUtil, allRows);
-      applyFilters();
+
+      // สร้างรายการวันที่นำเข้าทั้งหมดที่มีอยู่จริงในข้อมูล เรียงล่าสุดก่อน (สำหรับ dropdown กรองวันที่)
+      availableDateKeys = [...new Set(allRows.map(r => localDateKey(r.imported_at)))]
+        .filter(k => k !== 'ไม่ระบุ')
+        .sort((a,b) => b.localeCompare(a));
+      // ถ้าวันที่เลือกไว้เดิมไม่มีอยู่ในข้อมูลใหม่แล้ว (เช่นถูกลบไปจากหน้านำเข้าข้อมูล) หรือยังไม่เคยเลือก -> กลับไปที่ล่าสุดเสมอ
+      if (!selectedDateKey || !availableDateKeys.includes(selectedDateKey)){
+        selectedDateKey = availableDateKeys[0] || null;
+      }
+      renderDateFilterUI();
+      renderScoped();
     } catch (e) {
       console.error(e);
       setSummaryError(e.message || e);
@@ -1074,11 +1258,11 @@ const DashboardPage = (() => {
     return [...new Set(arr.filter(v => v !== null && v !== undefined && v !== ''))].sort((a,b) => String(a).localeCompare(String(b), 'th'));
   }
 
-  function populateFilterOptions(){
-    const groupSales = uniqueSorted(allRows.map(r => r.group_sale));
-    const groupProducts = uniqueSorted(allRows.map(r => r.group_product));
-    const productTypes = uniqueSorted(allRows.map(r => r.product_type));
-    const locations = uniqueSorted(allRows.map(r => locationDisplayCode(r.location_code)));
+  function populateFilterOptions(rows){
+    const groupSales = uniqueSorted(rows.map(r => r.group_sale));
+    const groupProducts = uniqueSorted(rows.map(r => r.group_product));
+    const productTypes = uniqueSorted(rows.map(r => r.product_type));
+    const locations = uniqueSorted(rows.map(r => locationDisplayCode(r.location_code)));
     msGroupSale.setOptions(groupSales);
     msGroupProduct.setOptions(groupProducts);
     msProductType.setOptions(productTypes);
@@ -1139,15 +1323,7 @@ const DashboardPage = (() => {
   }
 
   // ===== การ์ดกลุ่มสินค้าหลัก (Flat / Pipe / Section) — จัดกลุ่มตาม Group Product จริงในฐานข้อมูล =====
-  // ยืนยันกับผู้ใช้แล้วว่า: Flat = Flat Bars + Plate + HS (แผ่นเหล็กรีดร้อน ขนาดเดียวกับ Plate),
-  // Pipe = Pipe + CH (ตัวซี), Section = Beam ทั้งหมด (มี AK/HB/IB/WF/UC/RB/RW/SB/SD/SR/Sheet Pile ฯลฯ อยู่แล้ว)
-  // รายการที่ไม่เข้าพวก 3 กลุ่มนี้ (Scrap, DUMMY_KG/PC, ไม่ระบุ) ไม่แสดงเป็นการ์ด แต่ยังถูกนับรวมในฐาน % ของทั้งหมด (ให้ % ตรงกับความจริง)
-  const FAMILY_DEFS = [
-    { key:'flat', label:'Flat', icon:'📄', color:'#2a78d6', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
-    { key:'pipe', label:'Pipe', icon:'⭕', color:'#eb6834', groupProducts:['Pipe','CH'], desc:'ท่อ + ตัวซี (Pipe / CH)' },
-    { key:'section', label:'Section', icon:'🏗️', color:'#1baf7a', groupProducts:['Beam'], desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
-  ];
-
+  // นิยาม FAMILY_DEFS อยู่ที่ scope กลาง (global) แล้ว — ใช้ร่วมกับหน้าแนวโน้มด้วย ไม่ประกาศซ้ำที่นี่
   function renderFamilyCards(rows, locRows, capacitySummary){
     const box = el('familyCards');
     const allRowsForPct = rows || [];
@@ -1362,7 +1538,7 @@ const DashboardPage = (() => {
     // รวมรหัสโรงงานจริงทั้งหมดของทุกตัวเลือกที่ถูกเลือกไว้ (แต่ละตัวอาจเป็นกลุ่มรวมพื้นที่ เช่น Fac B+E = [Fac B, Fac E])
     const locMembers = locSet.size ? new Set([...locSet].flatMap(loc => locationMembersOf(loc))) : null;
 
-    filtered = allRows.filter(r => {
+    filtered = getScopedRows().filter(r => {
       if (gsSet.size && !gsSet.has(r.group_sale)) return false;
       if (gpSet.size && !gpSet.has(r.group_product)) return false;
       if (ptSet.size && !ptSet.has(r.product_type)) return false;
@@ -2109,18 +2285,7 @@ const ImportPage = (() => {
   }
 
   /* ---------- Stock append-mode: group by import date + delete-by-date ---------- */
-
-  // แปลง imported_at (ISO/UTC) ให้เป็น "คีย์วันที่ตามเวลาท้องถิ่นของเครื่องผู้ใช้" เช่น '2026-08-13'
-  // ใช้เป็นตัวจัดกลุ่มแถวสต็อกที่นำเข้าในวันเดียวกัน (ไม่สนใจเวลา ชม./นาที/วินาที)
-  function localDateKey(iso){
-    if (!iso) return 'ไม่ระบุ';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return 'ไม่ระบุ';
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
-  }
+  // localDateKey()/fmtDateKey() ย้ายไป scope กลาง (global) แล้ว — ใช้ร่วมกับ Dashboard/หน้าแนวโน้ม
 
   // จาก dateKey ('YYYY-MM-DD' ตามเวลาท้องถิ่น) คืนช่วงเวลา [start, end) เป็น ISO string (UTC)
   // สำหรับใช้กับ .gte(start).lt(end) ตอนลบข้อมูลของวันนั้นโดยเฉพาะ โดยไม่กระทบวันอื่น
@@ -2129,13 +2294,6 @@ const ImportPage = (() => {
     const start = new Date(y, m - 1, day, 0, 0, 0, 0);
     const end = new Date(y, m - 1, day + 1, 0, 0, 0, 0);
     return { startIso: start.toISOString(), endIso: end.toISOString() };
-  }
-
-  function fmtDateKey(dateKey){
-    if (dateKey === 'ไม่ระบุ') return dateKey;
-    const [y, m, day] = dateKey.split('-').map(Number);
-    const d = new Date(y, m - 1, day);
-    return d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
   }
 
   async function loadStockByDate(){
@@ -2197,6 +2355,179 @@ const ImportPage = (() => {
     loadImportHistory();
     loadStorageSummary();
     loadStockByDate();
+  }
+
+  return { activate, mount };
+})();
+
+/* ============================================================
+   TRENDS PAGE — แนวโน้มน้ำหนักสต็อกรายวัน (เปรียบเทียบระหว่างวันที่นำเข้าแต่ละครั้ง)
+   ไม่พึ่ง chart library ภายนอก — วาดกราฟเส้นด้วย SVG มือเขียนเอง สอดคล้องกับกราฟอื่นทั้งแอป
+============================================================ */
+const TrendsPage = (() => {
+  let mounted = false;
+  let allDaily = []; // [{ dateKey, totalTons, famTons:{flat,pipe,section}, skuCount }] เรียงจากเก่า->ใหม่
+  let rangeSel = 'all'; // '7' | '30' | 'all'
+
+  function mount(){
+    if (mounted) return;
+    mounted = true;
+    el('btnRefreshTrends').addEventListener('click', loadData);
+    document.querySelectorAll('#trendRangeRow .trend-range-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#trendRangeRow .trend-range-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        rangeSel = btn.dataset.range;
+        renderAll();
+      });
+    });
+  }
+
+  function setLoading(){
+    el('trendTotalChart').innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
+    el('trendFamilyChart').innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
+    el('trendTbody').innerHTML = '<tr><td colspan="7"><div class="empty-state">กำลังโหลด...</div></td></tr>';
+  }
+
+  async function loadData(){
+    setLoading();
+    try {
+      const rows = await fetchAllRows('v_stock_enriched', 'imported_at, total_weight, group_product, material');
+      const byDate = {};
+      rows.forEach(r => {
+        const key = localDateKey(r.imported_at);
+        if (key === 'ไม่ระบุ') return; // ไม่มีวันที่นำเข้าชัดเจน ไม่นับรวมในกราฟแนวโน้ม
+        if (!byDate[key]) byDate[key] = { totalKg: 0, famKg: { flat:0, pipe:0, section:0 }, skuSet: new Set() };
+        const w = Number(r.total_weight) || 0;
+        byDate[key].totalKg += w;
+        byDate[key].skuSet.add(r.material);
+        const fam = FAMILY_DEFS.find(f => f.groupProducts.includes(r.group_product));
+        if (fam) byDate[key].famKg[fam.key] += w;
+      });
+      allDaily = Object.entries(byDate)
+        .map(([dateKey, v]) => ({
+          dateKey,
+          totalTons: v.totalKg / 1000,
+          famTons: { flat: v.famKg.flat/1000, pipe: v.famKg.pipe/1000, section: v.famKg.section/1000 },
+          skuCount: v.skuSet.size,
+        }))
+        .sort((a,b) => a.dateKey.localeCompare(b.dateKey));
+      renderAll();
+    } catch (e) {
+      console.error(e);
+      el('trendTotalChart').innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message || e)}</div>`;
+      el('trendFamilyChart').innerHTML = '';
+      el('trendTbody').innerHTML = '<tr><td colspan="7"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
+      toast('โหลดข้อมูลแนวโน้มไม่สำเร็จ: ' + (e.message || e), 'error');
+    }
+  }
+
+  function scopedDaily(){
+    if (rangeSel === 'all') return allDaily;
+    const n = Number(rangeSel);
+    return allDaily.slice(-n);
+  }
+
+  function fmtDateShort(dateKey){
+    const [y, m, day] = dateKey.split('-').map(Number);
+    const d = new Date(y, m - 1, day);
+    return d.toLocaleDateString('th-TH', { day:'numeric', month:'short' });
+  }
+
+  // สร้างกราฟเส้น SVG มือเขียนเอง — series: [{ label, color, points:[{y:number}] }] เรียงตำแหน่งตรงกับ dateKeys
+  function buildLineChart(series, dateKeys){
+    const n = dateKeys.length;
+    if (!n) return '<div class="viz-empty">ยังไม่มีข้อมูล</div>';
+
+    const width = 900, height = 260;
+    const padL = 46, padR = 16, padT = 16, padB = 34;
+    const innerW = width - padL - padR, innerH = height - padT - padB;
+
+    const allY = series.flatMap(s => s.points.map(p => p.y));
+    const maxY = Math.max(...allY, 0.0001);
+    const niceMax = maxY * 1.15;
+
+    const xAt = (i) => n === 1 ? padL + innerW/2 : padL + (innerW * i) / (n - 1);
+    const yAt = (v) => padT + innerH - (innerH * v / niceMax);
+
+    const gridCount = 4;
+    let gridSvg = '';
+    for (let g = 0; g <= gridCount; g++){
+      const v = (niceMax / gridCount) * g;
+      const y = yAt(v);
+      gridSvg += `<line x1="${padL}" y1="${y}" x2="${width-padR}" y2="${y}" stroke="#e9ecef" stroke-width="1"/>`;
+      gridSvg += `<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="10.5" fill="#6c757d">${fmtNum(v,0)}</text>`;
+    }
+
+    const maxLabels = 8;
+    const labelStep = Math.max(1, Math.ceil(n / maxLabels));
+    let xLabelsSvg = '';
+    dateKeys.forEach((k, i) => {
+      if (i % labelStep !== 0 && i !== n - 1) return;
+      xLabelsSvg += `<text x="${xAt(i)}" y="${height-10}" text-anchor="middle" font-size="10.5" fill="#6c757d">${escapeHtml(fmtDateShort(k))}</text>`;
+    });
+
+    const linesSvg = series.map(s => {
+      const pointsAttr = s.points.map((p,i) => `${xAt(i)},${yAt(p.y)}`).join(' ');
+      const dots = s.points.map((p,i) => `<circle cx="${xAt(i)}" cy="${yAt(p.y)}" r="3.2" fill="${s.color}"><title>${escapeHtml(fmtDateKey(dateKeys[i]))} · ${escapeHtml(s.label)}: ${fmtNum(p.y,2)} ตัน</title></circle>`).join('');
+      return `<polyline points="${pointsAttr}" fill="none" stroke="${s.color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
+    }).join('');
+
+    const legendHtml = series.length > 1
+      ? `<div class="legend-row" style="margin-top:6px;">${series.map(s => `<div class="legend-item"><span class="legend-swatch" style="background:${s.color};"></span>${escapeHtml(s.label)}</div>`).join('')}</div>`
+      : '';
+
+    return `<div style="overflow-x:auto;"><svg viewBox="0 0 ${width} ${height}" style="width:100%;min-width:560px;height:auto;">${gridSvg}${xLabelsSvg}${linesSvg}</svg></div>${legendHtml}`;
+  }
+
+  function renderAll(){
+    const daily = scopedDaily();
+    if (!daily.length){
+      el('trendTotalChart').innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลสต็อกที่มีวันที่นำเข้าชัดเจน — นำเข้าข้อมูลอย่างน้อย 1 วันก่อน</div>';
+      el('trendFamilyChart').innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูล</div>';
+      el('trendTbody').innerHTML = '<tr><td colspan="7"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
+      return;
+    }
+    const dateKeys = daily.map(d => d.dateKey);
+
+    el('trendTotalChart').innerHTML = buildLineChart(
+      [{ label: 'น้ำหนักรวม', color: '#1a4a8a', points: daily.map(d => ({ y: d.totalTons })) }],
+      dateKeys
+    );
+
+    el('trendFamilyChart').innerHTML = buildLineChart(
+      FAMILY_DEFS.map(fam => ({ label: fam.label, color: fam.color, points: daily.map(d => ({ y: d.famTons[fam.key] })) })),
+      dateKeys
+    );
+
+    // ตารางแสดงล่าสุดก่อน พร้อมส่วนต่างเทียบกับวันก่อนหน้า (เทียบตามลำดับข้อมูลจริง ไม่ใช่แค่แถวก่อนหน้าในตาราง)
+    el('trendTbody').innerHTML = daily.slice().reverse().map((d) => {
+      const idx = daily.findIndex(x => x.dateKey === d.dateKey);
+      const prev = idx > 0 ? daily[idx-1] : null;
+      let deltaHtml = '<span class="cell-muted">—</span>';
+      if (prev){
+        const diff = d.totalTons - prev.totalTons;
+        const pct = prev.totalTons > 0 ? (diff / prev.totalTons) * 100 : 0;
+        const cls = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-flat';
+        const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '—';
+        deltaHtml = `<span class="${cls}">${arrow} ${fmtNum(Math.abs(diff),2)} ตัน (${diff>=0?'+':'-'}${Math.abs(pct).toFixed(1)}%)</span>`;
+      }
+      return `
+        <tr>
+          <td>${escapeHtml(fmtDateKey(d.dateKey))}</td>
+          <td class="cell-num">${fmtNum(d.totalTons,2)}</td>
+          <td class="cell-num">${deltaHtml}</td>
+          <td class="cell-num">${fmtNum(d.famTons.flat,2)}</td>
+          <td class="cell-num">${fmtNum(d.famTons.pipe,2)}</td>
+          <td class="cell-num">${fmtNum(d.famTons.section,2)}</td>
+          <td class="cell-num">${fmtNum(d.skuCount)}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  function activate(){
+    mount();
+    loadData();
   }
 
   return { activate, mount };
