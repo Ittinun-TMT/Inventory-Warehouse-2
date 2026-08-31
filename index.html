@@ -27,6 +27,9 @@
     --gray-100:#f1f3f5;
     --gray-200:#e9ecef;
     --gray-400:#adb5bd;
+    /* BUGFIX: .gs-sub อ้าง var(--gray-500) แต่ไม่เคยประกาศตัวแปรนี้ไว้ → ค่าไม่ถูกต้อง เบราว์เซอร์ทิ้ง
+       declaration ทั้งบรรทัด ทำให้ข้อความ "x.xx ตัน" ใน popup รายโรงงานเป็นสีเข้มเท่าหัวข้อ ไม่ใช่สีเทาอ่อน */
+    --gray-500:#868e96;
     --gray-600:#6c757d;
     --gray-800:#343a40;
     --danger:#dc3545;
@@ -240,8 +243,42 @@
   .legend-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--gray-600);}
   .legend-swatch{width:11px;height:11px;border-radius:3px;flex:none;}
 
+  /* ===== Top 5 รายการสินค้า (อันดับตามน้ำหนัก / ตามจำนวน) ===== */
+  .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
+  @media (max-width:980px){ .top-grid{grid-template-columns:1fr;} }
+  .top-grid > div{min-width:0;}
+  .top-item{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--gray-100);}
+  .top-item:last-child{border-bottom:none;}
+  .top-rank{
+    flex:none;width:23px;height:23px;border-radius:50%;background:var(--gray-100);color:var(--gray-600);
+    font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;
+  }
+  .top-item:nth-child(1) .top-rank{background:var(--orange-500);color:#fff;}
+  .top-item:nth-child(2) .top-rank{background:var(--navy-800);color:#fff;}
+  .top-item:nth-child(3) .top-rank{background:var(--navy-100);color:var(--navy-900);}
+  .top-main{flex:1 1 auto;min-width:0;}
+  .top-name{
+    font-size:13px;font-weight:600;color:var(--navy-900);display:flex;align-items:center;gap:7px;
+    white-space:nowrap;overflow:hidden;
+  }
+  .top-desc{font-size:11px;color:var(--gray-600);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .top-track{height:9px;border-radius:5px;background:var(--gray-100);overflow:hidden;margin-top:8px;}
+  .top-fill{height:100%;border-radius:5px;transition:width .5s ease;}
+  .top-val{flex:none;width:112px;text-align:right;font-size:11px;color:var(--gray-600);font-variant-numeric:tabular-nums;line-height:1.5;}
+  .top-val b{display:block;color:var(--navy-900);font-weight:600;font-size:14.5px;letter-spacing:.2px;}
+  .top-val .top-pct{color:var(--orange-500);font-weight:600;}
+  .top-note{
+    font-size:10.5px;color:var(--gray-400);line-height:1.6;
+    padding:11px 0 5px;margin-top:4px;border-top:1px solid var(--gray-100);
+  }
+  @media (max-width:640px){
+    .top-val{width:88px;font-size:10px;}
+    .top-val b{font-size:12.5px;}
+  }
+
   /* ===== Filter bar ===== */
-  .filter-sticky{position:sticky;top:68px;z-index:50;background:var(--gray-50);padding-top:10px;margin-top:10px;}
+  /* navbar สูง 70px — เดิมตั้ง top:68px ทำให้เห็นเนื้อหาแวบผ่านช่อง 2px ใต้ navbar ตอนเลื่อนหน้า */
+  .filter-sticky{position:sticky;top:70px;z-index:50;background:var(--gray-50);padding-top:10px;margin-top:10px;}
   .filter-bar{
     background:linear-gradient(160deg, var(--white), #fcfbf8 140%);border:1px solid var(--gray-200);border-radius:var(--radius);
     padding:15px 17px;box-shadow:var(--shadow);
@@ -656,6 +693,19 @@
       </div>
     </div>
 
+    <!-- ===== Top 5 รายการสินค้า — 2 มุมมองแยกกัน (น้ำหนัก / จำนวน) ตามตัวกรองด้านบน ===== -->
+    <div class="section-title" style="margin-top:26px;">🏆 Top 5 รายการสินค้า <span class="tag">จัดอันดับตาม Material (SKU) รวมทุก Batch + Storage Location · ตามตัวกรองด้านบน</span></div>
+    <div class="top-grid">
+      <div>
+        <div class="section-title" style="margin:14px 0 12px;">⚖️ อันดับตามน้ำหนัก <span class="tag">ตัน</span></div>
+        <div class="viz-block" id="topWeightViz"><div class="viz-empty">กำลังโหลด...</div></div>
+      </div>
+      <div>
+        <div class="section-title" style="margin:14px 0 12px;">🔢 อันดับตามจำนวน <span class="tag">Unrestricted</span></div>
+        <div class="viz-block" id="topQtyViz"><div class="viz-empty">กำลังโหลด...</div></div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ============ MATERIAL LOOKUP VIEW ============ -->
@@ -665,9 +715,13 @@
     <div class="import-card" style="max-width:100%;">
       <div class="desc">พิมพ์หรือวางรหัส Material ได้เลย (Copy มาจาก Excel ได้ — รองรับหลายรายการ คั่นด้วยขึ้นบรรทัดใหม่, comma หรือ tab)</div>
       <textarea id="lookupInput" rows="4" placeholder="เช่น&#10;1BP0012-020-0058&#10;3RP01005018-0233" style="font-family:'Kanit',sans-serif;font-size:13.5px;border:1px solid var(--gray-200);border-radius:9px;padding:10px 12px;background:var(--gray-50);color:var(--navy-900);resize:vertical;"></textarea>
-      <div style="display:flex;gap:10px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <button class="btn btn-primary" id="btnLookup">🔎 ค้นหา</button>
         <button class="btn btn-outline" id="btnLookupClear">✕ ล้าง</button>
+        <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--gray-600);cursor:pointer;">
+          <input type="checkbox" id="lookupAllDates" style="accent-color:var(--orange-500);cursor:pointer;"/>
+          <span>ค้นทุกวันที่นำเข้า <span id="lookupScopeHint" class="cell-muted"></span></span>
+        </label>
       </div>
     </div>
 
@@ -675,8 +729,8 @@
     <div id="lookupNotFound"></div>
     <div class="history-table-wrap">
       <table class="data-table" id="lookupTable">
-        <thead><tr><th>Material</th><th>รายละเอียด</th><th>Batch</th><th class="cell-num">จำนวน</th><th>Storage Loc.</th><th>โรงงาน</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">% ของพื้นที่โรงงานนี้</th><th class="cell-num">% ของสต็อกในโรงงานนี้</th></tr></thead>
-        <tbody id="lookupTbody"><tr><td colspan="9"><div class="empty-state">วางหรือพิมพ์รหัส Material แล้วกด "ค้นหา"</div></td></tr></tbody>
+        <thead><tr><th>Material</th><th>รายละเอียด</th><th>Batch</th><th class="cell-num">จำนวน</th><th>Storage Loc.</th><th>โรงงาน</th><th class="cell-num">น้ำหนัก (ตัน)</th><th class="cell-num">% ของพื้นที่โรงงานนี้</th><th class="cell-num">% ของสต็อกในโรงงานนี้</th><th>วันที่นำเข้า</th></tr></thead>
+        <tbody id="lookupTbody"><tr><td colspan="10"><div class="empty-state">วางหรือพิมพ์รหัส Material แล้วกด "ค้นหา"</div></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -969,6 +1023,7 @@ const Router = {
     return ['dashboard','trends','lookup','unmatched','import'].includes(h) ? h : 'dashboard';
   }
 };
+let activatedRoute = null;
 function handleRoute(){
   const route = Router.current();
   document.querySelectorAll('.route-view').forEach(v => v.classList.remove('visible'));
@@ -977,6 +1032,11 @@ function handleRoute(){
   if (view) view.classList.add('visible');
   const link = document.querySelector(`.nav-link[data-route="${route}"]`);
   if (link) link.classList.add('active');
+  // BUGFIX: boot() ตั้ง location.hash แล้วเรียก handleRoute() เอง ส่วนเบราว์เซอร์ก็ยิง event 'hashchange'
+  // ตามมาอีกครั้ง → หน้าแรกโหลดข้อมูลจาก Supabase ซ้ำ 2 รอบทุกครั้งที่เปิดเว็บ (ช้า + เปลืองโควตา)
+  // ถ้า route เดิมถูก activate ไปแล้ว ไม่ต้องโหลดซ้ำ (ต้องการรีเฟรชให้กดปุ่ม ↻ รีเฟรช)
+  if (route === activatedRoute) return;
+  activatedRoute = route;
   if (route === 'dashboard') DashboardPage.activate();
   if (route === 'trends') TrendsPage.activate();
   if (route === 'lookup') LookupPage.activate();
@@ -1003,6 +1063,35 @@ function facFromSloc(sloc){
 }
 
 /* ============================================================
+   LOCATION MERGE — ผู้ใช้ยืนยันว่า Fac B กับ Fac E เป็นพื้นที่เดียวกันจริง ให้รวมแสดงเป็นก้อนเดียว
+   ⚠️ ย้ายมาไว้ scope กลาง (global) เพราะเดิมประกาศอยู่ใน closure ของ DashboardPage เท่านั้น
+   ทำให้หน้า "ค้นหา Material" ยังแยก Fac B / Fac E อยู่ = ตัวเลข % ไม่ตรงกับหน้า Dashboard
+============================================================ */
+const LOCATION_MERGE_GROUPS = [
+  { display: 'Fac B+E', members: ['Fac B', 'Fac E'] },
+];
+function locationDisplayCode(rawCode){
+  if (!rawCode) return rawCode;
+  const grp = LOCATION_MERGE_GROUPS.find(g => g.members.includes(rawCode));
+  return grp ? grp.display : rawCode;
+}
+function locationMembersOf(displayCode){
+  const grp = LOCATION_MERGE_GROUPS.find(g => g.display === displayCode);
+  return grp ? grp.members : [displayCode];
+}
+// รวมแถว v_location_utilization (1 แถวต่อ 1 Fac จริง) เข้าด้วยกันตามกลุ่มที่รวมพื้นที่ไว้ ก่อนคำนวณ % /สถานะใดๆ
+function mergeLocationRows(rows){
+  const merged = {};
+  (rows||[]).forEach(r => {
+    const display = locationDisplayCode(r.location_code);
+    if (!merged[display]) merged[display] = { location_code: display, actual_capacity_tons: 0, stock_weight_tons: 0 };
+    merged[display].actual_capacity_tons += Number(r.actual_capacity_tons) || 0;
+    merged[display].stock_weight_tons += Number(r.stock_weight_tons) || 0;
+  });
+  return Object.values(merged);
+}
+
+/* ============================================================
    fetchAllRows — ดึงข้อมูลทุกแถวแบบแบ่งหน้า (pagination)
    ⚠️ สำคัญมาก: Supabase project นี้ตั้งค่า "Max Rows" ของ PostgREST API ไว้ที่ 1,000 แถว
    ต่อ 1 request เสมอ — ต่อให้โค้ดฝั่ง client ขอ .limit(20000)/.limit(50000) เท่าไหร่ก็ตาม
@@ -1011,19 +1100,26 @@ function facFromSloc(sloc){
    ไม่ครบ (ตอนนี้ตาราง stock มีมากกว่า 1,000 แถวแล้วจากโหมดวางเติม) — ฟังก์ชันนี้แก้ปัญหานี้
    โดยวนดึงทีละหน้า (.range()) จนกว่าจะได้ครบทุกแถวจริง ไม่ว่า Max Rows ของโปรเจกต์จะตั้งไว้เท่าไหร่
 ============================================================ */
-async function fetchAllRows(table, selectCols, orderCol){
+// 🐞 BUGFIX 2 จุดในฟังก์ชันนี้:
+//  (1) เดิมเรียกโดยไม่ส่ง orderCol เกือบทุกที่ → PostgREST/Postgres ไม่รับประกันลำดับแถวเมื่อไม่มี ORDER BY
+//      การไล่หน้าด้วย .range() บนผลลัพธ์ที่ลำดับไม่แน่นอน ทำให้ "ได้แถวซ้ำบางแถว + แถวอื่นหายไป" แบบสุ่ม
+//      (น้ำหนักรวมบนแดชบอร์ดเพี้ยนได้ทุกครั้งที่รีเฟรช) — จึงบังคับเรียงตาม id เป็นค่าเริ่มต้นเสมอ
+//  (2) เดิม break ทันทีเมื่อได้แถวน้อยกว่า PAGE_SIZE — ถ้าวันหนึ่งค่า Max Rows ของโปรเจกต์ถูกลด
+//      ต่ำกว่า 1000 (เช่น 500) จะหยุดที่หน้าแรกและข้อมูลขาดแบบเงียบๆ ตอนนี้เลื่อนตามจำนวนแถวที่ได้จริง
+//      และหยุดเมื่อได้ 0 แถวเท่านั้น จึงครบเสมอไม่ว่าเซิร์ฟเวอร์จะตัดที่เท่าไหร่
+async function fetchAllRows(table, selectCols, orderCol = 'id'){
   const PAGE_SIZE = 1000;
+  const MAX_PAGES = 500; // กันลูปไม่สิ้นสุดกรณีเซิร์ฟเวอร์ตอบผิดปกติ (สูงสุด ~500,000 แถว)
   let all = [];
   let from = 0;
-  while (true) {
+  for (let page = 0; page < MAX_PAGES; page++) {
     let q = sb.from(table).select(selectCols).range(from, from + PAGE_SIZE - 1);
     if (orderCol) q = q.order(orderCol, { ascending: true });
     const { data, error } = await q;
     if (error) throw error;
-    if (!data || !data.length) break;
+    if (!data || !data.length) break; // ไม่มีข้อมูลเหลือแล้ว = ครบจริง
     all = all.concat(data);
-    if (data.length < PAGE_SIZE) break; // หน้าสุดท้ายแล้ว (ได้น้อยกว่าขนาดหน้า)
-    from += PAGE_SIZE;
+    from += data.length; // เลื่อนตาม "จำนวนแถวที่เซิร์ฟเวอร์ให้มาจริง" ไม่ใช่ขนาดหน้าที่เราขอ
   }
   return all;
 }
@@ -1080,31 +1176,8 @@ const DashboardPage = (() => {
     color(tier){ return tier === 'critical' ? 'var(--danger)' : tier === 'warn' ? 'var(--warning)' : 'var(--success)'; },
   };
 
-  // ผู้ใช้ยืนยันว่า Fac B กับ Fac E เป็นพื้นที่เดียวกันจริง ให้รวมแสดงเป็นก้อนเดียวทั่วทั้งหน้า Dashboard
-  // (พื้นที่/สต็อกของทั้งคู่ถูกบวกรวมกันก่อนแสดงผลทุกจุด — เพิ่ม/แก้กลุ่มในอนาคตได้ที่จุดเดียวนี้)
-  const LOCATION_MERGE_GROUPS = [
-    { display: 'Fac B+E', members: ['Fac B', 'Fac E'] },
-  ];
-  function locationDisplayCode(rawCode){
-    if (!rawCode) return rawCode;
-    const grp = LOCATION_MERGE_GROUPS.find(g => g.members.includes(rawCode));
-    return grp ? grp.display : rawCode;
-  }
-  function locationMembersOf(displayCode){
-    const grp = LOCATION_MERGE_GROUPS.find(g => g.display === displayCode);
-    return grp ? grp.members : [displayCode];
-  }
-  // รวมแถว v_location_utilization (1 แถวต่อ 1 Fac จริง) เข้าด้วยกันตามกลุ่มที่รวมพื้นที่ไว้ ก่อนคำนวณ % /สถานะใดๆ
-  function mergeLocationRows(rows){
-    const merged = {};
-    (rows||[]).forEach(r => {
-      const display = locationDisplayCode(r.location_code);
-      if (!merged[display]) merged[display] = { location_code: display, actual_capacity_tons: 0, stock_weight_tons: 0 };
-      merged[display].actual_capacity_tons += Number(r.actual_capacity_tons) || 0;
-      merged[display].stock_weight_tons += Number(r.stock_weight_tons) || 0;
-    });
-    return Object.values(merged);
-  }
+  // LOCATION_MERGE_GROUPS / locationDisplayCode / locationMembersOf / mergeLocationRows
+  // ย้ายไป scope กลาง (global) แล้ว — ใช้ร่วมกับหน้า "ค้นหา Material" ให้ตัวเลขตรงกันทุกหน้า
 
   // ===== การกรองตามวันที่นำเข้า (append-mode รองรับหลายวันที่สะสมอยู่ในตาราง stock) =====
   // คืนเฉพาะแถวของวันที่ที่กำลังเลือกอยู่ (selectedDateKey) — ถ้าไม่มีวันที่เลย (ข้อมูลเก่าก่อนมีฟีเจอร์นี้ ไม่มี imported_at)
@@ -1124,11 +1197,19 @@ const DashboardPage = (() => {
       if (!loc) return;
       usedByLoc[loc] = (usedByLoc[loc] || 0) + ((Number(r.total_weight) || 0) / 1000);
     });
-    return (locUtil || []).map(r => ({
+    const out = (locUtil || []).map(r => ({
       location_code: r.location_code,
       actual_capacity_tons: Number(r.actual_capacity_tons) || 0,
       stock_weight_tons: usedByLoc[r.location_code] || 0,
     }));
+    // BUGFIX: เดิม map เฉพาะโรงงานที่มีอยู่ในไฟล์ Area เท่านั้น — ถ้ามีสต็อกอยู่ในโรงงานที่ยังไม่ได้นำเข้า
+    // ข้อมูลพื้นที่ น้ำหนักก้อนนั้นจะ "หายเงียบๆ" จากการ์ด "ใช้งานปัจจุบัน" ทำให้ตัวเลขไม่ตรงกับ
+    // KPI "น้ำหนักรวม (ตัน)" ด้านล่างโดยไม่มีอะไรเตือน — ตอนนี้ใส่เข้ามาด้วยโดยตั้งความจุ = 0
+    const known = new Set(out.map(r => r.location_code));
+    Object.keys(usedByLoc).forEach(loc => {
+      if (!known.has(loc)) out.push({ location_code: loc, actual_capacity_tons: 0, stock_weight_tons: usedByLoc[loc] });
+    });
+    return out;
   }
 
   // เติม/รีเฟรช dropdown เลือกวันที่ + แถบแจ้งเตือนเมื่อกำลังดูข้อมูลย้อนหลัง (ไม่ใช่วันล่าสุด)
@@ -1217,13 +1298,14 @@ const DashboardPage = (() => {
     el('btnCaptureSnapshot').addEventListener('click', (e) => captureDashboardSnapshot(e.currentTarget));
   }
 
+  const SUMMARY_VIZ_IDS = ['summaryLocationViz','summaryGroupSaleViz','summaryProductTypeViz','summaryLocGroupViz','topWeightViz','topQtyViz'];
   function setSummaryLoading(){
-    ['summaryLocationViz','summaryGroupSaleViz','summaryProductTypeViz','summaryLocGroupViz'].forEach(id => {
+    SUMMARY_VIZ_IDS.forEach(id => {
       el(id).innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
     });
   }
   function setSummaryError(msg){
-    ['summaryLocationViz','summaryGroupSaleViz','summaryProductTypeViz','summaryLocGroupViz'].forEach(id => {
+    SUMMARY_VIZ_IDS.forEach(id => {
       el(id).innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(msg)}</div>`;
     });
   }
@@ -1290,7 +1372,10 @@ const DashboardPage = (() => {
       const capacity = Number(r.actual_capacity_tons) || 0;
       const used = Number(r.stock_weight_tons) || 0;
       const pct = capacity > 0 ? (used / capacity) * 100 : 0;
-      return { location_code: r.location_code, capacity, used, pct, tier: Tier.of(pct) };
+      // BUGFIX: โรงงานที่ยังไม่มีข้อมูลความจุ (capacity = 0) แต่มีสต็อกอยู่จริง เดิมได้ pct = 0
+      // → ถูกนับเป็น "✅ ปกติ" ซึ่งกลับหัวกลับหางกับความจริง ต้องนับเป็นวิกฤต/ต้องตรวจสอบ
+      const noCapacity = capacity <= 0 && used > 0;
+      return { location_code: r.location_code, capacity, used, pct, noCapacity, tier: noCapacity ? 'critical' : Tier.of(pct) };
     });
 
     const totalCapacity = withPct.reduce((s,r) => s + r.capacity, 0);
@@ -1402,10 +1487,12 @@ const DashboardPage = (() => {
       const pct = capacity > 0 ? (used / capacity) * 100 : 0;
       const share = grandTotalUsed > 0 ? (used / grandTotalUsed) * 100 : 0;
       const remaining = capacity - used;
-      return { location_code: r.location_code, capacity, used, remaining, pct, share, tier: Tier.of(pct) };
+      const noCapacity = capacity <= 0 && used > 0; // ยังไม่มีข้อมูลพื้นที่ของโรงงานนี้ในไฟล์ Area
+      return { location_code: r.location_code, capacity, used, remaining, pct, share, noCapacity, tier: noCapacity ? 'critical' : Tier.of(pct) };
     });
 
-    const sorted = withPct.slice().sort((a,b) => b.pct - a.pct);
+    // โรงงานที่ยังไม่มีข้อมูลความจุมี pct = 0 จึงเคยหลุดไปอยู่ท้ายสุด ทั้งที่ต้องรีบตรวจ — ดันขึ้นบนสุด
+    const sorted = withPct.slice().sort((a,b) => (b.noCapacity?1:0) - (a.noCapacity?1:0) || b.pct - a.pct);
     list.innerHTML = sorted.map(r => {
       const widthPct = Math.min(100, r.pct);
       const remainingCls = r.remaining < 0 ? 'over' : 'ok';
@@ -1422,12 +1509,14 @@ const DashboardPage = (() => {
         <div class="mgr-factory-row" data-location="${escapeHtml(r.location_code)}" title="คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้างในโรงงานนี้">
           <div class="mgr-factory-name">${escapeHtml(r.location_code)}</div>
           <div class="mgr-factory-track"><div class="mgr-factory-fill" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div></div>
-          <div class="mgr-factory-nums" title="${escapeHtml(pctTitle)}">
-            <b>${r.pct.toFixed(0)}%</b> · ใช้ ${fmtNum(r.used,1)} / ${fmtNum(r.capacity,1)} ตัน
-            <div class="mgr-factory-remaining ${remainingCls}" title="${escapeHtml(remainingTitle)}">${remainingText}</div>
+          <div class="mgr-factory-nums" title="${escapeHtml(r.noCapacity ? 'โรงงานนี้ยังไม่มีข้อมูลพื้นที่จัดเก็บ (actual_capacity_tons) ในไฟล์ Area จึงคำนวณ % ใช้พื้นที่ไม่ได้' : pctTitle)}">
+            ${r.noCapacity
+              ? `<b>—</b> · ใช้ ${fmtNum(r.used,1)} ตัน <span class="cell-muted">(ยังไม่มีข้อมูลความจุ)</span>`
+              : `<b>${r.pct.toFixed(0)}%</b> · ใช้ ${fmtNum(r.used,1)} / ${fmtNum(r.capacity,1)} ตัน`}
+            ${r.noCapacity ? '' : `<div class="mgr-factory-remaining ${remainingCls}" title="${escapeHtml(remainingTitle)}">${remainingText}</div>`}
           </div>
           <div class="mgr-factory-share" title="${escapeHtml(shareTitle)}">สัดส่วนรวม<br/><b>${r.share.toFixed(1)}%</b></div>
-          <span class="mgr-status-pill ${r.tier}" style="flex:none;">${Tier.label(r.tier)}</span>
+          <span class="mgr-status-pill ${r.tier}" style="flex:none;">${r.noCapacity ? '⚠️ ไม่มีข้อมูลพื้นที่' : Tier.label(r.tier)}</span>
         </div>`;
     }).join('');
 
@@ -1495,12 +1584,13 @@ const DashboardPage = (() => {
         </div>
       </div>`;
     document.body.appendChild(overlay);
-    const close = () => overlay.remove();
+    // BUGFIX: เดิมถอด listener 'keydown' ออกเฉพาะกรณีปิดด้วยปุ่ม Esc — ถ้าผู้ใช้ปิดด้วยปุ่ม X หรือคลิกฉากหลัง
+    // listener จะค้างอยู่ตลอด และสะสมเพิ่มทุกครั้งที่เปิด popup โรงงานใหม่ (memory leak)
+    const escHandler = (e) => { if (e.key === 'Escape') close(); };
+    const close = () => { overlay.remove(); document.removeEventListener('keydown', escHandler); };
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     overlay.querySelector('.modal-close').addEventListener('click', close);
-    document.addEventListener('keydown', function escHandler(e){
-      if (e.key === 'Escape'){ close(); document.removeEventListener('keydown', escHandler); }
-    });
+    document.addEventListener('keydown', escHandler);
   }
 
   // ===== แคปรูป Dashboard (ตัดฟีเจอร์ส่งอีเมลออกตามคำขอผู้ใช้ — เหลือแค่แคป+ดาวน์โหลด ไม่มี modal/mailto อีกต่อไป) =====
@@ -1711,11 +1801,102 @@ const DashboardPage = (() => {
     box.innerHTML = barsHtml + `<div class="legend-row">${legendHtml}</div>`;
   }
 
+  /* ============================================================
+     ===== ✨ ใหม่: Top 5 รายการสินค้า — 2 มุมมอง (ตามน้ำหนัก / ตามจำนวน) =====
+     จัดกลุ่มตาม Material (SKU) โดยรวมทุก Batch และทุก Storage Location ของรหัสเดียวกันเข้าด้วยกัน
+     (ตาราง stock เก็บ 1 แถวต่อ Material × Batch × Sloc ถ้าไม่รวมก่อน จะได้ "อันดับของล็อต" ไม่ใช่ "อันดับของสินค้า")
+     ทั้ง 2 มุมมองผูกกับตัวกรองด้านบน (ค้นหา / Group Sale / Group Product / Product Type / โรงงาน)
+     และอยู่ในขอบเขต "วันที่นำเข้า" ที่เลือกไว้ด้านบนสุดเสมอ เพราะรับ rows ชุดเดียวกับกราฟสรุปอื่น
+  ============================================================ */
+  const TOP_N_ITEMS = 5;
+
+  // สรุปยอดต่อ 1 Material — คืน array ของ { material, description, groupProduct, weightKg, qty, rowCount, locs }
+  function materialSummary(rows){
+    const map = new Map();
+    (rows || []).forEach(r => {
+      const mat = r.material || 'ไม่ระบุ';
+      let m = map.get(mat);
+      if (!m){
+        m = { material: mat, description: '', groupProduct: '', weightKg: 0, qty: 0, rowCount: 0, locs: new Set() };
+        map.set(mat, m);
+      }
+      m.weightKg += Number(r.total_weight) || 0;
+      m.qty += Number(r.unrestricted_qty) || 0;
+      m.rowCount++;
+      if (!m.description && r.material_description) m.description = r.material_description;
+      if (!m.groupProduct && r.group_product) m.groupProduct = r.group_product;
+      const loc = locationDisplayCode(r.location_code);
+      if (loc) m.locs.add(loc);
+    });
+    return [...map.values()];
+  }
+
+  // metric: 'weight' (ตัน) หรือ 'qty' (จำนวน Unrestricted)
+  // ใช้ sequential 1 hue เข้มตามสัดส่วน (เหมือนกราฟอันดับอื่นในหน้านี้) — ไม่ใช่สี categorical เพราะเป็นค่าเชิงปริมาณ
+  function renderTopItems(containerId, rows, metric, hue, sat, unitLabel, decimals){
+    const box = el(containerId);
+    if (!box) return;
+    const valueOf = (m) => metric === 'weight' ? m.weightKg / 1000 : m.qty;
+    const mats = materialSummary(rows);
+    const grandTotal = mats.reduce((s,m) => s + valueOf(m), 0);
+    const ranked = mats.filter(m => valueOf(m) > 0).sort((a,b) => valueOf(b) - valueOf(a));
+    if (!ranked.length){
+      box.innerHTML = '<div class="viz-empty">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div>';
+      return;
+    }
+    const shown = ranked.slice(0, TOP_N_ITEMS);
+    const maxVal = valueOf(shown[0]) || 0.0001; // ความยาวแท่งเทียบกับอันดับ 1 (อ่านช่องว่างระหว่างอันดับได้ทันที)
+    const topSum = shown.reduce((s,m) => s + valueOf(m), 0);
+
+    const itemsHtml = shown.map((m, i) => {
+      const val = valueOf(m);
+      const pct = grandTotal > 0 ? (val / grandTotal) * 100 : 0;
+      const widthPct = (val / maxVal) * 100;
+      const otherLine = metric === 'weight'
+        ? `จำนวน (Unrestricted) = ${fmtNum(m.qty)} หน่วย`
+        : `น้ำหนักรวม = ${fmtNum(m.weightKg / 1000, 2)} ตัน`;
+      const title = `${m.material}${m.description ? ' — ' + m.description : ''}\n`
+        + `${metric === 'weight' ? 'น้ำหนักรวม' : 'จำนวน (Unrestricted)'} = ${fmtNum(val, decimals)} ${unitLabel}\n`
+        + `${otherLine}\n`
+        + `สัดส่วน = ${fmtNum(val, decimals)} ÷ ยอดรวมทุก SKU ตามตัวกรองปัจจุบัน ${fmtNum(grandTotal, decimals)} × 100 = ${pct.toFixed(2)}%\n`
+        + `รวมจาก ${fmtNum(m.rowCount)} แถว (Batch × Storage Location)\n`
+        + `จัดเก็บที่: ${m.locs.size ? [...m.locs].sort().join(', ') : '—'}`;
+      return `
+        <div class="top-item" title="${escapeHtml(title)}">
+          <div class="top-rank">${i+1}</div>
+          <div class="top-main">
+            <div class="top-name">
+              <span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(m.material)}</span>
+              ${m.groupProduct ? `<span class="badge badge-orange" style="flex:none;">${escapeHtml(m.groupProduct)}</span>` : ''}
+            </div>
+            <div class="top-desc">${m.description ? escapeHtml(m.description) : '<span class="cell-muted">— ไม่มีรายละเอียดสินค้า —</span>'}</div>
+            <div class="top-track"><div class="top-fill" style="width:${widthPct}%;background:${sequentialColor(hue, sat, pct)};"></div></div>
+          </div>
+          <div class="top-val">
+            <b>${fmtNum(val, decimals)}</b>${escapeHtml(unitLabel)}
+            <div class="top-pct">${pct.toFixed(1)}%</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const topShare = grandTotal > 0 ? (topSum / grandTotal) * 100 : 0;
+    const metricWord = metric === 'weight' ? 'น้ำหนัก' : 'จำนวน';
+    const note = `Top ${shown.length} นี้รวมกันคิดเป็น <b style="color:var(--navy-900);">${topShare.toFixed(1)}%</b> ของ${metricWord}ทั้งหมด `
+      + `(${fmtNum(grandTotal, decimals)} ${escapeHtml(unitLabel)}) จากทั้งหมด ${fmtNum(ranked.length)} SKU ที่มีค่ามากกว่า 0`
+      + (metric === 'qty'
+          ? ' · ⚠️ คอลัมน์ Unrestricted จาก SAP มีหลายหน่วยนับปนกัน (เส้น / แผ่น / ท่อน / กก. ตาม UOM ของแต่ละสินค้า) จึงใช้เทียบเชิงปริมาณอย่างหยาบเท่านั้น ไม่ใช่หน่วยเดียวกันทั้งหมด'
+          : '');
+    box.innerHTML = itemsHtml + `<div class="top-note">${note}</div>`;
+  }
+
   function renderSummaries(rows){
     renderRankBars('summaryLocationViz', groupSummary(rows, 'location_code'), 213, 66, 'ตัน');
     renderRankBars('summaryGroupSaleViz', groupSummary(rows, 'group_sale'), 20, 80, 'ตัน');
     renderRankBars('summaryProductTypeViz', groupSummary(rows, 'product_type'), 165, 55, 'ตัน');
     renderStackedByLocation('summaryLocGroupViz', rows);
+    // Top 5 รายการสินค้า — คนละ metric กัน จึงแยกเป็น 2 กราฟ ไม่ยัดสองสเกลลงแท่งเดียวกัน
+    renderTopItems('topWeightViz', rows, 'weight', 213, 66, ' ตัน', 2);
+    renderTopItems('topQtyViz', rows, 'qty', 20, 80, ' หน่วย', 0);
   }
 
   function activate(){
@@ -1732,7 +1913,9 @@ const DashboardPage = (() => {
 const LookupPage = (() => {
   let mounted = false;
   let allRows = [];
-  let locTotals = {};
+  let locCapacity = {};       // ความจุ (ตัน) ต่อโรงงาน — รวม Fac B+E แล้ว, ไม่ขึ้นกับวันที่
+  let availableDateKeys = []; // วันที่นำเข้าที่มีอยู่จริง เรียงล่าสุดก่อน
+  let latestDateKey = null;
 
   function mount(){
     if (mounted) return;
@@ -1740,9 +1923,13 @@ const LookupPage = (() => {
     el('btnLookup').addEventListener('click', runLookup);
     el('btnLookupClear').addEventListener('click', () => {
       el('lookupInput').value = '';
-      el('lookupTbody').innerHTML = '<tr><td colspan="9"><div class="empty-state">วางหรือพิมพ์รหัส Material แล้วกด "ค้นหา"</div></td></tr>';
+      el('lookupTbody').innerHTML = '<tr><td colspan="10"><div class="empty-state">วางหรือพิมพ์รหัส Material แล้วกด "ค้นหา"</div></td></tr>';
       el('lookupResultCount').textContent = '';
       el('lookupNotFound').innerHTML = '';
+    });
+    // สลับขอบเขตวันที่แล้วค้นซ้ำให้อัตโนมัติ ถ้ามีผลการค้นหาอยู่แล้ว
+    el('lookupAllDates').addEventListener('change', () => {
+      if (el('lookupInput').value.trim()) runLookup();
     });
     // รองรับ Enter (ไม่ต้องกด shift) เพื่อค้นหาไว — แต่ยังพิมพ์/วางหลายบรรทัดได้ปกติด้วย Shift+Enter หรือวางเป็นก้อน
     el('lookupInput').addEventListener('keydown', (e) => {
@@ -1758,13 +1945,26 @@ const LookupPage = (() => {
       ]);
       if (utilErr) throw utilErr;
       allRows = stockData || [];
-      locTotals = {};
-      (utilData || []).forEach(r => {
-        locTotals[r.location_code] = {
-          capacity: Number(r.actual_capacity_tons) || 0,
-          totalStock: Number(r.stock_weight_tons) || 0,
-        };
+      // 🐞 BUGFIX: เดิมเก็บทั้ง capacity และ totalStock จาก v_location_utilization
+      // แต่ stock_weight_tons ใน view นั้นรวม "ทุกวันที่นำเข้า" ที่สะสมอยู่ในตาราง stock (โหมดวางเติม)
+      // ทำให้คอลัมน์ "% ของสต็อกในโรงงานนี้" มีตัวส่วนใหญ่เกินจริงเป็นเท่าตัวตามจำนวนวันที่นำเข้า
+      // → ตอนนี้เก็บแค่ความจุ (คงที่) จาก view ส่วนยอดสต็อกของโรงงานคำนวณใหม่จากแถวที่อยู่ในขอบเขตวันที่จริง
+      // และรวมกลุ่มพื้นที่ (Fac B+E) ให้ตรงกับหน้า Dashboard ด้วย
+      locCapacity = {};
+      mergeLocationRows(utilData || []).forEach(r => {
+        locCapacity[r.location_code] = Number(r.actual_capacity_tons) || 0;
       });
+
+      availableDateKeys = [...new Set(allRows.map(r => localDateKey(r.imported_at)))]
+        .filter(k => k !== 'ไม่ระบุ')
+        .sort((a,b) => b.localeCompare(a));
+      latestDateKey = availableDateKeys[0] || null;
+      const hint = el('lookupScopeHint');
+      if (hint){
+        hint.textContent = latestDateKey
+          ? `(ค่าเริ่มต้น: เฉพาะวันล่าสุด ${fmtDateKey(latestDateKey)}${availableDateKeys.length > 1 ? ` · มีข้อมูลทั้งหมด ${availableDateKeys.length} วัน` : ''})`
+          : '';
+      }
     } catch (e) {
       console.error(e);
       toast('โหลดข้อมูลสำหรับค้นหาไม่สำเร็จ: ' + (e.message || e), 'error');
@@ -1779,26 +1979,47 @@ const LookupPage = (() => {
   function runLookup(){
     const codes = parseCodes(el('lookupInput').value);
     if (!codes.length){ toast('กรุณาใส่รหัส Material อย่างน้อย 1 รายการ', 'error'); return; }
+
+    // 🐞 BUGFIX: เดิมค้นจาก allRows ทั้งก้อน = ทุกวันที่นำเข้าที่สะสมอยู่ (โหมดวางเติม)
+    // รหัสเดียวจึงขึ้นซ้ำหลายแถวจากหลายวัน โดยไม่มีคอลัมน์บอกว่าแถวไหนของวันไหน
+    // → ค่าเริ่มต้นดูเฉพาะ "วันล่าสุด" และเพิ่มคอลัมน์วันที่นำเข้า + ติ๊กเพื่อดูทุกวันได้
+    const allDates = el('lookupAllDates').checked;
+    const scoped = (allDates || !latestDateKey)
+      ? allRows
+      : allRows.filter(r => localDateKey(r.imported_at) === latestDateKey);
+
+    // ยอดสต็อกรวมต่อโรงงาน คำนวณจากแถวในขอบเขตเดียวกับที่ค้นหา (ไม่ใช่ยอดรวมทุกวันจาก view)
+    const stockTonsByLoc = {};
+    scoped.forEach(r => {
+      const key = locationDisplayCode(r.location_code) || 'ไม่ระบุ';
+      stockTonsByLoc[key] = (stockTonsByLoc[key] || 0) + ((Number(r.total_weight) || 0) / 1000);
+    });
+
     const codesUpper = new Set(codes.map(c => c.toUpperCase()));
-    const matched = allRows.filter(r => codesUpper.has(String(r.material||'').toUpperCase()));
+    const matched = scoped.filter(r => codesUpper.has(String(r.material||'').toUpperCase()));
     const foundUpperSet = new Set(matched.map(r => String(r.material||'').toUpperCase()));
     const notFound = codes.filter(c => !foundUpperSet.has(c.toUpperCase()));
 
-    el('lookupResultCount').textContent = `พบ ${fmtNum(matched.length)} แถว จาก ${fmtNum(codes.length)} รหัสที่ค้นหา`;
+    const scopeText = (allDates || !latestDateKey)
+      ? 'ทุกวันที่นำเข้า'
+      : `ข้อมูลวันที่ ${fmtDateKey(latestDateKey)}`;
+    el('lookupResultCount').textContent = `พบ ${fmtNum(matched.length)} แถว จาก ${fmtNum(codes.length)} รหัสที่ค้นหา · ${scopeText}`;
     el('lookupNotFound').innerHTML = notFound.length
-      ? `<div class="lookup-notfound">⚠️ ไม่พบข้อมูลของ ${notFound.length} รหัส: ${notFound.map(c => escapeHtml(c)).join(', ')}</div>`
+      ? `<div class="lookup-notfound">⚠️ ไม่พบข้อมูลของ ${notFound.length} รหัส (ใน${escapeHtml(scopeText)}): ${notFound.map(c => escapeHtml(c)).join(', ')}</div>`
       : '';
 
     const tbody = el('lookupTbody');
     if (!matched.length){
-      tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">ไม่พบข้อมูลตามรหัสที่ค้นหา</div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state">ไม่พบข้อมูลตามรหัสที่ค้นหา</div></td></tr>';
       return;
     }
     tbody.innerHTML = matched.map(r => {
       const weightTons = (Number(r.total_weight) || 0) / 1000;
-      const loc = locTotals[r.location_code] || { capacity: 0, totalStock: 0 };
-      const pctOfCapacity = loc.capacity > 0 ? (weightTons / loc.capacity) * 100 : 0;
-      const pctOfStock = loc.totalStock > 0 ? (weightTons / loc.totalStock) * 100 : 0;
+      const locKey = locationDisplayCode(r.location_code);
+      const capacity = locKey ? (locCapacity[locKey] || 0) : 0;
+      const totalStock = locKey ? (stockTonsByLoc[locKey] || 0) : 0;
+      const pctOfCapacity = capacity > 0 ? (weightTons / capacity) * 100 : 0;
+      const pctOfStock = totalStock > 0 ? (weightTons / totalStock) * 100 : 0;
       return `
         <tr>
           <td>${escapeHtml(r.material)}</td>
@@ -1806,10 +2027,11 @@ const LookupPage = (() => {
           <td>${escapeHtml(r.batch)}</td>
           <td class="cell-num">${fmtNum(r.unrestricted_qty)}</td>
           <td><span class="badge badge-navy">${escapeHtml(r.storage_location)||'-'}</span></td>
-          <td>${r.location_code ? escapeHtml(r.location_code) : '<span class="cell-muted">ไม่ทราบ</span>'}</td>
+          <td>${locKey ? escapeHtml(locKey) : '<span class="cell-muted">ไม่ทราบ</span>'}</td>
           <td class="cell-num">${fmtNum(weightTons, 3)}</td>
-          <td class="cell-num" style="font-weight:600;color:var(--navy-800);">${loc.capacity > 0 ? pctOfCapacity.toFixed(2)+'%' : '<span class="cell-muted">-</span>'}</td>
-          <td class="cell-num">${loc.totalStock > 0 ? pctOfStock.toFixed(2)+'%' : '<span class="cell-muted">-</span>'}</td>
+          <td class="cell-num" style="font-weight:600;color:var(--navy-800);" title="${escapeHtml(`น้ำหนักแถวนี้ ${fmtNum(weightTons,3)} ตัน ÷ ความจุของ ${locKey||'-'} ${fmtNum(capacity,1)} ตัน × 100`)}">${capacity > 0 ? pctOfCapacity.toFixed(2)+'%' : '<span class="cell-muted">-</span>'}</td>
+          <td class="cell-num" title="${escapeHtml(`น้ำหนักแถวนี้ ${fmtNum(weightTons,3)} ตัน ÷ สต็อกรวมของ ${locKey||'-'} ${fmtNum(totalStock,2)} ตัน (${scopeText}) × 100`)}">${totalStock > 0 ? pctOfStock.toFixed(2)+'%' : '<span class="cell-muted">-</span>'}</td>
+          <td class="cell-muted" style="font-size:11.5px;">${escapeHtml(fmtDateKey(localDateKey(r.imported_at)))}</td>
         </tr>`;
     }).join('');
   }
@@ -1842,7 +2064,15 @@ const UnmatchedPage = (() => {
     el('unmatchedTbody').innerHTML = '<tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr>';
     try {
       const data = await fetchAllRows('v_stock_enriched', '*');
-      const rows = (data || []).filter(r => !r.group_sale);
+      // 🐞 BUGFIX: เดิมนับรวมทุก "วันที่นำเข้า" ที่สะสมอยู่ในตาราง stock (โหมดวางเติม)
+      // ทำให้ "จำนวนแบทช์/แถว" และ "น้ำหนักรวม" ถูกนับซ้ำเป็นเท่าตัวตามจำนวนวันที่นำเข้า
+      // (ตอนนี้มีข้อมูล 3 วัน → ตัวเลขเดิมบวมขึ้นราว 3 เท่า) — ต้องดูเฉพาะวันล่าสุดเท่านั้น
+      const dateKeys = [...new Set((data || []).map(r => localDateKey(r.imported_at)))]
+        .filter(k => k !== 'ไม่ระบุ')
+        .sort((a,b) => b.localeCompare(a));
+      const latestKey = dateKeys[0] || null;
+      const scoped = latestKey ? (data || []).filter(r => localDateKey(r.imported_at) === latestKey) : (data || []);
+      const rows = scoped.filter(r => !r.group_sale);
       const byMat = {};
       rows.forEach(r => {
         const key = r.material || 'ไม่ทราบ';
@@ -1856,9 +2086,12 @@ const UnmatchedPage = (() => {
 
       const totalRows = rows.length;
       const totalMats = allUnmatched.length;
-      el('unmatchedBanner').innerHTML = totalMats
+      const scopeNote = latestKey
+        ? `<div style="font-size:12px;color:var(--gray-600);margin-top:7px;">📅 อ้างอิงข้อมูลสต็อกของวันที่นำเข้าล่าสุด: <b>${escapeHtml(fmtDateKey(latestKey))}</b>${dateKeys.length > 1 ? ` (ระบบมีข้อมูลสะสม ${dateKeys.length} วัน — หน้านี้ไม่นับซ้ำข้ามวัน)` : ''}</div>`
+        : '';
+      el('unmatchedBanner').innerHTML = (totalMats
         ? `<div style="font-size:14px;color:var(--navy-900);"><b style="color:var(--danger);font-size:19px;">${fmtNum(totalMats)}</b> รหัส Material (${fmtNum(totalRows)} แถวสต็อก) ที่ยังไม่มีข้อมูล Group Sale / Group Product / Product Type — กรุณาเพิ่มรหัสเหล่านี้ในไฟล์กลุ่มสินค้า (Group_LongProduct.xlsx) แล้วนำเข้าใหม่ในหน้า "นำเข้าข้อมูล"</div>`
-        : `<div style="font-size:14px;color:var(--success);">✅ ไม่มีรหัส Material ที่ขาดข้อมูลกลุ่มสินค้า — ข้อมูลครบถ้วน</div>`;
+        : `<div style="font-size:14px;color:var(--success);">✅ ไม่มีรหัส Material ที่ขาดข้อมูลกลุ่มสินค้า — ข้อมูลครบถ้วน</div>`) + scopeNote;
 
       renderTable();
     } catch (e) {
@@ -1894,7 +2127,7 @@ const UnmatchedPage = (() => {
     const headers = ['Material','Description','Row Count','Weight (Ton)','Found In Factories'];
     const lines = [headers.join(',')];
     allUnmatched.forEach(m => {
-      const row = [m.material, m.description, m.rowCount, (m.weight/1000).toFixed(3), [...m.locs].join('; ')]
+      const row = [m.material, m.description, m.rowCount, (m.weight/1000).toFixed(3), [...m.locs].map(l => locationDisplayCode(l)).join('; ')]
         .map(v => `"${String(v===null||v===undefined?'':v).replace(/"/g,'""')}"`);
       lines.push(row.join(','));
     });
@@ -1995,14 +2228,18 @@ const ImportPage = (() => {
     const headerCells = Array.from(trs[0].querySelectorAll('td,th')).map(td => normalizeHeader(td.textContent));
 
     const idx = {};
+    // BUGFIX: เดิมกำหนดค่าทับทุกครั้งที่พบคอลัมน์ที่เข้าเงื่อนไข → ถ้าไฟล์ SAP มีหลายคอลัมน์ที่ match
+    // (เช่น "น้ำหนักรวม" กับ "หน่วยน้ำหนัก" หรือมี Description ซ้ำ) ระบบจะไปใช้ "คอลัมน์ตัวท้ายสุด" ที่ผิด
+    // และอ่านน้ำหนักเป็น null ทั้งไฟล์แบบไม่มี error — เปลี่ยนเป็นใช้คอลัมน์แรกที่พบเสมอ
+    const setIdx = (k, v) => { if (idx[k] === undefined) idx[k] = v; };
     headerCells.forEach((h, i) => {
       const hl = h.toLowerCase();
-      if (h === 'Material') idx.material = i;
-      else if (hl.includes('description')) idx.description = i;
-      else if (h === 'Batch') idx.batch = i;
-      else if (hl.includes('unrestricted')) idx.unrestricted = i;
-      else if (hl.includes('storage location')) idx.storageLocation = i;
-      else if (h.includes('น้ำหนัก') || hl.includes('weight')) idx.weight = i;
+      if (h === 'Material') setIdx('material', i);
+      else if (hl.includes('description')) setIdx('description', i);
+      else if (h === 'Batch') setIdx('batch', i);
+      else if (hl.includes('unrestricted')) setIdx('unrestricted', i);
+      else if (hl.includes('storage location')) setIdx('storageLocation', i);
+      else if (h.includes('น้ำหนัก') || hl.includes('weight')) setIdx('weight', i);
     });
     if (idx.material === undefined) throw new Error('ไม่พบคอลัมน์ "Material" ในไฟล์');
 
@@ -2035,8 +2272,7 @@ const ImportPage = (() => {
   async function parseAreaFile(file){
     const raw = await readXlsxRows(file);
     if (!raw.length) throw new Error('ไฟล์ Area ไม่มีข้อมูล');
-    const sampleKeys = Object.keys(raw[0]).map(normalizeHeader);
-    const keyMap = {};
+    const keyMap = {}; // (ลบตัวแปร sampleKeys ที่ประกาศแล้วไม่ได้ใช้ออก)
     Object.keys(raw[0]).forEach(k => {
       const nk = normalizeHeader(k);
       if (nk === 'Location') keyMap.location = k;
@@ -2126,6 +2362,26 @@ const ImportPage = (() => {
 
       const importStartedAt = new Date().toISOString();
 
+      // ✅ กันนำเข้าไฟล์สต็อกซ้ำในวันเดียวกัน: ตาราง stock ไม่มี unique key และเป็นโหมด "วางเติม"
+      // ถ้านำเข้าไฟล์เดิมสองครั้งในวันเดียว น้ำหนัก/จำนวนของวันนั้นจะถูกนับซ้ำเป็นสองเท่าแบบเงียบๆ
+      // ทั้งบนแดชบอร์ดและกราฟแนวโน้ม — ตรงนี้จึงเตือนและให้ยืนยันก่อน
+      if (kind === 'stock'){
+        const todayKey = localDateKey(importStartedAt);
+        const { startIso, endIso } = localDayRange(todayKey);
+        const { count: sameDayCount } = await sb.from('stock')
+          .select('id', { count: 'exact', head: true })
+          .gte('imported_at', startIso).lt('imported_at', endIso);
+        if (sameDayCount){
+          const proceed = confirm(
+            `⚠️ วันนี้ (${fmtDateKey(todayKey)}) มีข้อมูลสต็อกที่นำเข้าไว้แล้ว ${sameDayCount.toLocaleString()} แถว\n\n` +
+            `โหมดนำเข้าเป็นแบบ "วางเติม" — ถ้านำเข้าต่อ ระบบจะบวกเพิ่มจากของเดิม\n` +
+            `ถ้าเป็นไฟล์เดิมซ้ำ น้ำหนักและจำนวนของวันนี้จะถูกนับซ้ำสองเท่า\n\n` +
+            `ถ้าต้องการ "แทนที่" ข้อมูลของวันนี้ ให้กดยกเลิก แล้วลบข้อมูลของวันนี้ที่ตาราง\n` +
+            `"ข้อมูลสต็อกแยกตามวันที่นำเข้า" ด้านล่างก่อน\n\nยืนยันนำเข้าเพิ่มต่อไป?`);
+          if (!proceed) throw new Error('ยกเลิกการนำเข้า — มีข้อมูลสต็อกของวันนี้อยู่แล้ว');
+        }
+      }
+
       logLine(logId, `⏳ กำลังนำเข้าข้อมูลใหม่ (${rows.length.toLocaleString()} แถว) ...`);
       if (kind === 'area') {
         // upsert by location_code (Fac ต้องไม่ซ้ำ) — ต้องแปะ imported_at ใหม่เองทุกแถว
@@ -2138,11 +2394,17 @@ const ImportPage = (() => {
           throw upsertErr;
         }
       } else {
+        // 🐞 BUGFIX: เดิมปล่อยให้ imported_at ใช้ค่า default now() ของฐานข้อมูล แต่ตอน rollback กลับใช้
+        // .gte('imported_at', importStartedAt) ซึ่งเป็นเวลาจาก "นาฬิกาเครื่องผู้ใช้" — ถ้าเครื่องเดินเร็วกว่า
+        // เซิร์ฟเวอร์ rollback จะลบไม่โดนแถวที่ค้างอยู่เลย (ข้อมูลขยะค้างในตาราง) และถ้าเดินช้ากว่า
+        // ก็อาจลบข้อมูลของรอบก่อนหน้าไปด้วย → แปะ imported_at เองทุกแถว ให้ insert กับ rollback อ้างค่าเดียวกันเป๊ะ
+        // ผลพลอยได้: ทุกแถวของการนำเข้ารอบเดียวกันมี timestamp ตรงกัน การจัดกลุ่ม/ลบตามวันที่จึงแม่นขึ้น
+        const rowsStamped = rows.map(r => ({ ...r, imported_at: importStartedAt }));
         try {
-          await chunkInsert(table, rows);
+          await chunkInsert(table, rowsStamped);
         } catch (insertErr) {
           logLine(logId, `✗ นำเข้าไม่สำเร็จ: ${insertErr.message || insertErr} — กำลังล้างข้อมูลที่ insert ไปบางส่วนของรอบนี้ทิ้ง...`, 'err');
-          await sb.from(table).delete().gte('imported_at', importStartedAt);
+          await sb.from(table).delete().eq('imported_at', importStartedAt);
           throw insertErr;
         }
       }
@@ -2333,7 +2595,7 @@ const ImportPage = (() => {
       <tr>
         <td>${escapeHtml(fmtDateKey(dateKey))}</td>
         <td class="cell-num">${fmtNum(stat.rowCount)}</td>
-        <td class="cell-num">${fmtNum(stat.weight/1000)}</td>
+        <td class="cell-num">${fmtNum(stat.weight/1000, 2)}</td>
         <td><button class="btn btn-danger-outline btn-sm" data-date-key="${escapeHtml(dateKey)}" data-row-count="${stat.rowCount}">🗑️ ลบวันนี้</button></td>
       </tr>`).join('');
     tbody.querySelectorAll('button[data-date-key]').forEach(btn => {
@@ -2437,7 +2699,16 @@ const TrendsPage = (() => {
   function scopedDaily(){
     if (rangeSel === 'all') return allDaily;
     const n = Number(rangeSel);
-    return allDaily.slice(-n);
+    if (!allDaily.length) return allDaily;
+    // BUGFIX: เดิมใช้ allDaily.slice(-n) = "n ครั้งล่าสุดที่นำเข้า" ไม่ใช่ "n วันล่าสุด" ตามที่ปุ่มบอก
+    // (นำเข้าไม่ทุกวัน → ปุ่ม "7 วันล่าสุด" เคยดึงข้อมูลย้อนไปเป็นเดือน) — กรองด้วยวันที่จริง
+    const last = allDaily[allDaily.length - 1];
+    const [ly, lm, ld] = last.dateKey.split('-').map(Number);
+    const cutoff = new Date(ly, lm - 1, ld - (n - 1));
+    return allDaily.filter(d => {
+      const [y, m, day] = d.dateKey.split('-').map(Number);
+      return new Date(y, m - 1, day) >= cutoff;
+    });
   }
 
   function fmtDateShort(dateKey){
@@ -2513,8 +2784,8 @@ const TrendsPage = (() => {
     );
 
     // ตารางแสดงล่าสุดก่อน พร้อมส่วนต่างเทียบกับวันก่อนหน้า (เทียบตามลำดับข้อมูลจริง ไม่ใช่แค่แถวก่อนหน้าในตาราง)
-    el('trendTbody').innerHTML = daily.slice().reverse().map((d) => {
-      const idx = daily.findIndex(x => x.dateKey === d.dateKey);
+    el('trendTbody').innerHTML = daily.slice().reverse().map((d, ri) => {
+      const idx = daily.length - 1 - ri; // ตำแหน่งจริงใน daily (เลี่ยง findIndex ซ้อน map = O(n²))
       const prev = idx > 0 ? daily[idx-1] : null;
       let deltaHtml = '<span class="cell-muted">—</span>';
       if (prev){
