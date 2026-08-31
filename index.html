@@ -1278,13 +1278,11 @@ const DashboardPage = (() => {
     msGroupSale.onChange(() => applyFilters());
     msGroupProduct.onChange(() => applyFilters());
     msProductType.onChange(() => applyFilters());
-    // เลือกโรงงาน (checkbox) แล้ว ให้กรองตารางสรุปทันที + ถ้าเลือกอยู่แค่โรงงานเดียว ให้เปิด popup รายละเอียดของโรงงานนั้นด้วย
-    // (ถ้าเลือกหลายโรงงานพร้อมกัน ไม่เปิด popup เพราะไม่ชัดว่าจะให้แสดงของโรงงานไหน)
-    msLocation.onChange(() => {
-      applyFilters();
-      const sel = msLocation.getValues();
-      if (sel.size === 1) openLocationBreakdownModal([...sel][0], getScopedRows());
-    });
+    // 🐞 BUGFIX: เดิมพอติ๊กโรงงานเดียวในตัวกรอง จะเด้ง popup "มีอะไรจัดเก็บบ้าง" ขึ้นมาทับหน้าจอทันที
+    // ทั้งที่ผู้ใช้แค่กำลัง "กรอง" อยู่ (และมักจะกำลังจะติ๊กโรงงานที่ 2 ต่อ) — popup ยังไปปิดทับ dropdown
+    // ที่เปิดอยู่ ทำให้ต้องกดปิดก่อนจึงจะเลือกต่อได้ → ตัวกรองทำหน้าที่กรองเท่านั้น ไม่เปิด popup
+    // ถ้าต้องการดูรายละเอียดของโรงงาน ให้คลิกแถวโรงงานในหัวข้อ "🏭 รายโรงงานทั้งหมด" ตามเดิม
+    msLocation.onChange(() => applyFilters());
 
     el('btnClearFilters').addEventListener('click', () => {
       el('fSearch').value = '';
