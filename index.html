@@ -276,6 +276,51 @@
     .top-val b{font-size:12.5px;}
   }
 
+  /* ===== Auth box (หน้านำเข้าข้อมูล) ===== */
+  .auth-box{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    background:var(--orange-100);border:1px solid var(--orange-400);border-radius:var(--radius);
+    padding:14px 18px;margin-bottom:18px;
+  }
+  .auth-box.signed-in{background:rgba(25,135,84,.08);border-color:rgba(25,135,84,.35);}
+  .auth-status{font-size:13.5px;color:var(--navy-900);}
+  .auth-hint{font-size:11.5px;color:var(--gray-600);margin-top:3px;font-weight:400;}
+  .auth-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .auth-form input{
+    font-family:'Kanit',sans-serif;font-size:13px;border:1px solid var(--gray-200);border-radius:9px;
+    padding:8px 12px;background:var(--white);color:var(--navy-900);min-width:170px;
+  }
+  .auth-form input:focus{outline:2px solid var(--orange-400);}
+
+  /* ===== ABC Analysis (Pareto) ===== */
+  .abc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;}
+  @media (max-width:860px){ .abc-grid{grid-template-columns:1fr;} }
+  .abc-card{
+    background:linear-gradient(160deg, var(--white), #fcfbf8 140%);border:1px solid var(--gray-200);
+    border-radius:var(--radius);padding:17px 19px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+    transition:.2s cubic-bezier(.2,.7,.3,1);
+  }
+  .abc-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+  .abc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--abc-color,var(--navy-700));}
+  .abc-head{display:flex;align-items:center;gap:9px;}
+  .abc-letter{
+    width:30px;height:30px;border-radius:9px;flex:none;color:#fff;font-weight:700;font-size:15px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .abc-title{font-size:13.5px;font-weight:600;color:var(--navy-900);}
+  .abc-title small{display:block;font-weight:400;font-size:10.5px;color:var(--gray-600);margin-top:1px;}
+  .abc-value{font-size:24px;font-weight:600;color:var(--navy-900);margin-top:11px;font-variant-numeric:tabular-nums;}
+  .abc-value span{font-size:12.5px;font-weight:400;color:var(--gray-600);}
+  .abc-line{font-size:11.5px;color:var(--gray-600);margin-top:5px;}
+  .abc-line b{color:var(--navy-900);}
+  .abc-track{height:7px;border-radius:5px;background:var(--gray-100);margin-top:11px;overflow:hidden;}
+  .abc-fill{height:100%;border-radius:5px;}
+  .abc-insight{
+    font-size:12.5px;color:var(--navy-900);background:var(--gold-100);border:1px solid var(--gold-400);
+    border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.6;
+  }
+  .abc-insight b{color:var(--navy-900);}
+
   /* ===== Filter bar ===== */
   /* navbar สูง 70px — เดิมตั้ง top:68px ทำให้เห็นเนื้อหาแวบผ่านช่อง 2px ใต้ navbar ตอนเลื่อนหน้า */
   .filter-sticky{position:sticky;top:70px;z-index:50;background:var(--gray-50);padding-top:10px;margin-top:10px;}
@@ -706,6 +751,16 @@
       </div>
     </div>
 
+    <!-- ===== ABC Analysis / Pareto — จัดชั้นสินค้าตามสัดส่วนน้ำหนักสะสม ===== -->
+    <div class="section-title" style="margin-top:26px;justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">🔤 ABC Analysis <span class="tag">A = 80% แรกของน้ำหนัก · B = ถัดไปถึง 95% · C = ส่วนที่เหลือ · ตามตัวกรองด้านบน</span></span>
+      <button class="btn btn-outline btn-sm" id="btnAbcExport">⬇ Export ABC (CSV)</button>
+    </div>
+    <div class="abc-insight" id="abcInsight">กำลังคำนวณ...</div>
+    <div class="abc-grid" id="abcCards"></div>
+    <div class="section-title" style="margin:20px 0 12px;">เส้นสะสม (Pareto) <span class="tag">แกนนอน = สัดส่วนจำนวน SKU · แกนตั้ง = สัดส่วนน้ำหนักสะสม</span></div>
+    <div class="viz-block" id="abcPareto"><div class="viz-empty">กำลังโหลด...</div></div>
+
   </div>
 
   <!-- ============ MATERIAL LOOKUP VIEW ============ -->
@@ -756,6 +811,8 @@
 
   <!-- ============ IMPORT VIEW ============ -->
   <div id="view-import" class="route-view">
+    <div class="auth-box" id="authBox"></div>
+
     <div class="section-title">📥 นำเข้าข้อมูล <span class="tag">รายการสินค้า/สต็อก = เพิ่มต่อจากเดิม (ลบตามวันที่ได้) · พื้นที่คลัง/กลุ่มสินค้า = แทนที่ข้อมูลเดิมทั้งหมดทุกครั้ง</span></div>
 
     <div class="import-grid">
@@ -1063,6 +1120,48 @@ function facFromSloc(sloc){
 }
 
 /* ============================================================
+   AUTH — หน้าดูข้อมูลใช้งานได้โดยไม่ต้องล็อกอิน (anon อ่านได้เท่านั้น)
+   แต่การนำเข้า/ลบข้อมูลต้องล็อกอินก่อน เพราะ RLS policy ฝั่ง Supabase
+   อนุญาต insert/update/delete ให้ role `authenticated` เท่านั้น
+   (เดิมเปิด ALL ให้ role public → ใครเปิด DevTools ก็ลบข้อมูลทั้งคลังได้)
+============================================================ */
+const Auth = (() => {
+  let session = null;
+  const listeners = [];
+  function emit(){ listeners.forEach(fn => { try { fn(session); } catch(e){ console.error(e); } }); }
+  async function init(){
+    try {
+      const { data } = await sb.auth.getSession();
+      session = data?.session || null;
+    } catch(e){ console.error(e); session = null; }
+    sb.auth.onAuthStateChange((_event, s) => { session = s || null; emit(); });
+  }
+  return {
+    init,
+    isSignedIn(){ return !!session; },
+    email(){ return session?.user?.email || null; },
+    async signIn(email, password){
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    },
+    async signOut(){ await sb.auth.signOut(); },
+    onChange(fn){ listeners.push(fn); },
+  };
+})();
+
+// ข้อความ error ที่อ่านรู้เรื่องเมื่อถูก RLS ปฏิเสธ (รหัส 42501 = insufficient_privilege)
+function friendlyDbError(e){
+  const msg = (e && (e.message || e.msg)) ? String(e.message || e.msg) : String(e);
+  const code = e && e.code ? String(e.code) : '';
+  if (code === '42501' || /row-level security|permission denied/i.test(msg)){
+    return Auth.isSignedIn()
+      ? 'บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล — ติดต่อผู้ดูแลระบบ'
+      : 'ต้องเข้าสู่ระบบก่อนจึงจะนำเข้าหรือลบข้อมูลได้';
+  }
+  return msg;
+}
+
+/* ============================================================
    LOCATION MERGE — ผู้ใช้ยืนยันว่า Fac B กับ Fac E เป็นพื้นที่เดียวกันจริง ให้รวมแสดงเป็นก้อนเดียว
    ⚠️ ย้ายมาไว้ scope กลาง (global) เพราะเดิมประกาศอยู่ใน closure ของ DashboardPage เท่านั้น
    ทำให้หน้า "ค้นหา Material" ยังแยก Fac B / Fac E อยู่ = ตัวเลข % ไม่ตรงกับหน้า Dashboard
@@ -1107,13 +1206,17 @@ function mergeLocationRows(rows){
 //  (2) เดิม break ทันทีเมื่อได้แถวน้อยกว่า PAGE_SIZE — ถ้าวันหนึ่งค่า Max Rows ของโปรเจกต์ถูกลด
 //      ต่ำกว่า 1000 (เช่น 500) จะหยุดที่หน้าแรกและข้อมูลขาดแบบเงียบๆ ตอนนี้เลื่อนตามจำนวนแถวที่ได้จริง
 //      และหยุดเมื่อได้ 0 แถวเท่านั้น จึงครบเสมอไม่ว่าเซิร์ฟเวอร์จะตัดที่เท่าไหร่
-async function fetchAllRows(table, selectCols, orderCol = 'id'){
+// applyFilters: callback สำหรับใส่เงื่อนไขฝั่งเซิร์ฟเวอร์ เช่น q => q.gte('imported_at', a).lt('imported_at', b)
+// สำคัญต่อ performance: ให้ Postgres กรองก่อนส่งกลับ ไม่ใช่ดึงทั้งตารางมากรองที่เบราว์เซอร์
+async function fetchAllRows(table, selectCols, orderCol = 'id', applyFilters){
   const PAGE_SIZE = 1000;
   const MAX_PAGES = 500; // กันลูปไม่สิ้นสุดกรณีเซิร์ฟเวอร์ตอบผิดปกติ (สูงสุด ~500,000 แถว)
   let all = [];
   let from = 0;
   for (let page = 0; page < MAX_PAGES; page++) {
-    let q = sb.from(table).select(selectCols).range(from, from + PAGE_SIZE - 1);
+    let q = sb.from(table).select(selectCols);
+    if (applyFilters) q = applyFilters(q);
+    q = q.range(from, from + PAGE_SIZE - 1);
     if (orderCol) q = q.order(orderCol, { ascending: true });
     const { data, error } = await q;
     if (error) throw error;
@@ -1129,14 +1232,25 @@ async function fetchAllRows(table, selectCols, orderCol = 'id'){
    แปลง imported_at (ISO/UTC) ให้เป็น "คีย์วันที่ตามเวลาท้องถิ่นของเครื่องผู้ใช้" เช่น '2026-08-13'
    ใช้จัดกลุ่ม/กรองข้อมูลสต็อกที่นำเข้าในวันเดียวกัน (ไม่สนใจเวลา ชม./นาที/วินาที)
 ============================================================ */
+// ⚠️ ใช้เวลาไทย (+07:00) ตรงๆ ไม่ใช่ timezone ของเครื่อง เพื่อให้คีย์วันที่ตรงกับ public.bkk_date() ใน SQL
+// ทุกกรณี — เดิมใช้เวลาเครื่อง ถ้าใครเปิดจากเครื่องที่ตั้งโซนอื่นจะเห็นข้อมูลตกไปอยู่ผิดวัน
 function localDateKey(iso){
   if (!iso) return 'ไม่ระบุ';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return 'ไม่ระบุ';
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
+  const bkk = new Date(d.getTime() + 7 * 3600 * 1000); // เลื่อนเป็นเวลาไทยแล้วอ่านส่วนวันที่แบบ UTC
+  const y = bkk.getUTCFullYear();
+  const m = String(bkk.getUTCMonth()+1).padStart(2,'0');
+  const day = String(bkk.getUTCDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
+}
+// ช่วงเวลา [start, end) ของวันตามเวลาไทย — ระบุ offset +07:00 ตรงๆ จึงตรงกับ public.bkk_date() ใน SQL เสมอ
+// ไม่ว่าเครื่องผู้ใช้จะตั้ง timezone อะไรไว้ (เดิมสร้างจาก new Date(y,m,d) = เที่ยงคืนตามเครื่อง ซึ่งอาจคลาดกัน)
+function bkkDayRange(dateKey){
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const next = new Date(Date.UTC(y, m - 1, d + 1));
+  const nextKey = `${next.getUTCFullYear()}-${String(next.getUTCMonth()+1).padStart(2,'0')}-${String(next.getUTCDate()).padStart(2,'0')}`;
+  return { startIso: `${dateKey}T00:00:00+07:00`, endIso: `${nextKey}T00:00:00+07:00` };
 }
 function fmtDateKey(dateKey){
   if (dateKey === 'ไม่ระบุ') return dateKey;
@@ -1179,13 +1293,12 @@ const DashboardPage = (() => {
   // LOCATION_MERGE_GROUPS / locationDisplayCode / locationMembersOf / mergeLocationRows
   // ย้ายไป scope กลาง (global) แล้ว — ใช้ร่วมกับหน้า "ค้นหา Material" ให้ตัวเลขตรงกันทุกหน้า
 
-  // ===== การกรองตามวันที่นำเข้า (append-mode รองรับหลายวันที่สะสมอยู่ในตาราง stock) =====
-  // คืนเฉพาะแถวของวันที่ที่กำลังเลือกอยู่ (selectedDateKey) — ถ้าไม่มีวันที่เลย (ข้อมูลเก่าก่อนมีฟีเจอร์นี้ ไม่มี imported_at)
-  // ให้คืนข้อมูลทั้งหมดแทน กันไม่ให้ Dashboard ว่างเปล่าไปเฉยๆ
-  function getScopedRows(){
-    if (!selectedDateKey) return allRows;
-    return allRows.filter(r => localDateKey(r.imported_at) === selectedDateKey);
-  }
+  // ===== ขอบเขตข้อมูลของ Dashboard =====
+  // ⚡ เปลี่ยนวิธีทำงาน (performance): เดิมดึง "ทุกแถวของทุกวัน" มาไว้ในเบราว์เซอร์แล้วค่อย filter หาวันที่เลือก
+  // โหมดวางเติมเพิ่ม ~2,600 แถว/ครั้ง ถ้านำเข้าทุกวันทำการ ปีเดียวจะเป็นหลายแสนแถว → หน้าเว็บจะโหลดเป็นนาที
+  // ตอนนี้ allRows บรรจุแถวของ "วันที่ที่เลือกไว้" เท่านั้น (กรองด้วย SQL ผ่าน index idx_stock_imported_at)
+  // ปริมาณข้อมูลที่เบราว์เซอร์ถือจึงคงที่ ไม่โตตามจำนวนวันที่สะสม
+  function getScopedRows(){ return allRows; }
 
   // v_location_utilization.stock_weight_tons คำนวณจาก "ทั้งตาราง stock" (ทุกวันที่รวมกัน) โดย SQL view
   // ดังนั้นจะกรองตามวันที่แบบง่ายๆ (filter array ฝั่ง client) กับฟิลด์นี้ไม่ได้เลย ต้องคำนวณ "ใช้ไปกี่ตัน/โรงงาน" ใหม่เองจากแถวที่กรองวันที่แล้ว (scopedRows)
@@ -1234,10 +1347,11 @@ const DashboardPage = (() => {
       banner.style.display = 'flex';
       banner.innerHTML = `<span>⏱️ กำลังดูข้อมูลย้อนหลังวันที่ <b>${escapeHtml(fmtDateKey(selectedDateKey))}</b> — ไม่ใช่ข้อมูลล่าสุด</span><button type="button" class="btn btn-outline btn-sm" id="btnBackToLatest">กลับไปวันล่าสุด</button>`;
       const btn = el('btnBackToLatest');
-      if (btn) btn.addEventListener('click', () => {
+      if (btn) btn.addEventListener('click', async () => {
         selectedDateKey = availableDateKeys[0];
         renderDateFilterUI();
-        renderScoped();
+        setSummaryLoading();
+        await loadRowsForSelectedDate();
       });
     } else {
       banner.style.display = 'none';
@@ -1264,10 +1378,11 @@ const DashboardPage = (() => {
     if (mounted) return;
     mounted = true;
     el('fSearch').addEventListener('input', debounce(() => applyFilters(), 220));
-    el('fDateKey').addEventListener('change', (e) => {
+    el('fDateKey').addEventListener('change', async (e) => {
       selectedDateKey = e.target.value || null;
       renderDateFilterUI();
-      renderScoped();
+      setSummaryLoading();
+      await loadRowsForSelectedDate(); // ข้อมูลของแต่ละวันดึงตอนที่เลือก ไม่ได้ค้างไว้ในเบราว์เซอร์ทั้งหมด
     });
 
     msGroupSale = createMultiSelect('fGroupSale', 'Group Sale ทั้งหมด');
@@ -1294,9 +1409,10 @@ const DashboardPage = (() => {
     });
     el('btnRefreshDashboard').addEventListener('click', loadData);
     el('btnCaptureSnapshot').addEventListener('click', (e) => captureDashboardSnapshot(e.currentTarget));
+    el('btnAbcExport').addEventListener('click', exportAbcCsv);
   }
 
-  const SUMMARY_VIZ_IDS = ['summaryLocationViz','summaryGroupSaleViz','summaryProductTypeViz','summaryLocGroupViz','topWeightViz','topQtyViz'];
+  const SUMMARY_VIZ_IDS = ['summaryLocationViz','summaryGroupSaleViz','summaryProductTypeViz','summaryLocGroupViz','topWeightViz','topQtyViz','abcPareto'];
   function setSummaryLoading(){
     SUMMARY_VIZ_IDS.forEach(id => {
       el(id).innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
@@ -1308,31 +1424,55 @@ const DashboardPage = (() => {
     });
   }
 
+  // โหลด "โครง" ของหน้า: รายการวันที่นำเข้า (แถวละวัน) + ความจุโรงงาน (แถวละโรงงาน)
+  // ทั้งสองอย่างเป็น aggregate ฝั่งเซิร์ฟเวอร์ ขนาดคงที่ ไม่โตตามจำนวนแถวสต็อก
   async function loadData(){
     setSummaryLoading();
     try {
-      const [stockData, { data: utilData, error: utilErr }] = await Promise.all([
-        fetchAllRows('v_stock_enriched', '*'),
-        sb.from('v_location_utilization').select('*').order('location_code')
+      const [dailyRes, capRes] = await Promise.all([
+        sb.from('v_stock_daily').select('date_key,row_count,total_weight_kg').order('date_key', { ascending: false }),
+        sb.from('v_location_capacity').select('location_code,actual_capacity_tons').order('location_code'),
       ]);
-      if (utilErr) throw utilErr;
-      allRows = stockData || [];
-      locUtil = utilData || [];
+      if (dailyRes.error) throw dailyRes.error;
+      if (capRes.error) throw capRes.error;
 
-      // สร้างรายการวันที่นำเข้าทั้งหมดที่มีอยู่จริงในข้อมูล เรียงล่าสุดก่อน (สำหรับ dropdown กรองวันที่)
-      availableDateKeys = [...new Set(allRows.map(r => localDateKey(r.imported_at)))]
-        .filter(k => k !== 'ไม่ระบุ')
-        .sort((a,b) => b.localeCompare(a));
-      // ถ้าวันที่เลือกไว้เดิมไม่มีอยู่ในข้อมูลใหม่แล้ว (เช่นถูกลบไปจากหน้านำเข้าข้อมูล) หรือยังไม่เคยเลือก -> กลับไปที่ล่าสุดเสมอ
+      availableDateKeys = (dailyRes.data || []).map(r => r.date_key).filter(Boolean);
+      // locUtil เก็บแค่ความจุ (คงที่) — ยอด "ใช้ไปกี่ตัน" คำนวณจากแถวของวันที่เลือกใน buildScopedLocUtil()
+      locUtil = (capRes.data || []).map(r => ({
+        location_code: r.location_code,
+        actual_capacity_tons: Number(r.actual_capacity_tons) || 0,
+        stock_weight_tons: 0,
+      }));
+
+      // ถ้าวันที่เลือกไว้เดิมถูกลบไปแล้ว หรือยังไม่เคยเลือก -> กลับไปที่ล่าสุดเสมอ
       if (!selectedDateKey || !availableDateKeys.includes(selectedDateKey)){
         selectedDateKey = availableDateKeys[0] || null;
       }
       renderDateFilterUI();
-      renderScoped();
+      await loadRowsForSelectedDate();
     } catch (e) {
       console.error(e);
       setSummaryError(e.message || e);
       toast('โหลดข้อมูลแดชบอร์ดไม่สำเร็จ: ' + (e.message || e), 'error');
+    }
+  }
+
+  // ดึงแถวดิบของวันที่เลือกเท่านั้น (กรองด้วย imported_at ฝั่งเซิร์ฟเวอร์)
+  async function loadRowsForSelectedDate(){
+    if (!selectedDateKey){
+      allRows = [];
+      renderScoped();
+      return;
+    }
+    const { startIso, endIso } = bkkDayRange(selectedDateKey);
+    try {
+      allRows = await fetchAllRows('v_stock_enriched', '*', 'id',
+        q => q.gte('imported_at', startIso).lt('imported_at', endIso));
+      renderScoped();
+    } catch (e) {
+      console.error(e);
+      setSummaryError(e.message || e);
+      toast('โหลดข้อมูลสต็อกของวันที่เลือกไม่สำเร็จ: ' + (e.message || e), 'error');
     }
   }
 
@@ -1887,6 +2027,172 @@ const DashboardPage = (() => {
     box.innerHTML = itemsHtml + `<div class="top-note">${note}</div>`;
   }
 
+  /* ============================================================
+     ===== ✨ ใหม่: ABC Analysis (Pareto) =====
+     จัดชั้นสินค้าตาม "สัดส่วนน้ำหนักสะสม" ของ Material ที่เรียงจากมากไปน้อย
+       Class A = กลุ่มหัวแถวที่รวมกันได้ถึง 80% ของน้ำหนักทั้งหมด  → ของหลักที่ควรอยู่ใกล้ปากคลัง/นับถี่
+       Class B = ถัดจาก A ไปจนถึง 95%
+       Class C = ส่วนที่เหลือ (5% สุดท้าย) → มักเป็น SKU จำนวนมากแต่กินน้ำหนักน้อย
+     หมายเหตุการจัดชั้น: ตัดสินด้วย "สัดส่วนสะสมก่อนถึงรายการนั้น" (prevPct) ไม่ใช่สะสมรวมรายการนั้นแล้ว
+     มิฉะนั้นถ้า SKU อันดับ 1 หนักเกิน 80% ด้วยตัวเดียว จะไม่มีรายการใดได้ Class A เลย
+  ============================================================ */
+  const ABC_CLASSES = [
+    { key:'A', color:'#0f3460', label:'Class A', desc:'80% แรกของน้ำหนัก' },
+    { key:'B', color:'#4778ab', label:'Class B', desc:'ถัดจาก A ถึง 95%' },
+    { key:'C', color:'#9db4c9', label:'Class C', desc:'5% สุดท้ายของน้ำหนัก' },
+  ];
+  let abcItemsCache = []; // เก็บผลล่าสุดไว้ให้ปุ่ม Export CSV ใช้
+
+  function computeAbc(rows){
+    const mats = materialSummary(rows)
+      .filter(m => m.weightKg > 0)
+      .sort((a,b) => b.weightKg - a.weightKg);
+    const totalKg = mats.reduce((s,m) => s + m.weightKg, 0);
+    let cum = 0;
+    const items = mats.map((m, i) => {
+      const prevPct = totalKg > 0 ? (cum / totalKg) * 100 : 0;
+      cum += m.weightKg;
+      const cumPct = totalKg > 0 ? (cum / totalKg) * 100 : 0;
+      const cls = prevPct < 80 ? 'A' : prevPct < 95 ? 'B' : 'C';
+      return { ...m, rank: i + 1, tons: m.weightKg / 1000,
+               pctOfTotal: totalKg > 0 ? (m.weightKg / totalKg) * 100 : 0, cumPct, cls };
+    });
+    return { items, totalKg };
+  }
+
+  function renderAbc(rows){
+    const cardsBox = el('abcCards');
+    const paretoBox = el('abcPareto');
+    const insightBox = el('abcInsight');
+    if (!cardsBox || !paretoBox) return;
+
+    const { items, totalKg } = computeAbc(rows);
+    abcItemsCache = items;
+    if (!items.length){
+      cardsBox.innerHTML = '';
+      insightBox.textContent = 'ไม่พบข้อมูลตามเงื่อนไขที่กรอง';
+      paretoBox.innerHTML = '<div class="viz-empty">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div>';
+      return;
+    }
+
+    const totalSku = items.length;
+    const stat = {};
+    ABC_CLASSES.forEach(c => { stat[c.key] = { skuCount: 0, kg: 0 }; });
+    items.forEach(it => { stat[it.cls].skuCount++; stat[it.cls].kg += it.weightKg; });
+
+    cardsBox.innerHTML = ABC_CLASSES.map(c => {
+      const st = stat[c.key];
+      const skuPct = totalSku > 0 ? (st.skuCount / totalSku) * 100 : 0;
+      const wPct = totalKg > 0 ? (st.kg / totalKg) * 100 : 0;
+      const title = `${c.label} = ${fmtNum(st.skuCount)} SKU (${skuPct.toFixed(1)}% ของจำนวน SKU) รวม ${fmtNum(st.kg/1000,2)} ตัน (${wPct.toFixed(1)}% ของน้ำหนัก)\n`
+        + `เกณฑ์: ${c.desc} — จัดโดยเรียง SKU ตามน้ำหนักจากมากไปน้อย แล้วดูสัดส่วนน้ำหนักสะสม`;
+      return `
+        <div class="abc-card" style="--abc-color:${c.color};" title="${escapeHtml(title)}">
+          <div class="abc-head">
+            <span class="abc-letter" style="background:${c.color};">${c.key}</span>
+            <span class="abc-title">${escapeHtml(c.label)}<small>${escapeHtml(c.desc)}</small></span>
+          </div>
+          <div class="abc-value">${fmtNum(st.skuCount)} <span>SKU (${skuPct.toFixed(1)}% ของทั้งหมด)</span></div>
+          <div class="abc-line">น้ำหนัก <b>${fmtNum(st.kg/1000, 2)} ตัน</b> · คิดเป็น <b>${wPct.toFixed(1)}%</b> ของน้ำหนักทั้งหมด</div>
+          <div class="abc-track"><div class="abc-fill" style="width:${Math.min(100,wPct)}%;background:${c.color};"></div></div>
+        </div>`;
+    }).join('');
+
+    // ข้อสรุปที่อ่านแล้วใช้งานได้ทันที: SKU กี่ % ถือน้ำหนัก 80% แรก
+    const idx80 = items.findIndex(it => it.cumPct >= 80);
+    const skuPctFor80 = totalSku > 0 ? ((idx80 >= 0 ? idx80 + 1 : totalSku) / totalSku) * 100 : 0;
+    const cCount = stat.C.skuCount;
+    const cPctSku = totalSku > 0 ? (cCount / totalSku) * 100 : 0;
+    insightBox.innerHTML = `📌 SKU เพียง <b>${skuPctFor80.toFixed(1)}%</b> (${fmtNum(idx80 >= 0 ? idx80 + 1 : totalSku)} จาก ${fmtNum(totalSku)} รายการ) ถือน้ำหนักถึง <b>80%</b> ของสต็อกทั้งหมด `
+      + `— ควรจัดกลุ่มนี้ไว้ใกล้ทางเข้า-ออกและนับสต็อกถี่กว่ากลุ่มอื่น<br/>`
+      + `ในทางกลับกัน <b>Class C</b> มี ${fmtNum(cCount)} SKU (${cPctSku.toFixed(1)}% ของรายการ) แต่รวมกันได้แค่ `
+      + `<b>${totalKg > 0 ? ((stat.C.kg/totalKg)*100).toFixed(1) : '0.0'}%</b> ของน้ำหนัก — กลุ่มที่กินพื้นที่และแรงจัดการมากเทียบกับปริมาณ`;
+
+    paretoBox.innerHTML = buildParetoChart(items, totalKg);
+  }
+
+  // เส้นสะสม (Lorenz/Pareto): แกนนอน = สัดส่วนจำนวน SKU · แกนตั้ง = สัดส่วนน้ำหนักสะสม
+  // อ่านได้ทันทีว่า "SKU กี่ % ถือน้ำหนักกี่ %" — โค้งมากเท่าไหร่ยิ่งกระจุกตัวมาก
+  function buildParetoChart(items, totalKg){
+    const n = items.length;
+    if (!n) return '<div class="viz-empty">ยังไม่มีข้อมูล</div>';
+    const width = 900, height = 280;
+    const padL = 46, padR = 86, padT = 14, padB = 36; // padR กว้างพอสำหรับป้ายเส้นอ้างอิงด้านขวา ไม่ให้ตัวอักษรถูกตัด
+    const innerW = width - padL - padR, innerH = height - padT - padB;
+    const xAt = (pct) => padL + (innerW * pct) / 100;
+    const yAt = (pct) => padT + innerH - (innerH * pct) / 100;
+
+    let grid = '';
+    for (let g = 0; g <= 5; g++){
+      const v = g * 20;
+      grid += `<line x1="${padL}" y1="${yAt(v)}" x2="${width-padR}" y2="${yAt(v)}" stroke="#e9ecef" stroke-width="1"/>`
+           +  `<text x="${padL-8}" y="${yAt(v)+4}" text-anchor="end" font-size="10.5" fill="#6c757d">${v}%</text>`
+           +  `<text x="${xAt(v)}" y="${height-10}" text-anchor="middle" font-size="10.5" fill="#6c757d">${v}%</text>`;
+    }
+
+    // เส้นอ้างอิงเกณฑ์ 80% / 95%
+    const refs = [
+      { v:80, color:'#0f3460', label:'สิ้นสุด A' },
+      { v:95, color:'#4778ab', label:'สิ้นสุด B' },
+    ].map(r => `<line x1="${padL}" y1="${yAt(r.v)}" x2="${width-padR}" y2="${yAt(r.v)}" stroke="${r.color}" stroke-width="1.2" stroke-dasharray="5 4"/>`
+      + `<text x="${width-padR+5}" y="${yAt(r.v)+4}" font-size="10" fill="${r.color}">${escapeHtml(r.label)}</text>`).join('');
+
+    // ลดจำนวนจุดที่วาดลงเหลือ ~180 จุด (เส้นหน้าตาเหมือนกัน แต่ SVG เบากว่ามากเมื่อมี SKU หลายพัน)
+    const STEP = Math.max(1, Math.ceil(n / 180));
+    const pts = [`${xAt(0)},${yAt(0)}`];
+    for (let i = 0; i < n; i += STEP) pts.push(`${xAt(((i+1)/n)*100)},${yAt(items[i].cumPct)}`);
+    pts.push(`${xAt(100)},${yAt(100)}`);
+
+    // จุดหมายที่ตัดเกณฑ์ A และ B
+    const markers = [80, 95].map((thr, k) => {
+      const idx = items.findIndex(it => it.cumPct >= thr);
+      if (idx < 0) return '';
+      const skuPct = ((idx + 1) / n) * 100;
+      const color = k === 0 ? '#0f3460' : '#4778ab';
+      return `<line x1="${xAt(skuPct)}" y1="${yAt(0)}" x2="${xAt(skuPct)}" y2="${yAt(thr)}" stroke="${color}" stroke-width="1" stroke-dasharray="3 3" opacity=".65"/>`
+        + `<circle cx="${xAt(skuPct)}" cy="${yAt(thr)}" r="4.5" fill="${color}" stroke="#fff" stroke-width="2">`
+        + `<title>SKU ${skuPct.toFixed(1)}% แรก (${fmtNum(idx+1)} รายการ) รวมน้ำหนักได้ ${thr}% ของทั้งหมด</title></circle>`
+        + `<text x="${xAt(skuPct)}" y="${yAt(thr)-10}" text-anchor="middle" font-size="10.5" font-weight="600" fill="${color}">${skuPct.toFixed(1)}% ของ SKU</text>`;
+    }).join('');
+
+    // เส้นทแยง 45° = กรณีน้ำหนักกระจายเท่ากันทุก SKU (ใช้เทียบว่าของจริงกระจุกแค่ไหน)
+    const diagonal = `<line x1="${xAt(0)}" y1="${yAt(0)}" x2="${xAt(100)}" y2="${yAt(100)}" stroke="#adb5bd" stroke-width="1" stroke-dasharray="2 5"/>`;
+
+    return `<div style="overflow-x:auto;">
+        <svg viewBox="0 0 ${width} ${height}" style="width:100%;min-width:560px;height:auto;">
+          ${grid}${diagonal}${refs}
+          <polyline points="${pts.join(' ')}" fill="none" stroke="#E85D04" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          ${markers}
+        </svg>
+      </div>
+      <div class="legend-row" style="margin-top:6px;">
+        <div class="legend-item"><span class="legend-swatch" style="background:#E85D04;"></span>น้ำหนักสะสมจริง</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#adb5bd;"></span>เส้นอ้างอิงกรณีทุก SKU หนักเท่ากัน</div>
+        <div class="legend-item" style="color:var(--gray-400);">รวม ${fmtNum(n)} SKU · ${fmtNum(totalKg/1000, 2)} ตัน</div>
+      </div>`;
+  }
+
+  function exportAbcCsv(){
+    if (!abcItemsCache.length){ toast('ไม่มีข้อมูลให้ export', 'error'); return; }
+    const headers = ['Rank','Class','Material','Description','Group Product','Weight (Ton)','% of Total','Cumulative %','Qty (Unrestricted)','Rows','Factories'];
+    const lines = [headers.join(',')];
+    abcItemsCache.forEach(it => {
+      lines.push([
+        it.rank, it.cls, it.material, it.description, it.groupProduct,
+        it.tons.toFixed(3), it.pctOfTotal.toFixed(4), it.cumPct.toFixed(4),
+        it.qty, it.rowCount, [...it.locs].sort().join('; '),
+      ].map(v => `"${String(v === null || v === undefined ? '' : v).replace(/"/g,'""')}"`).join(','));
+    });
+    const blob = new Blob(['\ufeff' + lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wh2_abc_${selectedDateKey || 'latest'}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast(`Export ABC สำเร็จ (${fmtNum(abcItemsCache.length)} SKU)`, 'success');
+  }
+
   function renderSummaries(rows){
     renderRankBars('summaryLocationViz', groupSummary(rows, 'location_code'), 213, 66, 'ตัน');
     renderRankBars('summaryGroupSaleViz', groupSummary(rows, 'group_sale'), 20, 80, 'ตัน');
@@ -1895,6 +2201,7 @@ const DashboardPage = (() => {
     // Top 5 รายการสินค้า — คนละ metric กัน จึงแยกเป็น 2 กราฟ ไม่ยัดสองสเกลลงแท่งเดียวกัน
     renderTopItems('topWeightViz', rows, 'weight', 213, 66, ' ตัน', 2);
     renderTopItems('topQtyViz', rows, 'qty', 20, 80, ' หน่วย', 0);
+    renderAbc(rows);
   }
 
   function activate(){
@@ -1910,7 +2217,6 @@ const DashboardPage = (() => {
 ============================================================ */
 const LookupPage = (() => {
   let mounted = false;
-  let allRows = [];
   let locCapacity = {};       // ความจุ (ตัน) ต่อโรงงาน — รวม Fac B+E แล้ว, ไม่ขึ้นกับวันที่
   let availableDateKeys = []; // วันที่นำเข้าที่มีอยู่จริง เรียงล่าสุดก่อน
   let latestDateKey = null;
@@ -1935,27 +2241,41 @@ const LookupPage = (() => {
     });
   }
 
+  // ดึงแถวสต็อกของรหัสที่ค้น — แบ่งก้อนละ 100 รหัสกัน URL ยาวเกินขีดจำกัดของ GET
+  async function fetchRowsForCodes(codes, scopeRange){
+    const CHUNK = 100;
+    const out = [];
+    for (let i = 0; i < codes.length; i += CHUNK){
+      const part = codes.slice(i, i + CHUNK);
+      const rows = await fetchAllRows('v_stock_enriched', '*', 'id', q => {
+        let qq = q.in('material', part);
+        if (scopeRange) qq = qq.gte('imported_at', scopeRange.startIso).lt('imported_at', scopeRange.endIso);
+        return qq;
+      });
+      out.push(...rows);
+    }
+    return out;
+  }
+
+  // ⚡ โหลดเฉพาะข้อมูลโครง (ความจุโรงงาน + รายการวันที่) — ไม่ดึงแถวสต็อกใดๆ ตอนเปิดหน้า
+  // แถวสต็อกจะถูก query ตอนกด "ค้นหา" โดยส่งรหัส Material ไปกรองฝั่งเซิร์ฟเวอร์ (index idx_stock_material)
+  // เดิมหน้านี้ดึงทั้งตาราง (7,967 แถว) ทุกครั้งที่เปิด แม้ผู้ใช้จะค้นแค่รหัสเดียว
   async function loadData(){
     try {
-      const [stockData, { data: utilData, error: utilErr }] = await Promise.all([
-        fetchAllRows('v_stock_enriched', '*'),
-        sb.from('v_location_utilization').select('*').order('location_code'),
+      const [capRes, dailyRes] = await Promise.all([
+        sb.from('v_location_capacity').select('location_code,actual_capacity_tons'),
+        sb.from('v_stock_daily').select('date_key').order('date_key', { ascending: false }),
       ]);
-      if (utilErr) throw utilErr;
-      allRows = stockData || [];
-      // 🐞 BUGFIX: เดิมเก็บทั้ง capacity และ totalStock จาก v_location_utilization
-      // แต่ stock_weight_tons ใน view นั้นรวม "ทุกวันที่นำเข้า" ที่สะสมอยู่ในตาราง stock (โหมดวางเติม)
-      // ทำให้คอลัมน์ "% ของสต็อกในโรงงานนี้" มีตัวส่วนใหญ่เกินจริงเป็นเท่าตัวตามจำนวนวันที่นำเข้า
-      // → ตอนนี้เก็บแค่ความจุ (คงที่) จาก view ส่วนยอดสต็อกของโรงงานคำนวณใหม่จากแถวที่อยู่ในขอบเขตวันที่จริง
-      // และรวมกลุ่มพื้นที่ (Fac B+E) ให้ตรงกับหน้า Dashboard ด้วย
+      if (capRes.error) throw capRes.error;
+      if (dailyRes.error) throw dailyRes.error;
+
+      // เก็บแค่ความจุ (คงที่ ไม่ขึ้นกับวันที่) และรวมกลุ่มพื้นที่ Fac B+E ให้ตรงกับหน้า Dashboard
       locCapacity = {};
-      mergeLocationRows(utilData || []).forEach(r => {
+      mergeLocationRows(capRes.data || []).forEach(r => {
         locCapacity[r.location_code] = Number(r.actual_capacity_tons) || 0;
       });
 
-      availableDateKeys = [...new Set(allRows.map(r => localDateKey(r.imported_at)))]
-        .filter(k => k !== 'ไม่ระบุ')
-        .sort((a,b) => b.localeCompare(a));
+      availableDateKeys = (dailyRes.data || []).map(r => r.date_key).filter(Boolean);
       latestDateKey = availableDateKeys[0] || null;
       const hint = el('lookupScopeHint');
       if (hint){
@@ -1974,27 +2294,47 @@ const LookupPage = (() => {
     return [...new Set(text.split(/[\n,\t]+/).map(s => s.trim()).filter(Boolean))];
   }
 
-  function runLookup(){
+  async function runLookup(){
     const codes = parseCodes(el('lookupInput').value);
     if (!codes.length){ toast('กรุณาใส่รหัส Material อย่างน้อย 1 รายการ', 'error'); return; }
 
-    // 🐞 BUGFIX: เดิมค้นจาก allRows ทั้งก้อน = ทุกวันที่นำเข้าที่สะสมอยู่ (โหมดวางเติม)
-    // รหัสเดียวจึงขึ้นซ้ำหลายแถวจากหลายวัน โดยไม่มีคอลัมน์บอกว่าแถวไหนของวันไหน
-    // → ค่าเริ่มต้นดูเฉพาะ "วันล่าสุด" และเพิ่มคอลัมน์วันที่นำเข้า + ติ๊กเพื่อดูทุกวันได้
+    // ค่าเริ่มต้นดูเฉพาะ "วันล่าสุด" (โหมดวางเติมทำให้รหัสเดียวมีอยู่ในหลายวัน) — ติ๊กเพื่อดูทุกวันได้
     const allDates = el('lookupAllDates').checked;
-    const scoped = (allDates || !latestDateKey)
-      ? allRows
-      : allRows.filter(r => localDateKey(r.imported_at) === latestDateKey);
+    const scopeRange = (allDates || !latestDateKey) ? null : bkkDayRange(latestDateKey);
 
-    // ยอดสต็อกรวมต่อโรงงาน คำนวณจากแถวในขอบเขตเดียวกับที่ค้นหา (ไม่ใช่ยอดรวมทุกวันจาก view)
-    const stockTonsByLoc = {};
-    scoped.forEach(r => {
-      const key = locationDisplayCode(r.location_code) || 'ไม่ระบุ';
-      stockTonsByLoc[key] = (stockTonsByLoc[key] || 0) + ((Number(r.total_weight) || 0) / 1000);
-    });
+    const btn = el('btnLookup');
+    const btnLabel = btn.textContent;
+    btn.disabled = true; btn.textContent = '⏳ กำลังค้นหา...';
+    const tbodyEarly = el('lookupTbody');
+    tbodyEarly.innerHTML = '<tr><td colspan="10"><div class="empty-state">⏳ กำลังค้นหา...</div></td></tr>';
 
-    const codesUpper = new Set(codes.map(c => c.toUpperCase()));
-    const matched = scoped.filter(r => codesUpper.has(String(r.material||'').toUpperCase()));
+    let matched = [];
+    let stockTonsByLoc = {};
+    try {
+      // ส่งทั้งรหัสตามที่พิมพ์และแบบตัวพิมพ์ใหญ่ เพราะ .in() เทียบแบบตรงตัว (ข้อมูลใน DB เป็นตัวพิมพ์ใหญ่)
+      const queryCodes = [...new Set(codes.flatMap(c => [c, c.toUpperCase()]))];
+      const [rows, locDaily] = await Promise.all([
+        fetchRowsForCodes(queryCodes, scopeRange),
+        // ตัวส่วนของ "% ของสต็อกในโรงงานนี้" — รวมยอดใน SQL แล้ว (แถวละโรงงานต่อวัน)
+        sb.from('v_location_daily').select('date_key,location_code,total_weight_kg')
+          .then(res => { if (res.error) throw res.error; return res.data || []; }),
+      ]);
+      matched = rows;
+      locDaily
+        .filter(r => !scopeRange || r.date_key === latestDateKey)
+        .forEach(r => {
+          const key = locationDisplayCode(r.location_code) || 'ไม่ระบุ';
+          stockTonsByLoc[key] = (stockTonsByLoc[key] || 0) + ((Number(r.total_weight_kg) || 0) / 1000);
+        });
+    } catch (e) {
+      console.error(e);
+      tbodyEarly.innerHTML = `<tr><td colspan="10"><div class="empty-state">ค้นหาไม่สำเร็จ: ${escapeHtml(friendlyDbError(e))}</div></td></tr>`;
+      toast('ค้นหาไม่สำเร็จ: ' + friendlyDbError(e), 'error');
+      return;
+    } finally {
+      btn.disabled = false; btn.textContent = btnLabel;
+    }
+
     const foundUpperSet = new Set(matched.map(r => String(r.material||'').toUpperCase()));
     const notFound = codes.filter(c => !foundUpperSet.has(c.toUpperCase()));
 
@@ -2061,31 +2401,26 @@ const UnmatchedPage = (() => {
     el('unmatchedBanner').innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
     el('unmatchedTbody').innerHTML = '<tr><td colspan="5"><div class="empty-state">กำลังโหลด...</div></td></tr>';
     try {
-      const data = await fetchAllRows('v_stock_enriched', '*');
-      // 🐞 BUGFIX: เดิมนับรวมทุก "วันที่นำเข้า" ที่สะสมอยู่ในตาราง stock (โหมดวางเติม)
-      // ทำให้ "จำนวนแบทช์/แถว" และ "น้ำหนักรวม" ถูกนับซ้ำเป็นเท่าตัวตามจำนวนวันที่นำเข้า
-      // (ตอนนี้มีข้อมูล 3 วัน → ตัวเลขเดิมบวมขึ้นราว 3 เท่า) — ต้องดูเฉพาะวันล่าสุดเท่านั้น
-      const dateKeys = [...new Set((data || []).map(r => localDateKey(r.imported_at)))]
-        .filter(k => k !== 'ไม่ระบุ')
-        .sort((a,b) => b.localeCompare(a));
-      const latestKey = dateKeys[0] || null;
-      const scoped = latestKey ? (data || []).filter(r => localDateKey(r.imported_at) === latestKey) : (data || []);
-      const rows = scoped.filter(r => !r.group_sale);
-      const byMat = {};
-      rows.forEach(r => {
-        const key = r.material || 'ไม่ทราบ';
-        if (!byMat[key]) byMat[key] = { material: key, description: r.material_description || '', rowCount:0, weight:0, locs: new Set() };
-        byMat[key].rowCount++;
-        byMat[key].weight += Number(r.total_weight) || 0;
-        if (r.location_code) byMat[key].locs.add(r.location_code);
-        if (!byMat[key].description && r.material_description) byMat[key].description = r.material_description;
-      });
-      allUnmatched = Object.values(byMat).sort((a,b) => b.weight - a.weight);
+      // ⚡ เดิมดึงแถวดิบทั้งตารางมากรอง+จัดกลุ่มที่เบราว์เซอร์ (และเคยนับซ้ำข้ามวันด้วย)
+      // ตอนนี้ view v_unmatched_latest ทำทั้งการ scope วันล่าสุดและการจัดกลุ่มต่อ Material ใน SQL แล้ว
+      const { data, error } = await sb.from('v_unmatched_latest')
+        .select('material,material_description,row_count,total_weight_kg,locations,date_key')
+        .order('total_weight_kg', { ascending: false });
+      if (error) throw error;
+      const latestKey = (data && data.length) ? data[0].date_key : null;
+      const dateKeys = latestKey ? [latestKey] : [];
+      allUnmatched = (data || []).map(r => ({
+        material: r.material || 'ไม่ทราบ',
+        description: r.material_description || '',
+        rowCount: Number(r.row_count) || 0,
+        weight: Number(r.total_weight_kg) || 0,
+        locs: new Set((r.locations || []).map(l => locationDisplayCode(l)).filter(Boolean)),
+      }));
 
-      const totalRows = rows.length;
+      const totalRows = allUnmatched.reduce((s,m) => s + m.rowCount, 0);
       const totalMats = allUnmatched.length;
       const scopeNote = latestKey
-        ? `<div style="font-size:12px;color:var(--gray-600);margin-top:7px;">📅 อ้างอิงข้อมูลสต็อกของวันที่นำเข้าล่าสุด: <b>${escapeHtml(fmtDateKey(latestKey))}</b>${dateKeys.length > 1 ? ` (ระบบมีข้อมูลสะสม ${dateKeys.length} วัน — หน้านี้ไม่นับซ้ำข้ามวัน)` : ''}</div>`
+        ? `<div style="font-size:12px;color:var(--gray-600);margin-top:7px;">📅 อ้างอิงข้อมูลสต็อกของวันที่นำเข้าล่าสุด: <b>${escapeHtml(fmtDateKey(latestKey))}</b> (คำนวณจากฝั่งเซิร์ฟเวอร์ ไม่นับซ้ำข้ามวัน)</div>`
         : '';
       el('unmatchedBanner').innerHTML = (totalMats
         ? `<div style="font-size:14px;color:var(--navy-900);"><b style="color:var(--danger);font-size:19px;">${fmtNum(totalMats)}</b> รหัส Material (${fmtNum(totalRows)} แถวสต็อก) ที่ยังไม่มีข้อมูล Group Sale / Group Product / Product Type — กรุณาเพิ่มรหัสเหล่านี้ในไฟล์กลุ่มสินค้า (Group_LongProduct.xlsx) แล้วนำเข้าใหม่ในหน้า "นำเข้าข้อมูล"</div>`
@@ -2153,9 +2488,69 @@ const ImportPage = (() => {
   let mounted = false;
   let pendingFiles = { stock:null, area:null, group:null };
 
+  // ปุ่มทุกปุ่มที่ "เขียน" ฐานข้อมูล — ต้องล็อกอินก่อนจึงจะใช้ได้ (RLS ฝั่งเซิร์ฟเวอร์บังคับอยู่แล้ว
+  // ส่วนนี้เป็นการปิดที่ UI ด้วย เพื่อไม่ให้ผู้ใช้กดแล้วเจอ error โดยไม่รู้สาเหตุ)
+  const WRITE_BTN_IDS = ['btnImportStock','btnImportArea','btnImportGroup','btnDeleteAllStock','btnDeleteAllArea','btnDeleteAllGroup'];
+
+  function refreshAuthUI(){
+    const box = el('authBox');
+    if (!box) return;
+    const signedIn = Auth.isSignedIn();
+    box.className = 'auth-box' + (signedIn ? ' signed-in' : '');
+    box.innerHTML = signedIn
+      ? `<div class="auth-status">🔓 เข้าสู่ระบบแล้ว: <b>${escapeHtml(Auth.email() || '')}</b> — นำเข้าและลบข้อมูลได้</div>
+         <button class="btn btn-outline btn-sm" id="btnSignOut">ออกจากระบบ</button>`
+      : `<div class="auth-status">
+           🔒 <b>ต้องเข้าสู่ระบบก่อนนำเข้าหรือลบข้อมูล</b>
+           <div class="auth-hint">หน้าดูข้อมูล/แดชบอร์ดใช้งานได้โดยไม่ต้องล็อกอิน — การล็อกอินจำเป็นเฉพาะการแก้ไขข้อมูล</div>
+         </div>
+         <form class="auth-form" id="authForm" autocomplete="on">
+           <input type="email" id="authEmail" placeholder="อีเมล" autocomplete="username" required />
+           <input type="password" id="authPassword" placeholder="รหัสผ่าน" autocomplete="current-password" required />
+           <button type="submit" class="btn btn-primary btn-sm" id="btnSignIn">เข้าสู่ระบบ</button>
+         </form>`;
+
+    const outBtn = el('btnSignOut');
+    if (outBtn) outBtn.addEventListener('click', async () => {
+      await Auth.signOut();
+      toast('ออกจากระบบแล้ว', 'success');
+    });
+    const form = el('authForm');
+    if (form) form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = el('btnSignIn');
+      btn.disabled = true; btn.textContent = '⏳ กำลังเข้าสู่ระบบ...';
+      try {
+        await Auth.signIn(el('authEmail').value.trim(), el('authPassword').value);
+        toast('เข้าสู่ระบบสำเร็จ', 'success');
+      } catch (err) {
+        console.error(err);
+        toast('เข้าสู่ระบบไม่สำเร็จ: ' + (/invalid login/i.test(err.message||'') ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' : (err.message || err)), 'error');
+        btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+      }
+    });
+
+    // ปุ่ม "ลบวันนี้" ในตารางแยกตามวันที่ก็ต้องเปิด/ปิดตามสถานะล็อกอินเช่นกัน
+    document.querySelectorAll('#stockByDateTbody button[data-date-key]').forEach(b => {
+      b.disabled = !signedIn;
+      b.title = signedIn ? '' : 'ต้องเข้าสู่ระบบก่อน';
+    });
+
+    // เปิด/ปิดปุ่มที่เขียนข้อมูล — ปุ่มนำเข้ายังต้องมีไฟล์ที่เลือกไว้ด้วย
+    WRITE_BTN_IDS.forEach(id => {
+      const b = el(id);
+      if (!b) return;
+      const kind = id.startsWith('btnImport') ? id.replace('btnImport','').toLowerCase() : null;
+      const needsFile = kind ? !pendingFiles[kind] : false;
+      b.disabled = !signedIn || needsFile;
+      b.title = signedIn ? '' : 'ต้องเข้าสู่ระบบก่อน';
+    });
+  }
+
   function mount(){
     if (mounted) return;
     mounted = true;
+    refreshAuthUI();
 
     setupDropzone('dzStock', 'fileStock', 'chipStock', 'stock');
     setupDropzone('dzArea', 'fileArea', 'chipArea', 'area');
@@ -2190,7 +2585,9 @@ const ImportPage = (() => {
     const chip = el(chipId);
     chip.style.display = 'flex';
     chip.innerHTML = `<span>📎 ${escapeHtml(file.name)} (${(file.size/1024).toFixed(0)} KB)</span>`;
-    el('btnImport' + kind.charAt(0).toUpperCase() + kind.slice(1)).disabled = false;
+    // ปุ่มเปิดได้เฉพาะเมื่อล็อกอินแล้วด้วย (ไม่ใช่แค่มีไฟล์)
+    if (!Auth.isSignedIn()) toast('เลือกไฟล์แล้ว — กรุณาเข้าสู่ระบบก่อนกดนำเข้า', 'info');
+    refreshAuthUI();
   }
 
   /* ---------- Parsers ---------- */
@@ -2338,6 +2735,7 @@ const ImportPage = (() => {
   async function runImport(kind){
     const file = pendingFiles[kind];
     if (!file){ toast('กรุณาเลือกไฟล์ก่อน', 'error'); return; }
+    if (!Auth.isSignedIn()){ toast('ต้องเข้าสู่ระบบก่อนนำเข้าข้อมูล', 'error'); return; }
     const btnId = 'btnImport' + kind.charAt(0).toUpperCase() + kind.slice(1);
     const logId = 'log' + kind.charAt(0).toUpperCase() + kind.slice(1);
     const pgId = 'pg' + kind.charAt(0).toUpperCase() + kind.slice(1);
@@ -2365,7 +2763,7 @@ const ImportPage = (() => {
       // ทั้งบนแดชบอร์ดและกราฟแนวโน้ม — ตรงนี้จึงเตือนและให้ยืนยันก่อน
       if (kind === 'stock'){
         const todayKey = localDateKey(importStartedAt);
-        const { startIso, endIso } = localDayRange(todayKey);
+        const { startIso, endIso } = bkkDayRange(todayKey);
         const { count: sameDayCount } = await sb.from('stock')
           .select('id', { count: 'exact', head: true })
           .gte('imported_at', startIso).lt('imported_at', endIso);
@@ -2437,8 +2835,8 @@ const ImportPage = (() => {
       if (kind === 'stock') await loadStockByDate();
     } catch (e) {
       console.error(e);
-      logLine(logId, `✗ เกิดข้อผิดพลาด: ${e.message || e}`, 'err');
-      toast(`นำเข้าไฟล์${LABEL_OF[kind]}ไม่สำเร็จ: ${e.message || e}`, 'error');
+      logLine(logId, `✗ เกิดข้อผิดพลาด: ${friendlyDbError(e)}`, 'err');
+      toast(`นำเข้าไฟล์${LABEL_OF[kind]}ไม่สำเร็จ: ${friendlyDbError(e)}`, 'error');
       hideProgress(pgId);
     } finally {
       el(btnId).disabled = false;
@@ -2459,6 +2857,7 @@ const ImportPage = (() => {
   }
 
   async function deleteAllData(kind){
+    if (!Auth.isSignedIn()){ toast('ต้องเข้าสู่ระบบก่อนลบข้อมูล', 'error'); return; }
     const table = TABLE_OF[kind];
     const btn = el(DELETE_BTN_ID_OF[kind]);
     const currentCount = await getTableCount(table);
@@ -2477,7 +2876,7 @@ const ImportPage = (() => {
       if (kind === 'stock') await loadStockByDate();
     } catch (e) {
       console.error(e);
-      toast(`ลบข้อมูล${LABEL_OF[kind]}ไม่สำเร็จ: ${e.message || e}`, 'error');
+      toast(`ลบข้อมูล${LABEL_OF[kind]}ไม่สำเร็จ: ${friendlyDbError(e)}`, 'error');
     } finally {
       btn.disabled = false;
     }
@@ -2520,12 +2919,14 @@ const ImportPage = (() => {
       </tr>`).join('');
   }
 
+  // ⚡ เดิมดึงทั้งตาราง stock (3 คอลัมน์ × ทุกแถว) มานับ SKU/แถวที่เบราว์เซอร์
+  // ตอนนี้ view v_storage_summary รวมยอดใน SQL แล้ว — ได้แถวละ Storage Location (ตอนนี้ 12 แถว)
   async function loadStorageSummary(){
     const tbody = el('storageSummaryTbody');
-    let data;
-    try {
-      data = await fetchAllRows('stock', 'material, storage_location, imported_at');
-    } catch (error) {
+    const { data, error } = await sb.from('v_storage_summary')
+      .select('storage_location,location_code,row_count,sku_count,last_imported_at')
+      .order('storage_location');
+    if (error){
       tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(error.message || error)}</div></td></tr>`;
       return;
     }
@@ -2533,47 +2934,28 @@ const ImportPage = (() => {
       tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">ยังไม่มีข้อมูลสต็อกในระบบ — กรุณานำเข้าไฟล์สต็อก</div></td></tr>';
       return;
     }
-    const byStorage = {};
-    data.forEach(r => {
-      const key = r.storage_location || 'ไม่ระบุ';
-      if (!byStorage[key]) byStorage[key] = { skuSet: new Set(), rowCount: 0, lastImported: null };
-      const b = byStorage[key];
-      b.skuSet.add(r.material);
-      b.rowCount++;
-      if (!b.lastImported || (r.imported_at && r.imported_at > b.lastImported)) b.lastImported = r.imported_at;
-    });
-    const entries = Object.entries(byStorage).sort((a,b) => a[0].localeCompare(b[0], 'th'));
-    tbody.innerHTML = entries.map(([storageLoc, stat]) => {
-      const fac = facFromSloc(storageLoc) || '-';
-      return `
+    tbody.innerHTML = data.map(r => `
         <tr>
-          <td>${escapeHtml(storageLoc)}</td>
-          <td><span class="badge badge-navy">${escapeHtml(fac)}</span></td>
-          <td class="cell-num">${fmtNum(stat.rowCount)}</td>
-          <td class="cell-num">${fmtNum(stat.skuSet.size)}</td>
-          <td>${stat.lastImported ? fmtDateTime(stat.lastImported) : '-'}</td>
-        </tr>`;
-    }).join('');
+          <td>${escapeHtml(r.storage_location)}</td>
+          <td><span class="badge badge-navy">${escapeHtml(locationDisplayCode(r.location_code) || '-')}</span></td>
+          <td class="cell-num">${fmtNum(r.row_count)}</td>
+          <td class="cell-num">${fmtNum(r.sku_count)}</td>
+          <td>${r.last_imported_at ? fmtDateTime(r.last_imported_at) : '-'}</td>
+        </tr>`).join('');
   }
 
   /* ---------- Stock append-mode: group by import date + delete-by-date ---------- */
   // localDateKey()/fmtDateKey() ย้ายไป scope กลาง (global) แล้ว — ใช้ร่วมกับ Dashboard/หน้าแนวโน้ม
 
-  // จาก dateKey ('YYYY-MM-DD' ตามเวลาท้องถิ่น) คืนช่วงเวลา [start, end) เป็น ISO string (UTC)
-  // สำหรับใช้กับ .gte(start).lt(end) ตอนลบข้อมูลของวันนั้นโดยเฉพาะ โดยไม่กระทบวันอื่น
-  function localDayRange(dateKey){
-    const [y, m, day] = dateKey.split('-').map(Number);
-    const start = new Date(y, m - 1, day, 0, 0, 0, 0);
-    const end = new Date(y, m - 1, day + 1, 0, 0, 0, 0);
-    return { startIso: start.toISOString(), endIso: end.toISOString() };
-  }
+  // (ลบ localDayRange ออก — ใช้ bkkDayRange() ที่ scope กลางแทน เพื่อให้ช่วงวันตรงกับ SQL เสมอ)
 
+  // ⚡ เดิมดึงทั้งตาราง stock มาจัดกลุ่มตามวันที่เอง — ตอนนี้อ่านจาก view v_stock_daily (แถวละวัน)
   async function loadStockByDate(){
     const tbody = el('stockByDateTbody');
-    let data;
-    try {
-      data = await fetchAllRows('stock', 'imported_at, total_weight');
-    } catch (error) {
+    const { data, error } = await sb.from('v_stock_daily')
+      .select('date_key,row_count,total_weight_kg')
+      .order('date_key', { ascending: false });
+    if (error){
       tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(error.message || error)}</div></td></tr>`;
       return;
     }
@@ -2581,20 +2963,13 @@ const ImportPage = (() => {
       tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">ยังไม่มีข้อมูลสต็อกในระบบ — กรุณาเพิ่มข้อมูลสต็อก</div></td></tr>';
       return;
     }
-    const byDate = {};
-    data.forEach(r => {
-      const key = localDateKey(r.imported_at);
-      if (!byDate[key]) byDate[key] = { rowCount: 0, weight: 0 };
-      byDate[key].rowCount++;
-      byDate[key].weight += Number(r.total_weight) || 0;
-    });
-    const entries = Object.entries(byDate).sort((a,b) => b[0].localeCompare(a[0]));
-    tbody.innerHTML = entries.map(([dateKey, stat]) => `
+    const signedIn = Auth.isSignedIn();
+    tbody.innerHTML = data.map(r => `
       <tr>
-        <td>${escapeHtml(fmtDateKey(dateKey))}</td>
-        <td class="cell-num">${fmtNum(stat.rowCount)}</td>
-        <td class="cell-num">${fmtNum(stat.weight/1000, 2)}</td>
-        <td><button class="btn btn-danger-outline btn-sm" data-date-key="${escapeHtml(dateKey)}" data-row-count="${stat.rowCount}">🗑️ ลบวันนี้</button></td>
+        <td>${escapeHtml(fmtDateKey(r.date_key))}</td>
+        <td class="cell-num">${fmtNum(r.row_count)}</td>
+        <td class="cell-num">${fmtNum((Number(r.total_weight_kg)||0)/1000, 2)}</td>
+        <td><button class="btn btn-danger-outline btn-sm" data-date-key="${escapeHtml(r.date_key)}" data-row-count="${r.row_count}" ${signedIn ? '' : 'disabled title="ต้องเข้าสู่ระบบก่อน"'}>🗑️ ลบวันนี้</button></td>
       </tr>`).join('');
     tbody.querySelectorAll('button[data-date-key]').forEach(btn => {
       btn.addEventListener('click', () => deleteStockByDate(btn.dataset.dateKey, Number(btn.dataset.rowCount)));
@@ -2602,13 +2977,16 @@ const ImportPage = (() => {
   }
 
   async function deleteStockByDate(dateKey, rowCount){
+    if (!Auth.isSignedIn()){ toast('ต้องเข้าสู่ระบบก่อนลบข้อมูล', 'error'); return; }
     if (dateKey === 'ไม่ระบุ'){
       toast('ไม่สามารถลบกลุ่ม "ไม่ระบุ" อัตโนมัติได้ (ไม่มีวันที่นำเข้าที่ชัดเจน)', 'error');
       return;
     }
     const ok = confirm(`ยืนยันลบข้อมูลสต็อกของวันที่ ${fmtDateKey(dateKey)} จำนวน ${rowCount.toLocaleString()} แถว?\nการลบนี้ไม่สามารถย้อนกลับได้`);
     if (!ok) return;
-    const { startIso, endIso } = localDayRange(dateKey);
+    // ใช้ช่วงเวลาแบบ "วันตามเวลาไทย" ให้ตรงกับการจัดกลุ่มของ view v_stock_daily เป๊ะๆ
+    // (เดิมสร้างจากเที่ยงคืนตาม timezone ของเครื่อง — ถ้าเครื่องตั้งโซนอื่นจะลบคร่อมวัน)
+    const { startIso, endIso } = bkkDayRange(dateKey);
     try {
       const { error } = await sb.from('stock').delete().gte('imported_at', startIso).lt('imported_at', endIso);
       if (error) throw error;
@@ -2617,19 +2995,20 @@ const ImportPage = (() => {
       await loadStorageSummary();
     } catch (e) {
       console.error(e);
-      toast(`ลบไม่สำเร็จ: ${e.message || e}`, 'error');
+      toast(`ลบไม่สำเร็จ: ${friendlyDbError(e)}`, 'error');
     }
   }
 
   function activate(){
     mount();
+    refreshAuthUI();
     loadLastImportInfo();
     loadImportHistory();
     loadStorageSummary();
     loadStockByDate();
   }
 
-  return { activate, mount };
+  return { activate, mount, refreshAuthUI };
 })();
 
 /* ============================================================
@@ -2664,26 +3043,24 @@ const TrendsPage = (() => {
   async function loadData(){
     setLoading();
     try {
-      const rows = await fetchAllRows('v_stock_enriched', 'imported_at, total_weight, group_product, material');
-      const byDate = {};
-      rows.forEach(r => {
-        const key = localDateKey(r.imported_at);
-        if (key === 'ไม่ระบุ') return; // ไม่มีวันที่นำเข้าชัดเจน ไม่นับรวมในกราฟแนวโน้ม
-        if (!byDate[key]) byDate[key] = { totalKg: 0, famKg: { flat:0, pipe:0, section:0 }, skuSet: new Set() };
-        const w = Number(r.total_weight) || 0;
-        byDate[key].totalKg += w;
-        byDate[key].skuSet.add(r.material);
-        const fam = FAMILY_DEFS.find(f => f.groupProducts.includes(r.group_product));
-        if (fam) byDate[key].famKg[fam.key] += w;
-      });
-      allDaily = Object.entries(byDate)
-        .map(([dateKey, v]) => ({
-          dateKey,
-          totalTons: v.totalKg / 1000,
-          famTons: { flat: v.famKg.flat/1000, pipe: v.famKg.pipe/1000, section: v.famKg.section/1000 },
-          skuCount: v.skuSet.size,
-        }))
-        .sort((a,b) => a.dateKey.localeCompare(b.dateKey));
+      // ⚡ เดิมดึงแถวดิบทุกแถวของทุกวัน (7,967 แถว และโตขึ้นทุกครั้งที่นำเข้า) มารวมยอดที่เบราว์เซอร์
+      // ตอนนี้ใช้ view v_stock_daily ที่รวมยอดใน SQL แล้ว — ได้ "แถวละ 1 วัน" (ตอนนี้ 3 แถว) ใน 1 request
+      const { data, error } = await sb.from('v_stock_daily')
+        .select('date_key,row_count,sku_count,total_weight_kg,flat_kg,pipe_kg,section_kg')
+        .order('date_key', { ascending: true });
+      if (error) throw error;
+      allDaily = (data || [])
+        .filter(r => r.date_key)
+        .map(r => ({
+          dateKey: r.date_key,
+          totalTons: (Number(r.total_weight_kg) || 0) / 1000,
+          famTons: {
+            flat: (Number(r.flat_kg) || 0) / 1000,
+            pipe: (Number(r.pipe_kg) || 0) / 1000,
+            section: (Number(r.section_kg) || 0) / 1000,
+          },
+          skuCount: Number(r.sku_count) || 0,
+        }));
       renderAll();
     } catch (e) {
       console.error(e);
@@ -2817,8 +3194,10 @@ const TrendsPage = (() => {
 /* ============================================================
    BOOT
 ============================================================ */
-function boot(){
+async function boot(){
   if (!window.location.hash) window.location.hash = '#/dashboard';
+  await Auth.init();           // ต้องรู้สถานะล็อกอินก่อน เพื่อให้หน้านำเข้าข้อมูลแสดงสถานะถูกต้องตั้งแต่ครั้งแรก
+  Auth.onChange(() => ImportPage.refreshAuthUI());
   handleRoute();
 }
 boot();
