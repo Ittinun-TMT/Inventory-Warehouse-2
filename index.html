@@ -291,6 +291,11 @@
     padding:8px 12px;background:var(--white);color:var(--navy-900);min-width:170px;
   }
   .auth-form input:focus{outline:2px solid var(--orange-400);}
+  .auth-form input.auth-code{
+    font-size:16px;font-weight:600;letter-spacing:3px;text-align:center;
+    font-variant-numeric:tabular-nums;min-width:150px;max-width:180px;
+  }
+  .auth-form input.auth-code::placeholder{font-size:13px;font-weight:400;letter-spacing:.5px;}
 
   /* ===== ABC Analysis (Pareto) ===== */
   .abc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;}
@@ -1128,6 +1133,15 @@ function facFromSloc(sloc){
 const Auth = (() => {
   let session = null;
   const listeners = [];
+
+  // แปลง "รหัสพนักงาน 8 หลัก" เป็นคู่ email/password ของบัญชี Supabase Auth
+  // ⚠️ จุดสำคัญด้านความปลอดภัย: ไฟล์นี้ไม่มีรหัสพนักงานที่ใช้ได้ฝังอยู่เลย
+  // "รายชื่อรหัสที่ใช้ได้" อยู่ในตาราง auth.users ฝั่งเซิร์ฟเวอร์ — พิมพ์รหัสที่ไม่มีบัญชีจะล็อกอินไม่ผ่าน
+  // และแม้จะล็อกอินผ่าน สิทธิ์เขียนยังถูกบังคับด้วย RLS policy อีกชั้น (role authenticated เท่านั้น)
+  // เพิ่ม/ถอนสิทธิ์คน = เพิ่ม/ลบบัญชีในฐานข้อมูล ไม่ต้องแก้แล้วแจกไฟล์นี้ใหม่
+  const STAFF_CODE_RE = /^\d{8}$/;
+  const emailFor    = (code) => `${code}@wh2.local`;
+  const passwordFor = (code) => `WH2#${code}#tmt`;
   function emit(){ listeners.forEach(fn => { try { fn(session); } catch(e){ console.error(e); } }); }
   async function init(){
     try {
@@ -1139,9 +1153,21 @@ const Auth = (() => {
   return {
     init,
     isSignedIn(){ return !!session; },
-    email(){ return session?.user?.email || null; },
-    async signIn(email, password){
-      const { error } = await sb.auth.signInWithPassword({ email, password });
+    isValidCodeFormat(code){ return STAFF_CODE_RE.test(String(code || '').trim()); },
+    // รหัสพนักงานที่กำลังล็อกอินอยู่ (เก็บไว้ใน user_metadata.staff_code ตอนสร้างบัญชี)
+    staffCode(){
+      const u = session?.user;
+      if (!u) return null;
+      return u.user_metadata?.staff_code || String(u.email || '').split('@')[0] || null;
+    },
+    async signInWithCode(rawCode){
+      const code = String(rawCode || '').trim();
+      if (!STAFF_CODE_RE.test(code)){
+        const err = new Error('รหัสพนักงานต้องเป็นตัวเลข 8 หลัก');
+        err.__local = true;
+        throw err;
+      }
+      const { error } = await sb.auth.signInWithPassword({ email: emailFor(code), password: passwordFor(code) });
       if (error) throw error;
     },
     async signOut(){ await sb.auth.signOut(); },
@@ -1155,8 +1181,8 @@ function friendlyDbError(e){
   const code = e && e.code ? String(e.code) : '';
   if (code === '42501' || /row-level security|permission denied/i.test(msg)){
     return Auth.isSignedIn()
-      ? 'บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล — ติดต่อผู้ดูแลระบบ'
-      : 'ต้องเข้าสู่ระบบก่อนจึงจะนำเข้าหรือลบข้อมูลได้';
+      ? 'รหัสนี้ไม่มีสิทธิ์แก้ไขข้อมูล — ติดต่อผู้ดูแลระบบ'
+      : 'ต้องใส่รหัสพนักงาน 8 หลักก่อนจึงจะนำเข้าหรือลบข้อมูลได้';
   }
   return msg;
 }
@@ -2498,15 +2524,16 @@ const ImportPage = (() => {
     const signedIn = Auth.isSignedIn();
     box.className = 'auth-box' + (signedIn ? ' signed-in' : '');
     box.innerHTML = signedIn
-      ? `<div class="auth-status">🔓 เข้าสู่ระบบแล้ว: <b>${escapeHtml(Auth.email() || '')}</b> — นำเข้าและลบข้อมูลได้</div>
+      ? `<div class="auth-status">🔓 เข้าสู่ระบบแล้ว · รหัสพนักงาน <b>${escapeHtml(Auth.staffCode() || '')}</b> — นำเข้าและลบข้อมูลได้</div>
          <button class="btn btn-outline btn-sm" id="btnSignOut">ออกจากระบบ</button>`
       : `<div class="auth-status">
-           🔒 <b>ต้องเข้าสู่ระบบก่อนนำเข้าหรือลบข้อมูล</b>
-           <div class="auth-hint">หน้าดูข้อมูล/แดชบอร์ดใช้งานได้โดยไม่ต้องล็อกอิน — การล็อกอินจำเป็นเฉพาะการแก้ไขข้อมูล</div>
+           🔒 <b>ใส่รหัสพนักงาน 8 หลักเพื่อนำเข้าหรือลบข้อมูล</b>
+           <div class="auth-hint">หน้าแดชบอร์ด / แนวโน้ม / ค้นหา ใช้งานได้โดยไม่ต้องใส่รหัส — รหัสจำเป็นเฉพาะการแก้ไขข้อมูลเท่านั้น</div>
          </div>
-         <form class="auth-form" id="authForm" autocomplete="on">
-           <input type="email" id="authEmail" placeholder="อีเมล" autocomplete="username" required />
-           <input type="password" id="authPassword" placeholder="รหัสผ่าน" autocomplete="current-password" required />
+         <form class="auth-form" id="authForm" autocomplete="off">
+           <input type="text" id="authCode" class="auth-code" placeholder="รหัส 8 หลัก"
+                  inputmode="numeric" autocomplete="off" required
+                  aria-label="รหัสพนักงาน 8 หลัก" />
            <button type="submit" class="btn btn-primary btn-sm" id="btnSignIn">เข้าสู่ระบบ</button>
          </form>`;
 
@@ -2515,25 +2542,46 @@ const ImportPage = (() => {
       await Auth.signOut();
       toast('ออกจากระบบแล้ว', 'success');
     });
+    const codeInput = el('authCode');
+    if (codeInput){
+      // รับเฉพาะตัวเลข — วางจาก Excel/สแกนบัตรที่มีขีดหรือช่องว่างติดมาก็ใช้ได้
+      // ⚠️ ห้ามใส่ maxlength="8" ที่ตัว input: เบราว์เซอร์จะตัดความยาวก่อนที่โค้ดนี้จะลบขีดออก
+      // ทำให้วาง "6604-0027" (9 ตัว) เหลือ "6604-002" แล้วกลายเป็นรหัสผิด "6604002" — ตัดที่นี่ที่เดียว
+      codeInput.addEventListener('input', () => {
+        const cleaned = codeInput.value.replace(/\D/g, '').slice(0, 8);
+        if (cleaned !== codeInput.value) codeInput.value = cleaned;
+      });
+    }
     const form = el('authForm');
     if (form) form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = el('btnSignIn');
-      btn.disabled = true; btn.textContent = '⏳ กำลังเข้าสู่ระบบ...';
+      const code = el('authCode').value.trim();
+      if (!Auth.isValidCodeFormat(code)){
+        toast('รหัสพนักงานต้องเป็นตัวเลข 8 หลัก', 'error');
+        return;
+      }
+      btn.disabled = true; btn.textContent = '⏳ กำลังตรวจสอบรหัส...';
       try {
-        await Auth.signIn(el('authEmail').value.trim(), el('authPassword').value);
+        await Auth.signInWithCode(code);
         toast('เข้าสู่ระบบสำเร็จ', 'success');
       } catch (err) {
         console.error(err);
-        toast('เข้าสู่ระบบไม่สำเร็จ: ' + (/invalid login/i.test(err.message||'') ? 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' : (err.message || err)), 'error');
+        // GoTrue ตอบ "Invalid login credentials" ทั้งกรณีรหัสไม่มีในระบบ — ไม่บอกใบ้ว่ารหัสมีอยู่หรือไม่
+        const msg = /invalid login|invalid_credentials/i.test(err.message || '')
+          ? 'รหัสนี้ไม่มีสิทธิ์เข้าใช้งาน — ตรวจสอบรหัสอีกครั้ง หรือติดต่อผู้ดูแลระบบ'
+          : (err.message || err);
+        toast('เข้าสู่ระบบไม่สำเร็จ: ' + msg, 'error');
         btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+        const ci = el('authCode');
+        if (ci){ ci.value = ''; ci.focus(); }
       }
     });
 
     // ปุ่ม "ลบวันนี้" ในตารางแยกตามวันที่ก็ต้องเปิด/ปิดตามสถานะล็อกอินเช่นกัน
     document.querySelectorAll('#stockByDateTbody button[data-date-key]').forEach(b => {
       b.disabled = !signedIn;
-      b.title = signedIn ? '' : 'ต้องเข้าสู่ระบบก่อน';
+      b.title = signedIn ? '' : 'ต้องใส่รหัสพนักงานก่อน';
     });
 
     // เปิด/ปิดปุ่มที่เขียนข้อมูล — ปุ่มนำเข้ายังต้องมีไฟล์ที่เลือกไว้ด้วย
@@ -2543,7 +2591,7 @@ const ImportPage = (() => {
       const kind = id.startsWith('btnImport') ? id.replace('btnImport','').toLowerCase() : null;
       const needsFile = kind ? !pendingFiles[kind] : false;
       b.disabled = !signedIn || needsFile;
-      b.title = signedIn ? '' : 'ต้องเข้าสู่ระบบก่อน';
+      b.title = signedIn ? '' : 'ต้องใส่รหัสพนักงานก่อน';
     });
   }
 
@@ -2586,7 +2634,7 @@ const ImportPage = (() => {
     chip.style.display = 'flex';
     chip.innerHTML = `<span>📎 ${escapeHtml(file.name)} (${(file.size/1024).toFixed(0)} KB)</span>`;
     // ปุ่มเปิดได้เฉพาะเมื่อล็อกอินแล้วด้วย (ไม่ใช่แค่มีไฟล์)
-    if (!Auth.isSignedIn()) toast('เลือกไฟล์แล้ว — กรุณาเข้าสู่ระบบก่อนกดนำเข้า', 'info');
+    if (!Auth.isSignedIn()) toast('เลือกไฟล์แล้ว — กรุณาใส่รหัสพนักงานก่อนกดนำเข้า', 'info');
     refreshAuthUI();
   }
 
@@ -2735,7 +2783,7 @@ const ImportPage = (() => {
   async function runImport(kind){
     const file = pendingFiles[kind];
     if (!file){ toast('กรุณาเลือกไฟล์ก่อน', 'error'); return; }
-    if (!Auth.isSignedIn()){ toast('ต้องเข้าสู่ระบบก่อนนำเข้าข้อมูล', 'error'); return; }
+    if (!Auth.isSignedIn()){ toast('ต้องใส่รหัสพนักงาน 8 หลักก่อนนำเข้าข้อมูล', 'error'); return; }
     const btnId = 'btnImport' + kind.charAt(0).toUpperCase() + kind.slice(1);
     const logId = 'log' + kind.charAt(0).toUpperCase() + kind.slice(1);
     const pgId = 'pg' + kind.charAt(0).toUpperCase() + kind.slice(1);
@@ -2857,7 +2905,7 @@ const ImportPage = (() => {
   }
 
   async function deleteAllData(kind){
-    if (!Auth.isSignedIn()){ toast('ต้องเข้าสู่ระบบก่อนลบข้อมูล', 'error'); return; }
+    if (!Auth.isSignedIn()){ toast('ต้องใส่รหัสพนักงาน 8 หลักก่อนลบข้อมูล', 'error'); return; }
     const table = TABLE_OF[kind];
     const btn = el(DELETE_BTN_ID_OF[kind]);
     const currentCount = await getTableCount(table);
@@ -2969,7 +3017,7 @@ const ImportPage = (() => {
         <td>${escapeHtml(fmtDateKey(r.date_key))}</td>
         <td class="cell-num">${fmtNum(r.row_count)}</td>
         <td class="cell-num">${fmtNum((Number(r.total_weight_kg)||0)/1000, 2)}</td>
-        <td><button class="btn btn-danger-outline btn-sm" data-date-key="${escapeHtml(r.date_key)}" data-row-count="${r.row_count}" ${signedIn ? '' : 'disabled title="ต้องเข้าสู่ระบบก่อน"'}>🗑️ ลบวันนี้</button></td>
+        <td><button class="btn btn-danger-outline btn-sm" data-date-key="${escapeHtml(r.date_key)}" data-row-count="${r.row_count}" ${signedIn ? '' : 'disabled title="ต้องใส่รหัสพนักงานก่อน"'}>🗑️ ลบวันนี้</button></td>
       </tr>`).join('');
     tbody.querySelectorAll('button[data-date-key]').forEach(btn => {
       btn.addEventListener('click', () => deleteStockByDate(btn.dataset.dateKey, Number(btn.dataset.rowCount)));
@@ -2977,7 +3025,7 @@ const ImportPage = (() => {
   }
 
   async function deleteStockByDate(dateKey, rowCount){
-    if (!Auth.isSignedIn()){ toast('ต้องเข้าสู่ระบบก่อนลบข้อมูล', 'error'); return; }
+    if (!Auth.isSignedIn()){ toast('ต้องใส่รหัสพนักงาน 8 หลักก่อนลบข้อมูล', 'error'); return; }
     if (dateKey === 'ไม่ระบุ'){
       toast('ไม่สามารถลบกลุ่ม "ไม่ระบุ" อัตโนมัติได้ (ไม่มีวันที่นำเข้าที่ชัดเจน)', 'error');
       return;
