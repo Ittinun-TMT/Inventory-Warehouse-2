@@ -580,6 +580,31 @@
   }
   .historical-banner b{color:var(--navy-900);}
 
+  /* ===== Segmented control (เลือกตัวชี้วัด / มิติ บนหน้าแนวโน้ม) ===== */
+  .seg-group{display:inline-flex;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap;}
+  .seg-btn{
+    font-family:'Kanit',sans-serif;font-size:12px;font-weight:500;color:var(--gray-600);
+    background:transparent;border:none;border-radius:8px;padding:6px 13px;cursor:pointer;transition:.15s;white-space:nowrap;
+  }
+  .seg-btn:hover{color:var(--navy-900);}
+  .seg-btn.active{background:var(--white);color:var(--navy-900);box-shadow:0 1px 3px rgba(8,28,56,.14);font-weight:600;}
+
+  .trend-kpis{grid-template-columns:repeat(5,1fr);}
+  @media (max-width:1250px){ .trend-kpis{grid-template-columns:repeat(3,1fr);} }
+  @media (max-width:820px){ .trend-kpis{grid-template-columns:repeat(2,1fr);} }
+
+  /* แถบเตือนคุณภาพข้อมูลบนหน้าแนวโน้ม */
+  .trend-health{
+    background:var(--gold-100);border:1px solid var(--gold-400);border-radius:10px;
+    padding:10px 14px;font-size:12px;color:#7a5a00;line-height:1.7;margin-top:12px;
+  }
+
+  /* ตารางแนวโน้มรายพื้นที่ */
+  .sparkline{display:block;}
+  tr.trend-loc-row{cursor:pointer;}
+  tr.trend-loc-row:hover{background:var(--gold-100)!important;}
+  #trendLocTable tbody td{vertical-align:middle;}
+
   /* ===== Trends page (แนวโน้มสต็อกรายวัน) ===== */
   .trend-range-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
   .trend-range-btn{
@@ -907,30 +932,81 @@
 
   </div>
 
-  <!-- ============ TRENDS VIEW (แนวโน้มสต็อกรายวัน) ============ -->
+  <!-- ============ TRENDS VIEW (แนวโน้มสต็อก + การไหล + รายพื้นที่) ============ -->
   <div id="view-trends" class="route-view">
     <div class="section-title" style="justify-content:space-between;">
-      <span style="display:flex;align-items:center;gap:9px;">📈 แนวโน้มสต็อกรายวัน <span class="tag">เปรียบเทียบน้ำหนักสต็อกของแต่ละวันที่นำเข้าข้อมูล</span></span>
-      <button class="btn btn-outline btn-sm" id="btnRefreshTrends">↻ รีเฟรช</button>
+      <span style="display:flex;align-items:center;gap:9px;">📈 แนวโน้มสต็อก <span class="tag">เปรียบเทียบแต่ละรอบที่นำเข้าข้อมูล · ระดับสต็อก · การไหลเข้า-ออก · รายพื้นที่</span></span>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" id="btnTrendExport">⬇ Export CSV</button>
+        <button class="btn btn-outline btn-sm" id="btnRefreshTrends">↻ รีเฟรช</button>
+      </div>
     </div>
 
     <div class="trend-range-row" id="trendRangeRow">
-      <button type="button" class="trend-range-btn" data-range="7">7 วันล่าสุด</button>
       <button type="button" class="trend-range-btn" data-range="30">30 วันล่าสุด</button>
+      <button type="button" class="trend-range-btn" data-range="90">90 วันล่าสุด</button>
       <button type="button" class="trend-range-btn active" data-range="all">ทั้งหมด</button>
     </div>
 
-    <div class="section-title" style="margin-top:22px;">น้ำหนักรวมทั้งหมด <span class="tag">ตัน ต่อวันที่นำเข้า</span></div>
+    <div id="trendHealth"></div>
+
+    <div class="mgr-hero trend-kpis" id="trendKpis" style="margin-top:16px;"></div>
+
+    <div class="section-title" style="margin-top:22px;justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">📦 ระดับสต็อกรวม <span class="tag" id="trendMainTag">เทียบกับความจุทั้งเครือข่าย</span></span>
+      <div class="seg-group" id="trendMetricSeg">
+        <button type="button" class="seg-btn active" data-metric="weight">น้ำหนัก (ตัน)</button>
+        <button type="button" class="seg-btn" data-metric="pct">% ใช้พื้นที่</button>
+        <button type="button" class="seg-btn" data-metric="sku">จำนวน SKU</button>
+        <button type="button" class="seg-btn" data-metric="qty">จำนวนชิ้น</button>
+      </div>
+    </div>
     <div class="viz-block" id="trendTotalChart"><div class="viz-empty">กำลังโหลด...</div></div>
 
-    <div class="section-title" style="margin-top:26px;">แยกตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe / Section</span></div>
-    <div class="viz-block" id="trendFamilyChart"><div class="viz-empty">กำลังโหลด...</div></div>
+    <div class="section-title" style="margin-top:26px;">🔄 การไหลเข้า-ออก <span class="tag">เทียบกับรอบก่อนหน้า · แท่งขึ้น = รับเข้า · แท่งลง = จ่ายออก · เส้น = สุทธิ</span></div>
+    <div class="viz-block" id="trendFlowChart"><div class="viz-empty">กำลังโหลด...</div></div>
 
-    <div class="section-title" style="margin-top:26px;">ตารางข้อมูลรายวัน <span class="tag">พร้อมส่วนต่างเทียบวันก่อนหน้า</span></div>
+    <div class="section-title" style="margin-top:26px;">🏭 แนวโน้มรายพื้นที่ <span class="tag">เรียงตามความเร่งด่วน · คลิกแถวเพื่อดูกราฟของพื้นที่นั้น</span></div>
+    <div class="history-table-wrap">
+      <table class="data-table" id="trendLocTable">
+        <thead><tr>
+          <th>พื้นที่ / โรงงาน</th>
+          <th>แนวโน้ม</th>
+          <th class="cell-num">ล่าสุด (ตัน)</th>
+          <th class="cell-num">รอบล่าสุด</th>
+          <th class="cell-num">แนวโน้ม (ตัน/สัปดาห์)</th>
+          <th class="cell-num">รับเข้า/ออก รอบล่าสุด</th>
+          <th class="cell-num">% ใช้พื้นที่</th>
+          <th>คาดการณ์</th>
+        </tr></thead>
+        <tbody id="trendLocTbody"><tr><td colspan="8"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section-title" style="margin-top:26px;justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">🧩 แนวโน้มแยกตามมิติ <span class="tag" id="trendDimTag">น้ำหนัก (ตัน) ต่อรอบ</span></span>
+      <div class="seg-group" id="trendDimSeg">
+        <button type="button" class="seg-btn active" data-dim="family">กลุ่มหลัก</button>
+        <button type="button" class="seg-btn" data-dim="location">พื้นที่</button>
+        <button type="button" class="seg-btn" data-dim="group_sale">Group Sale</button>
+        <button type="button" class="seg-btn" data-dim="group_product">Group Product</button>
+        <button type="button" class="seg-btn" data-dim="product_type">Product Type</button>
+      </div>
+    </div>
+    <div class="viz-block" id="trendDimChart"><div class="viz-empty">กำลังโหลด...</div></div>
+
+    <div class="section-title" style="margin-top:26px;">🗓️ ตารางรายรอบ <span class="tag">ระดับสต็อก + การไหล + ของที่ไม่เคลื่อนไหว</span></div>
     <div class="history-table-wrap">
       <table class="data-table" id="trendTable">
-        <thead><tr><th>วันที่</th><th class="cell-num">น้ำหนักรวม (ตัน)</th><th class="cell-num">เปลี่ยนแปลง</th><th class="cell-num">Flat (ตัน)</th><th class="cell-num">Pipe (ตัน)</th><th class="cell-num">Section (ตัน)</th><th class="cell-num">จำนวน SKU</th></tr></thead>
-        <tbody id="trendTbody"><tr><td colspan="7"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+        <thead><tr>
+          <th>วันที่นำเข้า</th><th class="cell-num">ห่างกัน</th>
+          <th class="cell-num">สต็อก (ตัน)</th><th class="cell-num">เปลี่ยนแปลง</th>
+          <th class="cell-num">รับเข้า</th><th class="cell-num">จ่ายออก</th>
+          <th class="cell-num">ย้ายภายใน</th><th class="cell-num">ไม่เคลื่อนไหว</th>
+          <th class="cell-num">Flat</th><th class="cell-num">Pipe</th><th class="cell-num">Section</th>
+          <th class="cell-num">SKU</th>
+        </tr></thead>
+        <tbody id="trendTbody"><tr><td colspan="12"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1283,6 +1359,20 @@ function fmtDateKey(dateKey){
   const [y, m, day] = dateKey.split('-').map(Number);
   const d = new Date(y, m - 1, day);
   return d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+}
+
+/* ============================================================
+   PALETTE — ใช้ร่วมกันทั้งหน้า Dashboard และหน้าแนวโน้ม
+   สี categorical 7 ค่าแรก (validated palette จากสคีม dataviz — CVD-safe, ลำดับคงที่,
+   ผูกกับชื่อ entity เสมอ ไม่ใช่ผูกกับอันดับ — เปลี่ยนตัวกรองแล้วสีของแต่ละชื่อต้องไม่สลับ)
+============================================================ */
+const CATEGORICAL_SLOTS = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7'];
+const OTHER_SLOT_COLOR = '#9a9a92'; // สีกลางสำหรับกลุ่มที่ถูกยุบรวมเป็น "อื่นๆ"
+
+// สี sequential (magnitude): 1 hue เดียวต่อ 1 มุมมอง, ความเข้มแปรผันตาม % (มากกว่า = เข้มกว่า)
+function sequentialColor(hue, sat, pct){
+  const l = Math.max(38, 74 - (Math.min(100, pct) / 100) * 36);
+  return `hsl(${hue} ${sat}% ${l}%)`;
 }
 
 /* ============================================================
@@ -1879,16 +1969,8 @@ const DashboardPage = (() => {
   }
 
   // ===== Creative viz renderers (แทนตาราง) =====
-  // สี categorical 7 ค่าแรก (validated palette จากสคีม dataviz — CVD-safe, fixed order, ผูกกับ entity เดิมเสมอ)
-  const CATEGORICAL_SLOTS = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7'];
-  const OTHER_SLOT_COLOR = '#9a9a92'; // สีกลางสำหรับกลุ่มที่ถูกยุบรวมเป็น "อื่นๆ"
   const RANK_TOP_N = 8; // เกินจากนี้ยุบรวมเป็นแถว "อื่นๆ" กันรายการยาวเกินไป
-
-  // สีของแท่ง sequential (magnitude): 1 hue เดียวต่อ 1 มุมมอง, ความเข้ม (lightness) แปรผันตาม % ของทั้งหมด (มากกว่า = เข้มกว่า)
-  function sequentialColor(hue, sat, pct){
-    const l = Math.max(38, 74 - (Math.min(100, pct) / 100) * 36);
-    return `hsl(${hue} ${sat}% ${l}%)`;
-  }
+  // CATEGORICAL_SLOTS / OTHER_SLOT_COLOR / sequentialColor ย้ายไป scope กลางแล้ว — ใช้ร่วมกับหน้าแนวโน้ม
 
   function renderRankBars(containerId, entries, hue, sat, unitLabel){
     const box = el(containerId);
@@ -3060,182 +3142,607 @@ const ImportPage = (() => {
 })();
 
 /* ============================================================
-   TRENDS PAGE — แนวโน้มน้ำหนักสต็อกรายวัน (เปรียบเทียบระหว่างวันที่นำเข้าแต่ละครั้ง)
-   ไม่พึ่ง chart library ภายนอก — วาดกราฟเส้นด้วย SVG มือเขียนเอง สอดคล้องกับกราฟอื่นทั้งแอป
+   TRENDS PAGE — แนวโน้มสต็อก, การไหลเข้า-ออก, และแนวโน้มรายพื้นที่
+   ⚡ ทุกยอดรวมคำนวณด้วย SQL ฝั่ง Supabase แล้ว (v_stock_daily / v_movement_daily /
+      v_movement_by_location / v_daily_breakdown) หน้านี้จึงดึงข้อมูลไม่กี่ร้อยแถว
+      ไม่ว่าตาราง stock จะโตขึ้นเท่าไหร่ก็ตาม
+   ไม่พึ่ง chart library ภายนอก — วาด SVG เองทั้งหมด ให้เข้าชุดกับกราฟอื่นในแอป
 ============================================================ */
 const TrendsPage = (() => {
   let mounted = false;
-  let allDaily = []; // [{ dateKey, totalTons, famTons:{flat,pipe,section}, skuCount }] เรียงจากเก่า->ใหม่
-  let rangeSel = 'all'; // '7' | '30' | 'all'
+  let daily = [];        // [{dateKey, t, tons, sku, qty, flat, pipe, section, rows}] เรียงเก่า->ใหม่
+  let movement = {};     // dateKey -> {inT,outT,netT,internalT,unchangedT,lotsIn,lotsOut,lotsUnchanged,gapDays}
+  let movByLoc = {};     // dateKey -> { [locDisplay]: {inT,outT,netT} }
+  let breakdown = {};    // dimType -> { dimValue -> { dateKey -> {tons,sku,qty} } }
+  let capacityByLoc = {};
+  let totalCapacity = 0;
+  let importHealth = {}; // dateKey -> จำนวนครั้งที่นำเข้าในวันนั้น
+  let rangeSel = 'all';  // '30' | '90' | 'all'
+  let metricSel = 'weight';
+  let dimSel = 'family';
 
-  function mount(){
-    if (mounted) return;
-    mounted = true;
-    el('btnRefreshTrends').addEventListener('click', loadData);
-    document.querySelectorAll('#trendRangeRow .trend-range-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#trendRangeRow .trend-range-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        rangeSel = btn.dataset.range;
-        renderAll();
-      });
+  const DAY_MS = 86400000;
+  const keyToTime = (k) => { const [y,m,d] = k.split('-').map(Number); return Date.UTC(y, m-1, d); };
+
+  /* ---------- helpers ---------- */
+  function fmtDateShort(dateKey){
+    const [y,m,d] = dateKey.split('-').map(Number);
+    return new Date(y, m-1, d).toLocaleDateString('th-TH', { day:'numeric', month:'short' });
+  }
+  // แกนตั้งควรจบที่เลขกลม (5,000 / 10,000) ไม่ใช่ max×1.15 ที่ได้ป้ายอย่าง 10,514 ซึ่งอ่านยาก
+  function niceScale(maxVal, minVal = 0, tickCount = 4){
+    const span = (maxVal - minVal) || 1;
+    const rough = span / tickCount;
+    const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+    const norm = rough / mag;
+    const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+    return { min: Math.floor(minVal/step)*step, max: Math.ceil(maxVal/step)*step, step };
+  }
+  // ความชันด้วย least squares (ทนต่อจุดที่แกว่งมากกว่าการเอาจุดแรก-จุดสุดท้ายลบกัน)
+  function linearSlopePerDay(points){
+    const pts = points.filter(p => p.y !== null && p.y !== undefined);
+    if (pts.length < 2) return 0;
+    const t0 = pts[0].t;
+    const xs = pts.map(p => (p.t - t0) / DAY_MS), ys = pts.map(p => p.y);
+    const n = xs.length;
+    const mx = xs.reduce((a,b)=>a+b,0)/n, my = ys.reduce((a,b)=>a+b,0)/n;
+    let num = 0, den = 0;
+    for (let i=0;i<n;i++){ num += (xs[i]-mx)*(ys[i]-my); den += (xs[i]-mx)**2; }
+    return den === 0 ? 0 : num/den;
+  }
+  const deltaHtml = (diff, unit='ตัน', dec=1) => {
+    if (diff === null || diff === undefined) return '<span class="cell-muted">—</span>';
+    // ถ้าปัดตามจำนวนทศนิยมที่แสดงแล้วได้ 0 ให้ถือว่าไม่เปลี่ยน — กันกรณีแสดง "▼ 0.0 ตัน"
+    const eps = Math.pow(10, -dec) / 2;
+    if (Math.abs(diff) < eps) return `<span class="trend-flat">— 0${dec?'.'+'0'.repeat(dec):''} ${escapeHtml(unit)}</span>`;
+    const cls = diff > 0 ? 'trend-up' : 'trend-down';
+    const arrow = diff > 0 ? '▲' : '▼';
+    return `<span class="${cls}">${arrow} ${fmtNum(Math.abs(diff), dec)} ${escapeHtml(unit)}</span>`;
+  };
+
+  /* ---------- SVG: กราฟเส้นแบบแกนเวลาจริง ---------- */
+  // 🐞 เดิมวางจุดตามลำดับ (index) ทำให้ช่วงห่าง 6 วันดูเท่ากับ 1 วัน ความชันของเส้นจึงหลอกตา
+  // ตอนนี้แกนนอนเป็นเวลาจริง ระยะห่างบนกราฟจึงสะท้อนจำนวนวันที่ห่างกันจริง
+  function buildTimeChart(series, opts = {}){
+    const pts = series.flatMap(s => s.points).filter(p => p.y !== null && p.y !== undefined);
+    if (!pts.length) return '<div class="viz-empty">ยังไม่มีข้อมูลในช่วงที่เลือก</div>';
+
+    const height = opts.height || 280;
+    const width = 900;
+    const padL = 58, padR = opts.padR || 18, padT = 16, padB = 38;
+    const innerW = width - padL - padR, innerH = height - padT - padB;
+
+    const tMin = Math.min(...pts.map(p => p.t));
+    const tMaxRaw = Math.max(...pts.map(p => p.t));
+    const tMax = tMaxRaw === tMin ? tMin + DAY_MS : tMaxRaw;
+    const refMax = Math.max(...(opts.refLines || []).map(r => r.y), 0);
+    const yTop = Math.max(...pts.map(p => p.y), refMax);
+    const yBottom = Math.min(0, ...pts.map(p => p.y));
+    const sc = niceScale(yTop, yBottom);
+
+    const xAt = (t) => padL + innerW * (t - tMin) / (tMax - tMin);
+    const yAt = (v) => padT + innerH - innerH * (v - sc.min) / (sc.max - sc.min || 1);
+
+    let grid = '';
+    for (let v = sc.min; v <= sc.max + 1e-9; v += sc.step){
+      grid += `<line x1="${padL}" y1="${yAt(v)}" x2="${width-padR}" y2="${yAt(v)}" stroke="#e9ecef" stroke-width="1"/>`
+           +  `<text x="${padL-8}" y="${yAt(v)+4}" text-anchor="end" font-size="10.5" fill="#6c757d">${(opts.tickFmt||((x)=>fmtNum(x,0)))(v)}</text>`;
+    }
+
+    // ป้ายแกนนอน: วางตามวันจริง เลือกมาไม่เกิน 8 ป้ายให้ไม่ทับกัน
+    const allKeys = [...new Set(series.flatMap(s => s.points.map(p => p.key)))].sort();
+    const step = Math.max(1, Math.ceil(allKeys.length / 8));
+    let xLabels = '';
+    allKeys.forEach((k, i) => {
+      if (i % step !== 0 && i !== allKeys.length - 1) return;
+      xLabels += `<text x="${xAt(keyToTime(k))}" y="${height-12}" text-anchor="middle" font-size="10.5" fill="#6c757d">${escapeHtml(fmtDateShort(k))}</text>`;
     });
+
+    const refs = (opts.refLines || []).map(r => {
+      if (r.y > sc.max || r.y < sc.min) return '';
+      return `<line x1="${padL}" y1="${yAt(r.y)}" x2="${width-padR}" y2="${yAt(r.y)}" stroke="${r.color||'#C9971F'}" stroke-width="1.4" stroke-dasharray="6 4"/>`
+        + `<text x="${padL+6}" y="${yAt(r.y)-6}" font-size="10.5" font-weight="600" fill="${r.color||'#C9971F'}">${escapeHtml(r.label)}</text>`;
+    }).join('');
+
+    const body = series.map(s => {
+      // ค่า null = รอบที่ไม่มีข้อมูล → ตัดเส้นให้ขาด ไม่ลากข้ามช่วงที่ไม่รู้ค่า
+      const segs = [];
+      let cur = [];
+      s.points.forEach(p => {
+        if (p.y === null || p.y === undefined){ if (cur.length) segs.push(cur); cur = []; }
+        else cur.push(p);
+      });
+      if (cur.length) segs.push(cur);
+      const lines = segs.map(seg => seg.length === 1
+        ? ''
+        : `<polyline points="${seg.map(p=>`${xAt(p.t)},${yAt(p.y)}`).join(' ')}" fill="none" stroke="${s.color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`).join('');
+      const dots = s.points.filter(p => p.y !== null && p.y !== undefined).map(p =>
+        `<circle cx="${xAt(p.t)}" cy="${yAt(p.y)}" r="3.6" fill="${s.color}" stroke="#fff" stroke-width="1.5">`
+        + `<title>${escapeHtml(fmtDateKey(p.key))} · ${escapeHtml(s.label)}: ${escapeHtml((opts.valueFmt||((v)=>fmtNum(v,2)+' ตัน'))(p.y))}</title></circle>`).join('');
+      return lines + dots;
+    }).join('');
+
+    const legend = series.length > 1
+      ? `<div class="legend-row" style="margin-top:6px;">${series.map(s => `<div class="legend-item"><span class="legend-swatch" style="background:${s.color};"></span>${escapeHtml(s.label)}</div>`).join('')}</div>`
+      : '';
+    return `<div style="overflow-x:auto;"><svg viewBox="0 0 ${width} ${height}" style="width:100%;min-width:560px;height:auto;">${grid}${xLabels}${refs}${body}</svg></div>${legend}`;
   }
 
+  /* ---------- SVG: กราฟการไหล (แท่งเข้า/ออก + เส้นสุทธิ) ---------- */
+  function buildFlowChart(rows){
+    if (!rows.length) return '<div class="viz-empty">ต้องมีข้อมูลอย่างน้อย 2 รอบจึงจะเทียบการไหลได้</div>';
+    const width = 900, height = 300;
+    const padL = 58, padR = 18, padT = 16, padB = 44;
+    const innerW = width - padL - padR, innerH = height - padT - padB;
+    const maxAbs = Math.max(...rows.map(r => Math.max(r.inT, r.outT)), 1);
+    const sc = niceScale(maxAbs, -maxAbs, 2);
+    const yAt = (v) => padT + innerH - innerH * (v - sc.min) / (sc.max - sc.min);
+    const slot = innerW / rows.length;
+    const bw = Math.min(30, slot * 0.30);
+
+    let grid = '';
+    for (let v = sc.min; v <= sc.max + 1e-9; v += sc.step){
+      const solid = Math.abs(v) < 1e-9;
+      grid += `<line x1="${padL}" y1="${yAt(v)}" x2="${width-padR}" y2="${yAt(v)}" stroke="${solid?'#adb5bd':'#e9ecef'}" stroke-width="${solid?1.2:1}"/>`
+           +  `<text x="${padL-8}" y="${yAt(v)+4}" text-anchor="end" font-size="10.5" fill="#6c757d">${fmtNum(Math.abs(v),0)}</text>`;
+    }
+
+    const IN_COLOR = '#1baf7a', OUT_COLOR = '#eb6834', NET_COLOR = '#0F3460';
+    let bars = '', netPts = [], labels = '';
+    rows.forEach((r, i) => {
+      const cx = padL + slot * (i + 0.5);
+      // เว้นช่องว่าง 2px ระหว่างแท่งคู่ (spacer) ให้อ่านแยกแท่งได้ชัด
+      bars += `<rect x="${cx - bw - 1}" y="${yAt(r.inT)}" width="${bw}" height="${Math.max(1, yAt(0)-yAt(r.inT))}" rx="3" fill="${IN_COLOR}">`
+           +  `<title>${escapeHtml(fmtDateKey(r.dateKey))} · รับเข้า ${fmtNum(r.inT,1)} ตัน (${fmtNum(r.lotsIn)} ล็อต)</title></rect>`
+           +  `<rect x="${cx + 1}" y="${yAt(0)}" width="${bw}" height="${Math.max(1, yAt(-r.outT)-yAt(0))}" rx="3" fill="${OUT_COLOR}">`
+           +  `<title>${escapeHtml(fmtDateKey(r.dateKey))} · จ่ายออก ${fmtNum(r.outT,1)} ตัน (${fmtNum(r.lotsOut)} ล็อต)</title></rect>`;
+      netPts.push(`${cx},${yAt(r.netT)}`);
+      labels += `<text x="${cx}" y="${height-14}" text-anchor="middle" font-size="10.5" fill="#6c757d">${escapeHtml(fmtDateShort(r.dateKey))}</text>`;
+    });
+    const netLine = `<polyline points="${netPts.join(' ')}" fill="none" stroke="${NET_COLOR}" stroke-width="2.2" stroke-dasharray="5 3"/>`
+      + rows.map((r,i) => {
+          const cx = padL + slot*(i+0.5);
+          return `<circle cx="${cx}" cy="${yAt(r.netT)}" r="4" fill="${NET_COLOR}" stroke="#fff" stroke-width="1.6">`
+            + `<title>${escapeHtml(fmtDateKey(r.dateKey))} · สุทธิ ${r.netT>=0?'+':'−'}${fmtNum(Math.abs(r.netT),1)} ตัน`
+            + `\nรับเข้า ${fmtNum(r.inT,1)} − จ่ายออก ${fmtNum(r.outT,1)}`
+            + `\n(ไม่รวมการย้ายที่เก็บภายใน ${fmtNum(r.internalT,1)} ตัน)</title></circle>`;
+        }).join('');
+
+    return `<div style="overflow-x:auto;"><svg viewBox="0 0 ${width} ${height}" style="width:100%;min-width:560px;height:auto;">${grid}${labels}${bars}${netLine}</svg></div>
+      <div class="legend-row" style="margin-top:6px;">
+        <div class="legend-item"><span class="legend-swatch" style="background:${IN_COLOR};"></span>รับเข้า</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:${OUT_COLOR};"></span>จ่ายออก</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:${NET_COLOR};"></span>สุทธิ</div>
+        <div class="legend-item" style="color:var(--gray-400);">คิดที่ระดับ Material × Batch — การย้ายที่เก็บภายในถูกหักออกแล้ว</div>
+      </div>`;
+  }
+
+  /* ---------- SVG: sparkline เล็กในตาราง ---------- */
+  function buildSparkline(values, color){
+    const vals = values.filter(v => v !== null && v !== undefined);
+    if (vals.length < 2) return '<span class="cell-muted" style="font-size:11px;">—</span>';
+    const w = 104, h = 26, pad = 3;
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    const span = (mx - mn) || 1;
+    const xs = (i) => pad + (w - pad*2) * i / (values.length - 1);
+    const ys = (v) => h - pad - (h - pad*2) * (v - mn) / span;
+    const pts = values.map((v,i) => v===null?null:`${xs(i)},${ys(v)}`).filter(Boolean).join(' ');
+    const last = values[values.length-1];
+    return `<svg class="sparkline" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+      ${last!==null?`<circle cx="${xs(values.length-1)}" cy="${ys(last)}" r="2.6" fill="${color}"/>`:''}
+    </svg>`;
+  }
+
+  /* ---------- โหลดข้อมูล ---------- */
   function setLoading(){
-    el('trendTotalChart').innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
-    el('trendFamilyChart').innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
-    el('trendTbody').innerHTML = '<tr><td colspan="7"><div class="empty-state">กำลังโหลด...</div></td></tr>';
+    ['trendTotalChart','trendFlowChart','trendDimChart'].forEach(id => {
+      const e = el(id); if (e) e.innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
+    });
+    el('trendTbody').innerHTML = '<tr><td colspan="12"><div class="empty-state">กำลังโหลด...</div></td></tr>';
+    el('trendLocTbody').innerHTML = '<tr><td colspan="8"><div class="empty-state">กำลังโหลด...</div></td></tr>';
   }
 
   async function loadData(){
     setLoading();
     try {
-      // ⚡ เดิมดึงแถวดิบทุกแถวของทุกวัน (7,967 แถว และโตขึ้นทุกครั้งที่นำเข้า) มารวมยอดที่เบราว์เซอร์
-      // ตอนนี้ใช้ view v_stock_daily ที่รวมยอดใน SQL แล้ว — ได้ "แถวละ 1 วัน" (ตอนนี้ 3 แถว) ใน 1 request
-      const { data, error } = await sb.from('v_stock_daily')
-        .select('date_key,row_count,sku_count,total_weight_kg,flat_kg,pipe_kg,section_kg')
-        .order('date_key', { ascending: true });
-      if (error) throw error;
-      allDaily = (data || [])
-        .filter(r => r.date_key)
-        .map(r => ({
-          dateKey: r.date_key,
-          totalTons: (Number(r.total_weight_kg) || 0) / 1000,
-          famTons: {
-            flat: (Number(r.flat_kg) || 0) / 1000,
-            pipe: (Number(r.pipe_kg) || 0) / 1000,
-            section: (Number(r.section_kg) || 0) / 1000,
-          },
-          skuCount: Number(r.sku_count) || 0,
-        }));
+      const [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes] = await Promise.all([
+        sb.from('v_stock_daily').select('date_key,row_count,sku_count,total_weight_kg,flat_kg,pipe_kg,section_kg').order('date_key'),
+        sb.from('v_movement_daily').select('*').order('date_key'),
+        sb.from('v_movement_by_location').select('*'),
+        sb.from('v_daily_breakdown').select('*'),
+        sb.from('v_location_capacity').select('location_code,actual_capacity_tons'),
+        sb.from('v_import_health').select('*'),
+      ]);
+      for (const r of [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes]) if (r.error) throw r.error;
+
+      daily = (dailyRes.data || []).filter(r => r.date_key).map(r => ({
+        dateKey: r.date_key, t: keyToTime(r.date_key),
+        tons: (+r.total_weight_kg || 0)/1000, rows: +r.row_count || 0, sku: +r.sku_count || 0,
+        flat: (+r.flat_kg||0)/1000, pipe: (+r.pipe_kg||0)/1000, section: (+r.section_kg||0)/1000,
+        qty: 0,
+      }));
+
+      movement = {};
+      (movRes.data || []).forEach(r => { movement[r.date_key] = {
+        prevKey: r.prev_date_key, gapDays: +r.gap_days || 0,
+        inT: (+r.in_kg||0)/1000, outT: (+r.out_kg||0)/1000, netT: (+r.net_kg||0)/1000,
+        internalT: (+r.moved_internal_kg||0)/1000, unchangedT: (+r.unchanged_kg||0)/1000,
+        lotsIn: +r.lots_in||0, lotsOut: +r.lots_out||0, lotsUnchanged: +r.lots_unchanged||0,
+      }; });
+
+      movByLoc = {};
+      (movLocRes.data || []).forEach(r => {
+        const loc = locationDisplayCode(r.location_code) || 'ไม่ระบุ';
+        if (!movByLoc[r.date_key]) movByLoc[r.date_key] = {};
+        const slot = movByLoc[r.date_key][loc] || { inT:0, outT:0, netT:0 };
+        slot.inT += (+r.in_kg||0)/1000; slot.outT += (+r.out_kg||0)/1000; slot.netT += (+r.net_kg||0)/1000;
+        movByLoc[r.date_key][loc] = slot;
+      });
+
+      // มิติ "พื้นที่" ต้องรวม Fac B+E ให้ตรงกับหน้าอื่นก่อนเก็บลง breakdown
+      breakdown = {};
+      (bdRes.data || []).forEach(r => {
+        const dim = r.dim_type;
+        const val = dim === 'location' ? (locationDisplayCode(r.dim_value) || 'ไม่ระบุ') : r.dim_value;
+        breakdown[dim] = breakdown[dim] || {};
+        breakdown[dim][val] = breakdown[dim][val] || {};
+        const cell = breakdown[dim][val][r.date_key] || { tons:0, sku:0, qty:0 };
+        cell.tons += (+r.weight_kg||0)/1000;
+        cell.sku  += +r.sku_count||0;
+        cell.qty  += +r.qty||0;
+        breakdown[dim][val][r.date_key] = cell;
+      });
+      // จำนวนชิ้นรวมต่อรอบ อ่านจากมิติ family (ครอบคลุมทุกแถวพอดี ไม่ซ้ำ)
+      daily.forEach(d => {
+        d.qty = Object.values(breakdown.family || {}).reduce((s,byDate) => s + ((byDate[d.dateKey]||{}).qty || 0), 0);
+      });
+
+      capacityByLoc = {};
+      mergeLocationRows(capRes.data || []).forEach(r => { capacityByLoc[r.location_code] = +r.actual_capacity_tons || 0; });
+      totalCapacity = Object.values(capacityByLoc).reduce((a,b)=>a+b,0);
+
+      importHealth = {};
+      (healthRes.data || []).forEach(r => { importHealth[r.date_key] = +r.import_count || 0; });
+
       renderAll();
     } catch (e) {
       console.error(e);
-      el('trendTotalChart').innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(e.message || e)}</div>`;
-      el('trendFamilyChart').innerHTML = '';
-      el('trendTbody').innerHTML = '<tr><td colspan="7"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
-      toast('โหลดข้อมูลแนวโน้มไม่สำเร็จ: ' + (e.message || e), 'error');
+      const msg = escapeHtml(friendlyDbError(e));
+      ['trendTotalChart','trendFlowChart','trendDimChart'].forEach(id => {
+        const x = el(id); if (x) x.innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${msg}</div>`;
+      });
+      el('trendTbody').innerHTML = '<tr><td colspan="12"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
+      el('trendLocTbody').innerHTML = '<tr><td colspan="8"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
+      toast('โหลดข้อมูลแนวโน้มไม่สำเร็จ: ' + friendlyDbError(e), 'error');
     }
   }
 
-  function scopedDaily(){
-    if (rangeSel === 'all') return allDaily;
+  /* ---------- ขอบเขตช่วงเวลา ---------- */
+  function scoped(){
+    if (rangeSel === 'all' || !daily.length) return daily;
     const n = Number(rangeSel);
-    if (!allDaily.length) return allDaily;
-    // BUGFIX: เดิมใช้ allDaily.slice(-n) = "n ครั้งล่าสุดที่นำเข้า" ไม่ใช่ "n วันล่าสุด" ตามที่ปุ่มบอก
-    // (นำเข้าไม่ทุกวัน → ปุ่ม "7 วันล่าสุด" เคยดึงข้อมูลย้อนไปเป็นเดือน) — กรองด้วยวันที่จริง
-    const last = allDaily[allDaily.length - 1];
-    const [ly, lm, ld] = last.dateKey.split('-').map(Number);
-    const cutoff = new Date(ly, lm - 1, ld - (n - 1));
-    return allDaily.filter(d => {
-      const [y, m, day] = d.dateKey.split('-').map(Number);
-      return new Date(y, m - 1, day) >= cutoff;
-    });
+    const cutoff = daily[daily.length-1].t - (n-1)*DAY_MS; // นับเป็นวันปฏิทินจริง ไม่ใช่ "n รอบล่าสุด"
+    return daily.filter(d => d.t >= cutoff);
   }
 
-  function fmtDateShort(dateKey){
-    const [y, m, day] = dateKey.split('-').map(Number);
-    const d = new Date(y, m - 1, day);
-    return d.toLocaleDateString('th-TH', { day:'numeric', month:'short' });
-  }
-
-  // สร้างกราฟเส้น SVG มือเขียนเอง — series: [{ label, color, points:[{y:number}] }] เรียงตำแหน่งตรงกับ dateKeys
-  function buildLineChart(series, dateKeys){
-    const n = dateKeys.length;
-    if (!n) return '<div class="viz-empty">ยังไม่มีข้อมูล</div>';
-
-    const width = 900, height = 260;
-    const padL = 46, padR = 16, padT = 16, padB = 34;
-    const innerW = width - padL - padR, innerH = height - padT - padB;
-
-    const allY = series.flatMap(s => s.points.map(p => p.y));
-    const maxY = Math.max(...allY, 0.0001);
-    const niceMax = maxY * 1.15;
-
-    const xAt = (i) => n === 1 ? padL + innerW/2 : padL + (innerW * i) / (n - 1);
-    const yAt = (v) => padT + innerH - (innerH * v / niceMax);
-
-    const gridCount = 4;
-    let gridSvg = '';
-    for (let g = 0; g <= gridCount; g++){
-      const v = (niceMax / gridCount) * g;
-      const y = yAt(v);
-      gridSvg += `<line x1="${padL}" y1="${y}" x2="${width-padR}" y2="${y}" stroke="#e9ecef" stroke-width="1"/>`;
-      gridSvg += `<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="10.5" fill="#6c757d">${fmtNum(v,0)}</text>`;
+  /* ---------- ส่วนแสดงผล ---------- */
+  function renderHealth(rows){
+    const box = el('trendHealth');
+    const warns = [];
+    const dupes = rows.filter(d => (importHealth[d.dateKey] || 0) > 1);
+    if (dupes.length){
+      warns.push(`⚠️ มี ${dupes.length} วันที่นำเข้าไฟล์สต็อกมากกว่า 1 ครั้ง (${dupes.map(d => `${fmtDateKey(d.dateKey)} × ${importHealth[d.dateKey]}`).join(', ')}) — ถ้าเป็นไฟล์เดิมซ้ำ ยอดของวันนั้นจะถูกนับเกินจริง ตรวจที่หน้า "นำเข้าข้อมูล"`);
     }
+    if (rows.length < 3){
+      warns.push(`ℹ️ มีข้อมูลเพียง ${rows.length} รอบในช่วงที่เลือก — แนวโน้มและการคาดการณ์จะแม่นขึ้นเมื่อมีอย่างน้อย 4–5 รอบ`);
+    }
+    const gaps = rows.map((d,i) => i>0 ? { key:d.dateKey, gap:(d.t-rows[i-1].t)/DAY_MS } : null).filter(g => g && g.gap > 10);
+    if (gaps.length){
+      warns.push(`ℹ️ มีช่วงที่เว้นห่างเกิน 10 วัน (${gaps.map(g => `ก่อน ${fmtDateKey(g.key)} เว้น ${g.gap} วัน`).join(', ')}) — กราฟเว้นระยะตามวันจริงแล้ว`);
+    }
+    box.innerHTML = warns.length
+      ? `<div class="trend-health">${warns.map(w => `<div>${w}</div>`).join('')}</div>` : '';
+  }
 
-    const maxLabels = 8;
-    const labelStep = Math.max(1, Math.ceil(n / maxLabels));
-    let xLabelsSvg = '';
-    dateKeys.forEach((k, i) => {
-      if (i % labelStep !== 0 && i !== n - 1) return;
-      xLabelsSvg += `<text x="${xAt(i)}" y="${height-10}" text-anchor="middle" font-size="10.5" fill="#6c757d">${escapeHtml(fmtDateShort(k))}</text>`;
+  function renderKpis(rows){
+    const box = el('trendKpis');
+    if (!rows.length){ box.innerHTML = ''; return; }
+    const last = rows[rows.length-1];
+    const prev = rows.length > 1 ? rows[rows.length-2] : null;
+    const movRows = rows.map(d => movement[d.dateKey]).filter(Boolean);
+    const totalIn = movRows.reduce((s,m)=>s+m.inT,0);
+    const totalOut = movRows.reduce((s,m)=>s+m.outT,0);
+    const totalDays = movRows.reduce((s,m)=>s+(m.gapDays||0),0);
+    const outPerDay = totalDays > 0 ? totalOut/totalDays : 0;
+    const doh = outPerDay > 0 ? last.tons / outPerDay : null;
+    const pct = totalCapacity > 0 ? last.tons/totalCapacity*100 : 0;
+    const lastMov = movement[last.dateKey];
+    const slope = linearSlopePerDay(rows.map(d => ({t:d.t, y:d.tons})));
+
+    const card = (label, value, sub, info) => `
+      <div class="mgr-card">
+        <div class="mgr-label">${label} ${info?`<span class="kpi-info" title="${escapeHtml(info)}">ⓘ</span>`:''}</div>
+        <div class="mgr-value">${value}</div>
+        <div class="mgr-sub">${sub}</div>
+      </div>`;
+
+    box.innerHTML = [
+      card('สต็อกล่าสุด (ตัน)', fmtNum(last.tons,1),
+        `${pct.toFixed(1)}% ของความจุ ${fmtNum(totalCapacity,0)} ตัน · ${escapeHtml(fmtDateKey(last.dateKey))}`,
+        'น้ำหนักสต็อกรวมของรอบล่าสุดในช่วงที่เลือก เทียบกับความจุรวมทุกโรงงาน'),
+      card('เปลี่ยนแปลงรอบล่าสุด', prev ? deltaHtml(last.tons - prev.tons) : '<span class="cell-muted">—</span>',
+        prev ? `เทียบ ${escapeHtml(fmtDateKey(prev.dateKey))} (ห่าง ${lastMov?lastMov.gapDays:'-'} วัน)` : '&nbsp;',
+        'ผลต่างน้ำหนักสต็อกรวมระหว่างรอบล่าสุดกับรอบก่อนหน้า'),
+      card('รับเข้า / จ่ายออก', `<span style="color:#1baf7a;">${fmtNum(totalIn,0)}</span> / <span style="color:#eb6834;">${fmtNum(totalOut,0)}</span>`,
+        `รวมทั้งช่วง (ตัน) · สุทธิ ${totalIn-totalOut>=0?'+':'−'}${fmtNum(Math.abs(totalIn-totalOut),0)}`,
+        'คำนวณจากการเทียบ snapshot ระดับ Material × Batch ระหว่างรอบที่ติดกัน — ส่วนที่เพิ่มขึ้นนับเป็นรับเข้า ส่วนที่ลดลงนับเป็นจ่ายออก (หักการย้ายที่เก็บภายในออกแล้ว)'),
+      card('Days on Hand', doh ? fmtNum(doh,0) + ' วัน' : '<span class="cell-muted">—</span>',
+        outPerDay > 0 ? `ที่อัตราจ่ายออก ${fmtNum(outPerDay,0)} ตัน/วัน` : 'ยังไม่มีข้อมูลการจ่ายออก',
+        'DOH = สต็อกล่าสุด ÷ อัตราจ่ายออกเฉลี่ยต่อวันในช่วงที่เลือก = ของที่มีอยู่พอขายอีกกี่วันถ้าไม่รับเข้าเพิ่ม'),
+      card('แนวโน้มรวม', `${slope>=0?'+':'−'}${fmtNum(Math.abs(slope*7),0)}`,
+        `ตัน/สัปดาห์ (least squares จาก ${rows.length} รอบ)`,
+        'ความชันของเส้นแนวโน้มจากวิธีกำลังสองน้อยที่สุด คูณ 7 เพื่อแปลงเป็นต่อสัปดาห์ — ทนต่อจุดที่แกว่งมากกว่าการเอาจุดแรกลบจุดสุดท้าย'),
+    ].join('');
+  }
+
+  function renderMainChart(rows){
+    const cfg = {
+      weight: { label:'น้ำหนักรวม', get:(d)=>d.tons, fmt:(v)=>fmtNum(v,1)+' ตัน', tick:(v)=>fmtNum(v,0),
+                ref: totalCapacity>0 ? [{y: totalCapacity, label:`ความจุรวม ${fmtNum(totalCapacity,0)} ตัน`, color:'#C9971F'}] : [] },
+      pct:    { label:'% ใช้พื้นที่', get:(d)=> totalCapacity>0 ? d.tons/totalCapacity*100 : 0, fmt:(v)=>v.toFixed(1)+'%', tick:(v)=>fmtNum(v,0)+'%',
+                ref: [{y:100, label:'เต็มความจุ', color:'#dc3545'}, {y:80, label:'เกณฑ์ใกล้เต็ม 80%', color:'#C9971F'}] },
+      sku:    { label:'จำนวน SKU', get:(d)=>d.sku, fmt:(v)=>fmtNum(v,0)+' SKU', tick:(v)=>fmtNum(v,0), ref: [] },
+      qty:    { label:'จำนวนชิ้น (Unrestricted)', get:(d)=>d.qty, fmt:(v)=>fmtNum(v,0)+' หน่วย', tick:(v)=>fmtNum(v,0), ref: [] },
+    }[metricSel];
+
+    el('trendMainTag').textContent = metricSel === 'weight' ? 'เทียบกับความจุทั้งเครือข่าย'
+      : metricSel === 'pct' ? 'สัดส่วนการใช้พื้นที่รวมทุกโรงงาน'
+      : metricSel === 'sku' ? 'จำนวนรหัสสินค้าที่ไม่ซ้ำกันในแต่ละรอบ'
+      : '⚠️ รวมหลายหน่วยนับ (เส้น/แผ่น/กก.) ใช้เทียบอย่างหยาบ';
+
+    el('trendTotalChart').innerHTML = buildTimeChart(
+      [{ label: cfg.label, color:'#1a4a8a', points: rows.map(d => ({ key:d.dateKey, t:d.t, y:cfg.get(d) })) }],
+      { refLines: cfg.ref, valueFmt: cfg.fmt, tickFmt: cfg.tick }
+    );
+  }
+
+  function renderFlowChart(rows){
+    const flow = rows.map(d => movement[d.dateKey] ? { dateKey:d.dateKey, ...movement[d.dateKey] } : null).filter(Boolean);
+    el('trendFlowChart').innerHTML = buildFlowChart(flow);
+  }
+
+  /* ---------- แนวโน้มรายพื้นที่ (หัวใจของหน้านี้) ---------- */
+  function locationSeries(rows){
+    const byLoc = breakdown.location || {};
+    return Object.keys(byLoc).map(loc => {
+      const points = rows.map(d => ({ key:d.dateKey, t:d.t, y: (byLoc[loc][d.dateKey] || {}).tons ?? null }));
+      const known = points.filter(p => p.y !== null);
+      const latest = known.length ? known[known.length-1].y : 0;
+      const prev = known.length > 1 ? known[known.length-2].y : null;
+      const cap = capacityByLoc[loc] || 0;
+      const slopeDay = linearSlopePerDay(points);
+      const lastKey = rows.length ? rows[rows.length-1].dateKey : null;
+      const mv = (lastKey && movByLoc[lastKey] && movByLoc[lastKey][loc]) || { inT:0, outT:0, netT:0 };
+      // คาดการณ์: ใช้ความชันแนวโน้มทำนายว่าอีกกี่วันจะชนความจุ (หรือของหมด)
+      // เพดานการคาดการณ์: ความชันที่เกือบเป็นศูนย์จะให้ตัวเลขอย่าง "เต็มในราว 5,991 วัน" ซึ่งไม่มีความหมาย
+      // และชวนให้เข้าใจผิดว่าคำนวณมาแม่นยำ — เกิน FORECAST_HORIZON ถือว่า "ทรงตัว"
+      const FORECAST_HORIZON = 180;
+      let forecast = null;
+      if (cap > 0 && latest >= cap) forecast = { type:'over', days: 0 };
+      else if (cap > 0 && slopeDay > 0.05 && latest < cap){
+        const days = Math.round((cap - latest)/slopeDay);
+        if (days <= FORECAST_HORIZON) forecast = { type:'full', days };
+      } else if (slopeDay < -0.05 && latest > 0){
+        const days = Math.round(latest / -slopeDay);
+        if (days <= FORECAST_HORIZON) forecast = { type:'empty', days };
+      }
+      return { loc, points, values: points.map(p=>p.y), latest, prev, cap,
+               pct: cap>0 ? latest/cap*100 : null, slopeWeek: slopeDay*7, mv, forecast };
+    }).sort((a,b) => {
+      // เรียงตามความเร่งด่วน: ใกล้เต็มเร็วที่สุดก่อน แล้วค่อยเรียงตาม % ใช้พื้นที่
+      const rank = (x) => x.forecast && x.forecast.type === 'over' ? -1
+                        : x.forecast && x.forecast.type === 'full' ? x.forecast.days : 9e9;
+      return rank(a) - rank(b) || (b.pct ?? -1) - (a.pct ?? -1);
     });
+  }
 
-    const linesSvg = series.map(s => {
-      const pointsAttr = s.points.map((p,i) => `${xAt(i)},${yAt(p.y)}`).join(' ');
-      const dots = s.points.map((p,i) => `<circle cx="${xAt(i)}" cy="${yAt(p.y)}" r="3.2" fill="${s.color}"><title>${escapeHtml(fmtDateKey(dateKeys[i]))} · ${escapeHtml(s.label)}: ${fmtNum(p.y,2)} ตัน</title></circle>`).join('');
-      return `<polyline points="${pointsAttr}" fill="none" stroke="${s.color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
+  function renderLocationTable(rows){
+    const tbody = el('trendLocTbody');
+    const list = locationSeries(rows);
+    if (!list.length){ tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">ไม่พบข้อมูลรายพื้นที่</div></td></tr>'; return; }
+
+    tbody.innerHTML = list.map(s => {
+      const tier = s.pct === null ? 'normal' : s.pct > 100 ? 'critical' : s.pct > 80 ? 'warn' : 'normal';
+      const sparkColor = s.slopeWeek > 0 ? '#0F3460' : s.slopeWeek < 0 ? '#E85D04' : '#adb5bd';
+      let forecastHtml = '<span class="cell-muted">ทรงตัว</span>';
+      if (s.forecast){
+        if (s.forecast.type === 'over') forecastHtml = '<span class="mgr-status-pill critical">⛔ เกินความจุแล้ว</span>';
+        else if (s.forecast.type === 'full'){
+          const cls = s.forecast.days <= 14 ? 'critical' : s.forecast.days <= 30 ? 'warn' : 'normal';
+          forecastHtml = `<span class="mgr-status-pill ${cls}">เต็มในราว ${fmtNum(s.forecast.days)} วัน</span>`;
+        } else {
+          forecastHtml = `<span class="cell-muted">ลดลง · หมดในราว ${fmtNum(s.forecast.days)} วัน</span>`;
+        }
+      }
+      const fcTitle = s.forecast && s.forecast.type === 'full'
+        ? `คงเหลือ ${fmtNum(s.cap - s.latest,1)} ตัน ÷ แนวโน้มเพิ่ม ${fmtNum(s.slopeWeek/7,2)} ตัน/วัน ≈ ${fmtNum(s.forecast.days)} วัน\nเป็นการประมาณเชิงเส้นจากข้อมูลในช่วงที่เลือกเท่านั้น ไม่ได้รวมแผนรับเข้าในอนาคต`
+        : 'ประมาณจากความชันแนวโน้มในช่วงที่เลือก';
+      return `
+        <tr class="trend-loc-row" data-loc="${escapeHtml(s.loc)}" title="คลิกเพื่อดูกราฟของพื้นที่นี้">
+          <td><b>${escapeHtml(s.loc)}</b></td>
+          <td>${buildSparkline(s.values, sparkColor)}</td>
+          <td class="cell-num">${fmtNum(s.latest,1)}</td>
+          <td class="cell-num">${s.prev !== null ? deltaHtml(s.latest - s.prev) : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num"><span class="${s.slopeWeek>0?'trend-up':s.slopeWeek<0?'trend-down':'trend-flat'}">${s.slopeWeek>=0?'+':'−'}${fmtNum(Math.abs(s.slopeWeek),1)}</span></td>
+          <td class="cell-num" style="font-size:11.5px;"><span style="color:#1baf7a;">+${fmtNum(s.mv.inT,1)}</span> / <span style="color:#eb6834;">−${fmtNum(s.mv.outT,1)}</span></td>
+          <td class="cell-num">${s.pct===null?'<span class="cell-muted">—</span>':`<span class="mgr-status-pill ${tier}">${s.pct.toFixed(0)}%</span>`}</td>
+          <td title="${escapeHtml(fcTitle)}">${forecastHtml}</td>
+        </tr>`;
     }).join('');
 
-    const legendHtml = series.length > 1
-      ? `<div class="legend-row" style="margin-top:6px;">${series.map(s => `<div class="legend-item"><span class="legend-swatch" style="background:${s.color};"></span>${escapeHtml(s.label)}</div>`).join('')}</div>`
-      : '';
-
-    return `<div style="overflow-x:auto;"><svg viewBox="0 0 ${width} ${height}" style="width:100%;min-width:560px;height:auto;">${gridSvg}${xLabelsSvg}${linesSvg}</svg></div>${legendHtml}`;
+    tbody.querySelectorAll('.trend-loc-row').forEach(tr => {
+      tr.addEventListener('click', () => openLocationTrendModal(tr.dataset.loc, rows));
+    });
   }
 
-  function renderAll(){
-    const daily = scopedDaily();
-    if (!daily.length){
-      el('trendTotalChart').innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลสต็อกที่มีวันที่นำเข้าชัดเจน — นำเข้าข้อมูลอย่างน้อย 1 วันก่อน</div>';
-      el('trendFamilyChart').innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูล</div>';
-      el('trendTbody').innerHTML = '<tr><td colspan="7"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
-      return;
+  // กราฟเจาะลึกรายพื้นที่: ระดับสต็อกเทียบความจุ + การไหลเข้า-ออกของพื้นที่นั้น
+  function openLocationTrendModal(loc, rows){
+    const s = locationSeries(rows).find(x => x.loc === loc);
+    if (!s) return;
+    const flow = rows.map(d => {
+      const m = (movByLoc[d.dateKey] || {})[loc];
+      return m ? { dateKey:d.dateKey, inT:m.inT, outT:m.outT, netT:m.netT, internalT:0,
+                   lotsIn:0, lotsOut:0 } : null;
+    }).filter(Boolean);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box" style="max-width:1000px;">
+        <div class="modal-head">
+          <div>
+            <h3>📈 ${escapeHtml(loc)} — แนวโน้มของพื้นที่นี้</h3>
+            <div class="modal-sub">ล่าสุด ${fmtNum(s.latest,1)} ตัน${s.cap>0?` · ความจุ ${fmtNum(s.cap,1)} ตัน · ใช้ ${s.pct.toFixed(1)}%`:' · ยังไม่มีข้อมูลความจุ'} · แนวโน้ม ${s.slopeWeek>=0?'+':'−'}${fmtNum(Math.abs(s.slopeWeek),1)} ตัน/สัปดาห์</div>
+          </div>
+          <button class="modal-close" aria-label="ปิด">&times;</button>
+        </div>
+        <div class="modal-body" style="flex-direction:column;padding:20px 24px;">
+          <div class="modal-col-title">ระดับสต็อก</div>
+          ${buildTimeChart([{ label: loc, color:'#1a4a8a', points: s.points }],
+              { height: 240, refLines: s.cap>0 ? [{y:s.cap, label:`ความจุ ${fmtNum(s.cap,0)} ตัน`, color:'#C9971F'}] : [],
+                valueFmt:(v)=>fmtNum(v,1)+' ตัน' })}
+          <div class="modal-col-title" style="margin-top:20px;">การไหลเข้า-ออกของพื้นที่นี้</div>
+          <div class="cell-muted" style="font-size:11px;margin-bottom:8px;">ระดับนี้นับ "การย้ายระหว่างโรงงาน" รวมด้วย เพราะมองจากมุมของพื้นที่นี้ว่ามีของเข้ามา/ออกไปเท่าไหร่</div>
+          ${buildFlowChart(flow)}
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const escHandler = (e) => { if (e.key === 'Escape') close(); };
+    const close = () => { overlay.remove(); document.removeEventListener('keydown', escHandler); };
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    overlay.querySelector('.modal-close').addEventListener('click', close);
+    document.addEventListener('keydown', escHandler);
+  }
+
+  /* ---------- แนวโน้มแยกตามมิติ ---------- */
+  function renderDimChart(rows){
+    const byVal = breakdown[dimSel] || {};
+    const lastKey = rows.length ? rows[rows.length-1].dateKey : null;
+    // จัดอันดับจากยอดของรอบล่าสุด แล้วผูกสีตามชื่อ (สีไม่สลับความหมายเมื่อเปลี่ยนช่วงเวลา)
+    const ranked = Object.keys(byVal)
+      .map(v => ({ v, last: (byVal[v][lastKey] || {}).tons || 0 }))
+      .sort((a,b) => b.last - a.last);
+    const shown = ranked.slice(0, CATEGORICAL_SLOTS.length);
+    const rest = ranked.slice(CATEGORICAL_SLOTS.length);
+
+    const series = shown.map((r,i) => ({
+      label: r.v, color: CATEGORICAL_SLOTS[i],
+      points: rows.map(d => ({ key:d.dateKey, t:d.t, y: (byVal[r.v][d.dateKey] || {}).tons ?? null })),
+    }));
+    if (rest.length){
+      series.push({
+        label: `อื่นๆ (${rest.length})`, color: OTHER_SLOT_COLOR,
+        points: rows.map(d => ({ key:d.dateKey, t:d.t,
+          y: rest.reduce((s,r) => s + ((byVal[r.v][d.dateKey] || {}).tons || 0), 0) })),
+      });
     }
-    const dateKeys = daily.map(d => d.dateKey);
+    el('trendDimTag').textContent = `น้ำหนัก (ตัน) ต่อรอบ · ${shown.length + (rest.length?1:0)} เส้น`;
+    el('trendDimChart').innerHTML = buildTimeChart(series, { valueFmt:(v)=>fmtNum(v,1)+' ตัน', height: 300 });
+  }
 
-    el('trendTotalChart').innerHTML = buildLineChart(
-      [{ label: 'น้ำหนักรวม', color: '#1a4a8a', points: daily.map(d => ({ y: d.totalTons })) }],
-      dateKeys
-    );
-
-    el('trendFamilyChart').innerHTML = buildLineChart(
-      FAMILY_DEFS.map(fam => ({ label: fam.label, color: fam.color, points: daily.map(d => ({ y: d.famTons[fam.key] })) })),
-      dateKeys
-    );
-
-    // ตารางแสดงล่าสุดก่อน พร้อมส่วนต่างเทียบกับวันก่อนหน้า (เทียบตามลำดับข้อมูลจริง ไม่ใช่แค่แถวก่อนหน้าในตาราง)
-    el('trendTbody').innerHTML = daily.slice().reverse().map((d, ri) => {
-      const idx = daily.length - 1 - ri; // ตำแหน่งจริงใน daily (เลี่ยง findIndex ซ้อน map = O(n²))
-      const prev = idx > 0 ? daily[idx-1] : null;
-      let deltaHtml = '<span class="cell-muted">—</span>';
-      if (prev){
-        const diff = d.totalTons - prev.totalTons;
-        const pct = prev.totalTons > 0 ? (diff / prev.totalTons) * 100 : 0;
-        const cls = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-flat';
-        const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '—';
-        deltaHtml = `<span class="${cls}">${arrow} ${fmtNum(Math.abs(diff),2)} ตัน (${diff>=0?'+':'-'}${Math.abs(pct).toFixed(1)}%)</span>`;
-      }
+  /* ---------- ตารางรายรอบ ---------- */
+  function renderTable(rows){
+    const tbody = el('trendTbody');
+    if (!rows.length){ tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>'; return; }
+    tbody.innerHTML = rows.slice().reverse().map((d, ri) => {
+      const idx = rows.length - 1 - ri;
+      const prev = idx > 0 ? rows[idx-1] : null;
+      const m = movement[d.dateKey];
       return `
         <tr>
-          <td>${escapeHtml(fmtDateKey(d.dateKey))}</td>
-          <td class="cell-num">${fmtNum(d.totalTons,2)}</td>
-          <td class="cell-num">${deltaHtml}</td>
-          <td class="cell-num">${fmtNum(d.famTons.flat,2)}</td>
-          <td class="cell-num">${fmtNum(d.famTons.pipe,2)}</td>
-          <td class="cell-num">${fmtNum(d.famTons.section,2)}</td>
-          <td class="cell-num">${fmtNum(d.skuCount)}</td>
+          <td>${escapeHtml(fmtDateKey(d.dateKey))}${(importHealth[d.dateKey]||0)>1?' <span class="badge badge-orange" title="วันนี้มีการนำเข้าไฟล์สต็อกมากกว่า 1 ครั้ง">นำเข้า '+importHealth[d.dateKey]+' ครั้ง</span>':''}</td>
+          <td class="cell-num">${m && m.gapDays ? m.gapDays + ' วัน' : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num">${fmtNum(d.tons,1)}</td>
+          <td class="cell-num">${prev ? deltaHtml(d.tons - prev.tons) : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num" style="color:#1baf7a;">${m ? '+'+fmtNum(m.inT,1) : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num" style="color:#eb6834;">${m ? '−'+fmtNum(m.outT,1) : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num cell-muted" title="ของที่แค่ย้ายที่เก็บ ไม่ได้เข้า-ออกคลังจริง">${m ? fmtNum(m.internalT,1) : '—'}</td>
+          <td class="cell-num" title="${m?escapeHtml(`${fmtNum(m.lotsUnchanged)} ล็อตที่น้ำหนักไม่เปลี่ยนเลยจากรอบก่อน`):''}">${m ? fmtNum(m.unchangedT,1) : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num">${fmtNum(d.flat,1)}</td>
+          <td class="cell-num">${fmtNum(d.pipe,1)}</td>
+          <td class="cell-num">${fmtNum(d.section,1)}</td>
+          <td class="cell-num">${fmtNum(d.sku)}</td>
         </tr>`;
     }).join('');
   }
 
-  function activate(){
-    mount();
-    loadData();
+  function exportCsv(){
+    const rows = scoped();
+    if (!rows.length){ toast('ไม่มีข้อมูลให้ export', 'error'); return; }
+    const headers = ['Date','Gap Days','Stock (Ton)','Change (Ton)','In (Ton)','Out (Ton)','Internal Move (Ton)',
+                     'Unchanged (Ton)','Flat','Pipe','Section','SKU','Qty','Utilization %'];
+    const lines = [headers.join(',')];
+    rows.forEach((d, i) => {
+      const m = movement[d.dateKey] || {};
+      const prev = i > 0 ? rows[i-1] : null;
+      lines.push([
+        d.dateKey, m.gapDays ?? '', d.tons.toFixed(2), prev ? (d.tons-prev.tons).toFixed(2) : '',
+        (m.inT ?? '') === '' ? '' : m.inT.toFixed(2), (m.outT ?? '') === '' ? '' : m.outT.toFixed(2),
+        (m.internalT ?? '') === '' ? '' : m.internalT.toFixed(2),
+        (m.unchangedT ?? '') === '' ? '' : m.unchangedT.toFixed(2),
+        d.flat.toFixed(2), d.pipe.toFixed(2), d.section.toFixed(2), d.sku, d.qty,
+        totalCapacity > 0 ? (d.tons/totalCapacity*100).toFixed(2) : '',
+      ].map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(','));
+    });
+    const blob = new Blob(['﻿' + lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `wh2_trends_${rows[0].dateKey}_to_${rows[rows.length-1].dateKey}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast(`Export แนวโน้มสำเร็จ (${fmtNum(rows.length)} รอบ)`, 'success');
   }
 
+  function renderAll(){
+    const rows = scoped();
+    renderHealth(rows);
+    renderKpis(rows);
+    if (!rows.length){
+      ['trendTotalChart','trendFlowChart','trendDimChart'].forEach(id =>
+        el(id).innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลสต็อกที่มีวันที่นำเข้าชัดเจน — นำเข้าข้อมูลอย่างน้อย 1 รอบก่อน</div>');
+      el('trendTbody').innerHTML = '<tr><td colspan="12"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
+      el('trendLocTbody').innerHTML = '<tr><td colspan="8"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
+      return;
+    }
+    renderMainChart(rows);
+    renderFlowChart(rows);
+    renderLocationTable(rows);
+    renderDimChart(rows);
+    renderTable(rows);
+  }
+
+  function mount(){
+    if (mounted) return;
+    mounted = true;
+    el('btnRefreshTrends').addEventListener('click', loadData);
+    el('btnTrendExport').addEventListener('click', exportCsv);
+    const seg = (rootId, attr, setter) => {
+      document.querySelectorAll(`#${rootId} .${rootId==='trendRangeRow'?'trend-range-btn':'seg-btn'}`).forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll(`#${rootId} button`).forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          setter(btn.dataset[attr]);
+          renderAll();
+        });
+      });
+    };
+    seg('trendRangeRow', 'range', v => { rangeSel = v; });
+    seg('trendMetricSeg', 'metric', v => { metricSel = v; });
+    seg('trendDimSeg', 'dim', v => { dimSel = v; });
+  }
+
+  function activate(){ mount(); loadData(); }
   return { activate, mount };
 })();
 
