@@ -589,6 +589,15 @@
   .seg-btn:hover{color:var(--navy-900);}
   .seg-btn.active{background:var(--white);color:var(--navy-900);box-shadow:0 1px 3px rgba(8,28,56,.14);font-weight:600;}
 
+  /* สถานะความสดของยอดสรุป (หน้านำเข้าข้อมูล) */
+  .agg-status{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    font-size:12.5px;color:var(--gray-600);background:var(--gray-50);
+    border:1px solid var(--gray-200);border-radius:10px;padding:10px 14px;margin-bottom:18px;
+  }
+  .agg-status.stale{background:var(--gold-100);border-color:var(--gold-400);color:#7a5a00;}
+  .agg-status b{color:var(--navy-900);}
+
   .trend-kpis{grid-template-columns:repeat(5,1fr);}
   @media (max-width:1250px){ .trend-kpis{grid-template-columns:repeat(3,1fr);} }
   @media (max-width:820px){ .trend-kpis{grid-template-columns:repeat(2,1fr);} }
@@ -598,6 +607,10 @@
     background:var(--gold-100);border:1px solid var(--gold-400);border-radius:10px;
     padding:10px 14px;font-size:12px;color:#7a5a00;line-height:1.7;margin-top:12px;
   }
+
+  .delta-pct{font-size:10.5px;color:var(--gray-600);font-weight:500;}
+  .share-bar{height:6px;border-radius:4px;background:var(--gray-100);overflow:hidden;margin-bottom:3px;min-width:60px;}
+  .share-fill{height:100%;border-radius:4px;background:var(--navy-700);}
 
   /* ตารางแนวโน้มรายพื้นที่ */
   .sparkline{display:block;}
@@ -842,6 +855,7 @@
   <!-- ============ IMPORT VIEW ============ -->
   <div id="view-import" class="route-view">
     <div class="auth-box" id="authBox"></div>
+    <div class="agg-status" id="aggStatus"></div>
 
     <div class="section-title">📥 นำเข้าข้อมูล <span class="tag">รายการสินค้า/สต็อก = เพิ่มต่อจากเดิม (ลบตามวันที่ได้) · พื้นที่คลัง/กลุ่มสินค้า = แทนที่ข้อมูลเดิมทั้งหมดทุกครั้ง</span></div>
 
@@ -1251,7 +1265,7 @@ const Auth = (() => {
   };
 })();
 
-// ข้อความ error ที่อ่านรู้เรื่องเมื่อถูก RLS ปฏิเสธ (รหัส 42501 = insufficient_privilege)
+// ข้อความ error ที่อ่านรู้เรื่อง
 function friendlyDbError(e){
   const msg = (e && (e.message || e.msg)) ? String(e.message || e.msg) : String(e);
   const code = e && e.code ? String(e.code) : '';
@@ -1260,7 +1274,40 @@ function friendlyDbError(e){
       ? 'รหัสนี้ไม่มีสิทธิ์แก้ไขข้อมูล — ติดต่อผู้ดูแลระบบ'
       : 'ต้องใส่รหัสพนักงาน 8 หลักก่อนจึงจะนำเข้าหรือลบข้อมูลได้';
   }
+  // 57014 = statement timeout ของ Postgres
+  if (code === '57014' || /statement timeout|canceling statement/i.test(msg)){
+    return 'ฐานข้อมูลใช้เวลาประมวลผลนานเกินกำหนด — กด "รีเฟรชยอดสรุป" ที่หน้านำเข้าข้อมูล แล้วลองใหม่อีกครั้ง';
+  }
   return msg;
+}
+
+/* ============================================================
+   ยอดสรุป (materialized view) — คำนวณไว้ล่วงหน้าฝั่งเซิร์ฟเวอร์
+   ยอดสรุปทั้งหมดเปลี่ยนเฉพาะตอนนำเข้า/ลบข้อมูล จึงเก็บผลไว้แล้วอ่านตรงๆ (เร็วระดับมิลลิวินาที)
+   แลกกับว่า "ต้องสั่งคำนวณใหม่" ทุกครั้งที่ข้อมูลเปลี่ยน ไม่งั้นตัวเลขจะค้างอยู่ที่รอบก่อน
+   ฟังก์ชันนี้ถูกเรียกอัตโนมัติหลังนำเข้า/ลบทุกครั้ง และมีปุ่มให้กดเองที่หน้านำเข้าข้อมูลเป็นทางสำรอง
+============================================================ */
+async function refreshAggregates({ silent = false } = {}){
+  const { data, error } = await sb.rpc('refresh_trend_views');
+  if (error) throw error;
+  if (!silent) toast('คำนวณยอดสรุปใหม่เรียบร้อย', 'success');
+  return data;
+}
+
+// เรียกแบบ "ไม่ให้ล้มทั้งงาน" — ใช้หลังนำเข้า/ลบ ซึ่งข้อมูลดิบบันทึกสำเร็จไปแล้ว
+async function refreshAggregatesQuiet(logId){
+  try {
+    await refreshAggregates({ silent: true });
+    if (logId) logLine(logId, '✓ คำนวณยอดสรุปสำหรับแดชบอร์ด/แนวโน้มใหม่แล้ว', 'ok');
+    return true;
+  } catch (e) {
+    console.error(e);
+    const m = 'บันทึกข้อมูลสำเร็จ แต่คำนวณยอดสรุปใหม่ไม่สำเร็จ: ' + friendlyDbError(e)
+            + ' — ตัวเลขบนแดชบอร์ด/แนวโน้มจะยังเป็นของรอบก่อนจนกว่าจะกด "รีเฟรชยอดสรุป"';
+    if (logId) logLine(logId, '⚠️ ' + m, 'err');
+    toast(m, 'error');
+    return false;
+  }
 }
 
 /* ============================================================
@@ -2660,6 +2707,14 @@ const ImportPage = (() => {
       }
     });
 
+    // 🐞 ปุ่ม "รีเฟรชยอดสรุป" ถูกสร้างโดย loadAggStatus() ซึ่งไม่ได้ทำงานซ้ำตอนล็อกอิน
+    // ถ้าไม่อัปเดตที่นี่ด้วย ผู้ใช้ที่เพิ่งใส่รหัสจะเห็นปุ่มยังเป็นสีเทากดไม่ได้จนกว่าจะสลับหน้าไปกลับ
+    const aggBtn = el('btnRefreshAgg');
+    if (aggBtn){
+      aggBtn.disabled = !signedIn;
+      aggBtn.title = signedIn ? '' : 'ต้องใส่รหัสพนักงานก่อน';
+    }
+
     // ปุ่ม "ลบวันนี้" ในตารางแยกตามวันที่ก็ต้องเปิด/ปิดตามสถานะล็อกอินเช่นกัน
     document.querySelectorAll('#stockByDateTbody button[data-date-key]').forEach(b => {
       b.disabled = !signedIn;
@@ -2949,6 +3004,9 @@ const ImportPage = (() => {
       setProgress(pgId, 95);
 
       await logImportBatch(BATCH_TYPE_OF[kind], file.name, rows.length);
+      // ยอดสรุปทั้งหมด (แดชบอร์ด/แนวโน้ม/ค้นหา) อ่านจาก materialized view — ต้องสั่งคำนวณใหม่ที่นี่
+      logLine(logId, '⏳ กำลังคำนวณยอดสรุปใหม่ ...');
+      await refreshAggregatesQuiet(logId);
       setProgress(pgId, 100);
       if (kind === 'stock') {
         logLine(logId, `✅ เสร็จสมบูรณ์ — เพิ่มข้อมูลสต็อกต่อจากเดิมเรียบร้อย (${rows.length.toLocaleString()} แถว)`, 'ok');
@@ -2962,6 +3020,7 @@ const ImportPage = (() => {
       await loadLastImportInfo();
       await loadImportHistory();
       await loadStorageSummary();
+      await loadAggStatus();
       if (kind === 'stock') await loadStockByDate();
     } catch (e) {
       console.error(e);
@@ -2999,10 +3058,12 @@ const ImportPage = (() => {
       // id เป็น bigint identity เริ่มจาก 1 เสมอ — ใช้ .gt('id', 0) แทนการลบแบบไม่มีเงื่อนไขเลย เพื่อความชัดเจน/ปลอดภัย
       const { error } = await sb.from(table).delete().gt('id', 0);
       if (error) throw error;
+      await refreshAggregatesQuiet();
       toast(`ลบข้อมูล${LABEL_OF[kind]}ทั้งหมดเรียบร้อย — พร้อมนำเข้าไฟล์ใหม่ได้เลย`, 'success');
       await loadLastImportInfo();
       await loadImportHistory();
       await loadStorageSummary();
+      await loadAggStatus();
       if (kind === 'stock') await loadStockByDate();
     } catch (e) {
       console.error(e);
@@ -3120,13 +3181,38 @@ const ImportPage = (() => {
     try {
       const { error } = await sb.from('stock').delete().gte('imported_at', startIso).lt('imported_at', endIso);
       if (error) throw error;
+      await refreshAggregatesQuiet();
       toast(`ลบข้อมูลสต็อกวันที่ ${fmtDateKey(dateKey)} เรียบร้อย`, 'success');
       await loadStockByDate();
       await loadStorageSummary();
+      await loadAggStatus();
     } catch (e) {
       console.error(e);
       toast(`ลบไม่สำเร็จ: ${friendlyDbError(e)}`, 'error');
     }
+  }
+
+  // แสดงว่ายอดสรุปคำนวณไว้เมื่อไหร่ + เตือนถ้าข้อมูลดิบเปลี่ยนไปแล้วแต่ยังไม่ได้คำนวณใหม่
+  async function loadAggStatus(){
+    const box = el('aggStatus');
+    if (!box) return;
+    const { data, error } = await sb.from('v_agg_status').select('*').maybeSingle();
+    if (error || !data){ box.innerHTML = ''; return; }
+    const stale = !!data.is_stale;
+    box.className = 'agg-status' + (stale ? ' stale' : '');
+    box.innerHTML = `
+      <div>${stale ? '⚠️ <b>ยอดสรุปยังไม่ตรงกับข้อมูลล่าสุด</b> — แดชบอร์ดและหน้าแนวโน้มจะยังแสดงตัวเลขของรอบก่อน'
+                   : '✅ ยอดสรุปตรงกับข้อมูลล่าสุดแล้ว'}
+        <div style="font-size:11.5px;margin-top:3px;">คำนวณครั้งล่าสุด: <b>${escapeHtml(fmtDateTime(data.refreshed_at))}</b> · ข้อมูลสต็อก ${fmtNum(data.stock_rows_now)} แถว</div>
+      </div>
+      <button class="btn btn-outline btn-sm" id="btnRefreshAgg" ${Auth.isSignedIn() ? '' : 'disabled title="ต้องใส่รหัสพนักงานก่อน"'}>↻ รีเฟรชยอดสรุป</button>`;
+    const btn = el('btnRefreshAgg');
+    if (btn) btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = '⏳ กำลังคำนวณ...';
+      try { await refreshAggregates(); }
+      catch (e) { console.error(e); toast('คำนวณยอดสรุปไม่สำเร็จ: ' + friendlyDbError(e), 'error'); }
+      finally { await loadAggStatus(); }
+    });
   }
 
   function activate(){
@@ -3136,9 +3222,10 @@ const ImportPage = (() => {
     loadImportHistory();
     loadStorageSummary();
     loadStockByDate();
+    loadAggStatus();
   }
 
-  return { activate, mount, refreshAuthUI };
+  return { activate, mount, refreshAuthUI, loadAggStatus };
 })();
 
 /* ============================================================
@@ -3154,9 +3241,11 @@ const TrendsPage = (() => {
   let movement = {};     // dateKey -> {inT,outT,netT,internalT,unchangedT,lotsIn,lotsOut,lotsUnchanged,gapDays}
   let movByLoc = {};     // dateKey -> { [locDisplay]: {inT,outT,netT} }
   let breakdown = {};    // dimType -> { dimValue -> { dateKey -> {tons,sku,qty} } }
+  let locGroup = {};     // locDisplay -> dimType -> dimValue -> { dateKey -> tons }
   let capacityByLoc = {};
   let totalCapacity = 0;
   let importHealth = {}; // dateKey -> จำนวนครั้งที่นำเข้าในวันนั้น
+  let aggStatus = null;  // { refreshed_at, is_stale }
   let rangeSel = 'all';  // '30' | '90' | 'all'
   let metricSel = 'weight';
   let dimSel = 'family';
@@ -3190,14 +3279,21 @@ const TrendsPage = (() => {
     for (let i=0;i<n;i++){ num += (xs[i]-mx)*(ys[i]-my); den += (xs[i]-mx)**2; }
     return den === 0 ? 0 : num/den;
   }
-  const deltaHtml = (diff, unit='ตัน', dec=1) => {
+  // base = ค่าตั้งต้น (รอบก่อน) — ถ้าส่งมาจะต่อท้ายด้วย % การเปลี่ยนแปลง
+  const deltaHtml = (diff, unit='ตัน', dec=1, base=null) => {
     if (diff === null || diff === undefined) return '<span class="cell-muted">—</span>';
     // ถ้าปัดตามจำนวนทศนิยมที่แสดงแล้วได้ 0 ให้ถือว่าไม่เปลี่ยน — กันกรณีแสดง "▼ 0.0 ตัน"
     const eps = Math.pow(10, -dec) / 2;
     if (Math.abs(diff) < eps) return `<span class="trend-flat">— 0${dec?'.'+'0'.repeat(dec):''} ${escapeHtml(unit)}</span>`;
     const cls = diff > 0 ? 'trend-up' : 'trend-down';
     const arrow = diff > 0 ? '▲' : '▼';
-    return `<span class="${cls}">${arrow} ${fmtNum(Math.abs(diff), dec)} ${escapeHtml(unit)}</span>`;
+    // ฐานเป็น 0 แล้วมีของเพิ่มขึ้น = เพิ่มจากศูนย์ คิด % ไม่ได้ (จะได้ Infinity) — แสดงว่า "ใหม่" แทน
+    let pct = '';
+    if (base !== null && base !== undefined){
+      pct = base > 0 ? ` <span class="delta-pct">(${diff>0?'+':'−'}${Math.abs(diff/base*100).toFixed(1)}%)</span>`
+                     : (diff > 0 ? ' <span class="delta-pct">(ใหม่)</span>' : '');
+    }
+    return `<span class="${cls}">${arrow} ${fmtNum(Math.abs(diff), dec)} ${escapeHtml(unit)}</span>${pct}`;
   };
 
   /* ---------- SVG: กราฟเส้นแบบแกนเวลาจริง ---------- */
@@ -3346,15 +3442,29 @@ const TrendsPage = (() => {
   async function loadData(){
     setLoading();
     try {
-      const [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes] = await Promise.all([
+      const [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes, aggRes, lgRes] = await Promise.all([
         sb.from('v_stock_daily').select('date_key,row_count,sku_count,total_weight_kg,flat_kg,pipe_kg,section_kg').order('date_key'),
         sb.from('v_movement_daily').select('*').order('date_key'),
         sb.from('v_movement_by_location').select('*'),
         sb.from('v_daily_breakdown').select('*'),
         sb.from('v_location_capacity').select('location_code,actual_capacity_tons'),
         sb.from('v_import_health').select('*'),
+        sb.from('v_agg_status').select('*').maybeSingle(),
+        sb.from('v_location_group_daily').select('date_key,location_code,dim_type,dim_value,weight_kg'),
       ]);
-      for (const r of [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes]) if (r.error) throw r.error;
+      for (const r of [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes, lgRes]) if (r.error) throw r.error;
+      aggStatus = aggRes.error ? null : aggRes.data;
+
+      // โรงงาน × กลุ่มสินค้า × วันที่ (รวม Fac B+E ให้ตรงกับที่อื่น)
+      locGroup = {};
+      (lgRes.data || []).forEach(r => {
+        const loc = locationDisplayCode(r.location_code) || 'ไม่ระบุ';
+        locGroup[loc] = locGroup[loc] || {};
+        locGroup[loc][r.dim_type] = locGroup[loc][r.dim_type] || {};
+        const byVal = locGroup[loc][r.dim_type];
+        byVal[r.dim_value] = byVal[r.dim_value] || {};
+        byVal[r.dim_value][r.date_key] = (byVal[r.dim_value][r.date_key] || 0) + (+r.weight_kg || 0)/1000;
+      });
 
       daily = (dailyRes.data || []).filter(r => r.date_key).map(r => ({
         dateKey: r.date_key, t: keyToTime(r.date_key),
@@ -3430,6 +3540,11 @@ const TrendsPage = (() => {
   function renderHealth(rows){
     const box = el('trendHealth');
     const warns = [];
+    if (aggStatus && aggStatus.is_stale){
+      warns.push('⚠️ <b>ยอดสรุปยังไม่ตรงกับข้อมูลล่าสุด</b> — ตัวเลขในหน้านี้เป็นของรอบที่คำนวณไว้เมื่อ '
+        + escapeHtml(fmtDateTime(aggStatus.refreshed_at))
+        + ' · กด "↻ รีเฟรชยอดสรุป" ที่หน้า "นำเข้าข้อมูล" เพื่อคำนวณใหม่');
+    }
     const dupes = rows.filter(d => (importHealth[d.dateKey] || 0) > 1);
     if (dupes.length){
       warns.push(`⚠️ มี ${dupes.length} วันที่นำเข้าไฟล์สต็อกมากกว่า 1 ครั้ง (${dupes.map(d => `${fmtDateKey(d.dateKey)} × ${importHealth[d.dateKey]}`).join(', ')}) — ถ้าเป็นไฟล์เดิมซ้ำ ยอดของวันนั้นจะถูกนับเกินจริง ตรวจที่หน้า "นำเข้าข้อมูล"`);
@@ -3441,8 +3556,11 @@ const TrendsPage = (() => {
     if (gaps.length){
       warns.push(`ℹ️ มีช่วงที่เว้นห่างเกิน 10 วัน (${gaps.map(g => `ก่อน ${fmtDateKey(g.key)} เว้น ${g.gap} วัน`).join(', ')}) — กราฟเว้นระยะตามวันจริงแล้ว`);
     }
-    box.innerHTML = warns.length
-      ? `<div class="trend-health">${warns.map(w => `<div>${w}</div>`).join('')}</div>` : '';
+    const asof = aggStatus && aggStatus.refreshed_at
+      ? `<div style="color:var(--gray-600);">🕒 ยอดสรุปคำนวณไว้เมื่อ ${escapeHtml(fmtDateTime(aggStatus.refreshed_at))} (คำนวณล่วงหน้าฝั่งเซิร์ฟเวอร์ หน้านี้จึงโหลดเร็วแม้ข้อมูลจะสะสมมากขึ้น)</div>`
+      : '';
+    box.innerHTML = (warns.length || asof)
+      ? `<div class="trend-health">${warns.map(w => `<div>${w}</div>`).join('')}${asof}</div>` : '';
   }
 
   function renderKpis(rows){
@@ -3471,7 +3589,7 @@ const TrendsPage = (() => {
       card('สต็อกล่าสุด (ตัน)', fmtNum(last.tons,1),
         `${pct.toFixed(1)}% ของความจุ ${fmtNum(totalCapacity,0)} ตัน · ${escapeHtml(fmtDateKey(last.dateKey))}`,
         'น้ำหนักสต็อกรวมของรอบล่าสุดในช่วงที่เลือก เทียบกับความจุรวมทุกโรงงาน'),
-      card('เปลี่ยนแปลงรอบล่าสุด', prev ? deltaHtml(last.tons - prev.tons) : '<span class="cell-muted">—</span>',
+      card('เปลี่ยนแปลงรอบล่าสุด', prev ? deltaHtml(last.tons - prev.tons, 'ตัน', 1, prev.tons) : '<span class="cell-muted">—</span>',
         prev ? `เทียบ ${escapeHtml(fmtDateKey(prev.dateKey))} (ห่าง ${lastMov?lastMov.gapDays:'-'} วัน)` : '&nbsp;',
         'ผลต่างน้ำหนักสต็อกรวมระหว่างรอบล่าสุดกับรอบก่อนหน้า'),
       card('รับเข้า / จ่ายออก', `<span style="color:#1baf7a;">${fmtNum(totalIn,0)}</span> / <span style="color:#eb6834;">${fmtNum(totalOut,0)}</span>`,
@@ -3573,7 +3691,7 @@ const TrendsPage = (() => {
           <td><b>${escapeHtml(s.loc)}</b></td>
           <td>${buildSparkline(s.values, sparkColor)}</td>
           <td class="cell-num">${fmtNum(s.latest,1)}</td>
-          <td class="cell-num">${s.prev !== null ? deltaHtml(s.latest - s.prev) : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num">${s.prev !== null ? deltaHtml(s.latest - s.prev, 'ตัน', 1, s.prev) : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num"><span class="${s.slopeWeek>0?'trend-up':s.slopeWeek<0?'trend-down':'trend-flat'}">${s.slopeWeek>=0?'+':'−'}${fmtNum(Math.abs(s.slopeWeek),1)}</span></td>
           <td class="cell-num" style="font-size:11.5px;"><span style="color:#1baf7a;">+${fmtNum(s.mv.inT,1)}</span> / <span style="color:#eb6834;">−${fmtNum(s.mv.outT,1)}</span></td>
           <td class="cell-num">${s.pct===null?'<span class="cell-muted">—</span>':`<span class="mgr-status-pill ${tier}">${s.pct.toFixed(0)}%</span>`}</td>
@@ -3615,6 +3733,17 @@ const TrendsPage = (() => {
           <div class="modal-col-title" style="margin-top:20px;">การไหลเข้า-ออกของพื้นที่นี้</div>
           <div class="cell-muted" style="font-size:11px;margin-bottom:8px;">ระดับนี้นับ "การย้ายระหว่างโรงงาน" รวมด้วย เพราะมองจากมุมของพื้นที่นี้ว่ามีของเข้ามา/ออกไปเท่าไหร่</div>
           ${buildFlowChart(flow)}
+
+          <div class="modal-col-title" style="margin-top:22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span>แยกตามกลุ่มสินค้าในพื้นที่นี้</span>
+            <div class="seg-group" id="locGroupSeg">
+              <button type="button" class="seg-btn active" data-dim="family">กลุ่มหลัก</button>
+              <button type="button" class="seg-btn" data-dim="group_sale">Group Sale</button>
+              <button type="button" class="seg-btn" data-dim="group_product">Group Product</button>
+              <button type="button" class="seg-btn" data-dim="product_type">Product Type</button>
+            </div>
+          </div>
+          <div id="locGroupBox"></div>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -3623,6 +3752,70 @@ const TrendsPage = (() => {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     overlay.querySelector('.modal-close').addEventListener('click', close);
     document.addEventListener('keydown', escHandler);
+
+    renderLocationGroups(loc, rows, 'family');
+    overlay.querySelectorAll('#locGroupSeg .seg-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        overlay.querySelectorAll('#locGroupSeg .seg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderLocationGroups(loc, rows, btn.dataset.dim);
+      });
+    });
+  }
+
+  // ตารางกลุ่มสินค้าในพื้นที่หนึ่ง: ล่าสุด / รอบก่อน / เปลี่ยนแปลงเป็นตันและ % / สัดส่วนในพื้นที่นี้
+  function renderLocationGroups(loc, rows, dimType){
+    const box = el('locGroupBox');
+    if (!box) return;
+    const byVal = ((locGroup[loc] || {})[dimType]) || {};
+    const keys = rows.map(r => r.dateKey);
+    const lastKey = keys[keys.length-1], prevKey = keys.length > 1 ? keys[keys.length-2] : null;
+    const entries = Object.keys(byVal).map(v => {
+      const series = keys.map(k => byVal[v][k] ?? null);
+      const latest = byVal[v][lastKey] || 0;
+      const prev = prevKey !== null ? (byVal[v][prevKey] ?? null) : null;
+      return { v, series, latest, prev };
+    }).filter(e => e.latest > 0 || (e.prev || 0) > 0)
+      .sort((a,b) => b.latest - a.latest);
+
+    if (!entries.length){ box.innerHTML = '<div class="viz-empty">ไม่มีข้อมูลกลุ่มสินค้าในพื้นที่นี้</div>'; return; }
+
+    const totalLatest = entries.reduce((s,e) => s + e.latest, 0);
+    const totalPrev = entries.reduce((s,e) => s + (e.prev || 0), 0);
+    const rowsHtml = entries.map(e => {
+      const diff = e.prev === null ? null : e.latest - e.prev;
+      const share = totalLatest > 0 ? e.latest/totalLatest*100 : 0;
+      const color = e.latest >= (e.prev || 0) ? '#0F3460' : '#E85D04';
+      return `
+        <tr>
+          <td><b>${escapeHtml(e.v)}</b></td>
+          <td>${buildSparkline(e.series, color)}</td>
+          <td class="cell-num">${fmtNum(e.latest,1)}</td>
+          <td class="cell-num cell-muted">${e.prev === null ? '—' : fmtNum(e.prev,1)}</td>
+          <td class="cell-num">${deltaHtml(diff, 'ตัน', 1, e.prev)}</td>
+          <td class="cell-num">
+            <div class="share-bar"><div class="share-fill" style="width:${Math.min(100,share)}%;"></div></div>
+            <span style="font-size:11px;">${share.toFixed(1)}%</span>
+          </td>
+        </tr>`;
+    }).join('');
+
+    const totalDiff = totalPrev > 0 ? totalLatest - totalPrev : null;
+    box.innerHTML = `
+      <div class="cell-muted" style="font-size:11.5px;margin:2px 0 8px;">
+        เทียบรอบล่าสุด <b>${escapeHtml(fmtDateKey(lastKey))}</b>${prevKey?` กับรอบก่อน <b>${escapeHtml(fmtDateKey(prevKey))}</b>`:''}
+        · รวมทั้งพื้นที่ ${fmtNum(totalLatest,1)} ตัน ${totalDiff!==null?deltaHtml(totalDiff,'ตัน',1,totalPrev):''}
+      </div>
+      <div class="history-table-wrap" style="margin-top:0;">
+        <table class="data-table" style="min-width:640px;">
+          <thead><tr>
+            <th>กลุ่ม</th><th>แนวโน้ม</th>
+            <th class="cell-num">ล่าสุด (ตัน)</th><th class="cell-num">รอบก่อน</th>
+            <th class="cell-num">เปลี่ยนแปลง</th><th class="cell-num">สัดส่วนในพื้นที่นี้</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>`;
   }
 
   /* ---------- แนวโน้มแยกตามมิติ ---------- */
@@ -3664,7 +3857,7 @@ const TrendsPage = (() => {
           <td>${escapeHtml(fmtDateKey(d.dateKey))}${(importHealth[d.dateKey]||0)>1?' <span class="badge badge-orange" title="วันนี้มีการนำเข้าไฟล์สต็อกมากกว่า 1 ครั้ง">นำเข้า '+importHealth[d.dateKey]+' ครั้ง</span>':''}</td>
           <td class="cell-num">${m && m.gapDays ? m.gapDays + ' วัน' : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num">${fmtNum(d.tons,1)}</td>
-          <td class="cell-num">${prev ? deltaHtml(d.tons - prev.tons) : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num">${prev ? deltaHtml(d.tons - prev.tons, 'ตัน', 1, prev.tons) : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num" style="color:#1baf7a;">${m ? '+'+fmtNum(m.inT,1) : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num" style="color:#eb6834;">${m ? '−'+fmtNum(m.outT,1) : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num cell-muted" title="ของที่แค่ย้ายที่เก็บ ไม่ได้เข้า-ออกคลังจริง">${m ? fmtNum(m.internalT,1) : '—'}</td>
