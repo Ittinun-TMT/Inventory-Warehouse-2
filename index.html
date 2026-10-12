@@ -501,13 +501,31 @@
   /* แถบ = ความจุของโรง (เต็มหลอด = 100%) · เส้นบาง = เกณฑ์ใกล้เต็ม 80% · เกินพิกัด = เต็มหลอด + ลายทางเฉียง */
   .mgr-factory-mark{position:absolute;top:-4px;bottom:-4px;width:1px;background:#9fb3b9;pointer-events:none;}
   .mgr-factory-fill.over{background:repeating-linear-gradient(-45deg, #ff6a05 0 7px, #c24e00 7px 14px) !important;}
-  .mgr-factory-nums{flex:0 0 200px;text-align:right;font-size:11.5px;color:var(--gray-600);font-variant-numeric:tabular-nums;}
-  .mgr-factory-nums b{color:var(--navy-900);font-weight:600;}
+  /* ตัวเลขรายโรง: 4 ช่องมีป้ายกำกับชัดเจน — ใช้พื้นที่ % · ใช้ไป · ความจุ · ว่างเหลือ/เกินพิกัด */
+  .mgr-factory-nums{flex:0 0 420px;display:grid;grid-template-columns:70px 1fr 1fr 1.1fr;gap:6px;font-variant-numeric:tabular-nums;}
+  .mfn-cell{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:1px;padding:5px 8px;border-radius:8px;min-width:0;}
+  .mfn-label{font-size:11px;color:var(--gray-600);white-space:nowrap;line-height:1.3;}
+  .mfn-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:var(--navy-900);line-height:1.25;white-space:nowrap;}
+  .mfn-pct .mfn-val{font-size:19px;}
+  .mfn-pct.critical .mfn-val{color:var(--danger);}
+  .mfn-remain.ok{background:#eaf3f9;}
+  .mfn-remain.ok .mfn-val{color:var(--blue-600);}
+  .mfn-remain.over{background:var(--orange-100);}
+  .mfn-remain.over .mfn-label,.mfn-remain.over .mfn-val{color:var(--danger);}
+  .mfn-remain.na{background:var(--gray-100);}
+  /* ป้ายสถานะกว้างเท่ากันทุกแถว → คอลัมน์ตัวเลขตรงกันทุกโรง (เดิม "เกินพิกัด" กว้างกว่า "ปกติ" ทำให้เยื้อง) */
+  .mgr-factory-row > .mgr-status-pill{flex:0 0 108px !important;justify-content:center;}
+  /* จอกลาง (แท็บเล็ต/แล็ปท็อปเล็ก): ให้แถบลงไปบรรทัดของตัวเอง ตัวเลขยังอยู่แถวเดียวกับชื่อ */
+  @media (max-width:1180px) and (min-width:641px){
+    .mgr-factory-row{flex-wrap:wrap;row-gap:8px;}
+    .mgr-factory-name{flex:1 1 auto;}
+    .mgr-factory-track{flex:1 1 100%;order:3;}
+  }
   .mgr-factory-remaining{margin-top:3px;font-size:11px;font-weight:500;}
   .mgr-factory-remaining.ok{color:var(--success);}
   .mgr-factory-remaining.over{color:var(--danger);font-weight:600;}
-  .mgr-factory-share{flex:0 0 110px;text-align:right;font-size:11px;color:var(--gray-400);line-height:1.5;}
-  .mgr-factory-share b{color:var(--navy-800);font-weight:600;font-size:12.5px;}
+  .mgr-factory-share{flex:0 0 110px;display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+  .mgr-factory-share b{font-family:'IBM Plex Mono',monospace;color:var(--navy-800);font-weight:600;font-size:15px;}
   .mgr-factory-row[data-location]{cursor:pointer;border-radius:10px;margin:0 -12px;padding:13px 12px;transition:.18s ease;}
   .mgr-factory-row[data-location]:hover{background:var(--navy-100);}
 
@@ -517,8 +535,11 @@
     .mgr-factory-row{flex-wrap:wrap;row-gap:6px;}
     .mgr-factory-name{flex:1 1 auto;}
     .mgr-factory-track{flex:1 1 100%;order:3;}
-    .mgr-factory-nums{flex:1 1 auto;text-align:left;}
-    .mgr-factory-share{flex:0 1 auto;text-align:left;}
+    .mgr-factory-nums{flex:1 1 100%;order:4;grid-template-columns:repeat(4,minmax(0,1fr));}
+    .mfn-cell{align-items:flex-start;padding:5px 6px;}
+    .mfn-val{font-size:14px;} .mfn-pct .mfn-val{font-size:16px;}
+    .mfn-label{white-space:normal;}
+    .mgr-factory-share{flex:0 1 auto;align-items:flex-start;}
   }
 
   /* ===== Material family cards (Flat / Pipe / Section) ===== */
@@ -2179,12 +2200,15 @@ const DashboardPage = (() => {
           <div class="mgr-factory-name">${escapeHtml(r.location_code)}<span class="mgr-factory-stores" title="สิ่งที่จัดเก็บในโรงนี้ (ตาม Group Product) ของวันที่เลือก">${escapeHtml(contentsText(locContents[r.location_code], 3))}</span></div>
           <div class="mgr-factory-track" title="เต็มหลอด = ความจุ 100% · เส้นบาง = เกณฑ์ใกล้เต็ม 80%${overCls ? ' · ลายทาง = เกินความจุแล้ว' : ''}"><div class="mgr-factory-fill${overCls}" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div><span class="mgr-factory-mark" style="left:80%;"></span></div>
           <div class="mgr-factory-nums" title="${escapeHtml(r.noCapacity ? 'โรงงานนี้ยังไม่มีข้อมูลพื้นที่จัดเก็บ (actual_capacity_tons) ในไฟล์ Area จึงคำนวณ % ใช้พื้นที่ไม่ได้' : pctTitle)}">
-            ${r.noCapacity
-              ? `<b>—</b> · ใช้ ${fmtNum(r.used,1)} ตัน <span class="cell-muted">(ยังไม่มีข้อมูลความจุ)</span>`
-              : `<b>${r.pct.toFixed(0)}%</b> · ใช้ ${fmtNum(r.used,1)} / ${fmtNum(r.capacity,1)} ตัน`}
-            ${r.noCapacity ? '' : `<div class="mgr-factory-remaining ${remainingCls}" title="${escapeHtml(remainingTitle)}">${remainingText}</div>`}
+            <div class="mfn-cell mfn-pct ${r.tier}"><span class="mfn-label">ใช้พื้นที่</span><span class="mfn-val">${r.noCapacity ? '—' : r.pct.toFixed(0) + '%'}</span></div>
+            <div class="mfn-cell"><span class="mfn-label">ใช้ไป (ตัน)</span><span class="mfn-val">${fmtNum(r.used,1)}</span></div>
+            <div class="mfn-cell"><span class="mfn-label">ความจุ (ตัน)</span><span class="mfn-val">${r.noCapacity ? '—' : fmtNum(r.capacity,1)}</span></div>
+            <div class="mfn-cell mfn-remain ${r.noCapacity ? 'na' : remainingCls}" title="${escapeHtml(r.noCapacity ? 'ยังไม่มีข้อมูลความจุในไฟล์ Area' : remainingTitle)}">
+              <span class="mfn-label">${r.noCapacity ? 'ไม่มีข้อมูลความจุ' : r.remaining >= 0 ? 'ว่างเหลือ (ตัน)' : 'เกินพิกัด (ตัน)'}</span>
+              <span class="mfn-val">${r.noCapacity ? '—' : (r.remaining < 0 ? '+' : '') + fmtNum(Math.abs(r.remaining),1)}</span>
+            </div>
           </div>
-          <div class="mgr-factory-share" title="${escapeHtml(shareTitle)}">สัดส่วนรวม<br/><b>${r.share.toFixed(1)}%</b></div>
+          <div class="mgr-factory-share" title="${escapeHtml(shareTitle)}"><span class="mfn-label">สัดส่วนของสต็อกรวม</span><b>${r.share.toFixed(1)}%</b></div>
           <span class="mgr-status-pill ${r.tier}" style="flex:none;">${r.noCapacity ? '⚠️ ไม่มีข้อมูลพื้นที่' : Tier.label(r.tier)}</span>
         </div>`;
     }).join('');
