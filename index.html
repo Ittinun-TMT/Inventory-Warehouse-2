@@ -178,6 +178,9 @@
   }
   .modal-close:hover{background:rgba(255,255,255,0.22);}
   .modal-body{padding:0;display:flex;}
+  .loc-gp-strip{padding:16px 24px;border-bottom:1px solid var(--gray-200);background:var(--gray-50);}
+  .loc-gp-list{display:flex;flex-wrap:wrap;gap:8px;}
+  .loc-gp-chip{font-size:13px;color:var(--navy-900);background:var(--white);border:1px solid var(--gray-200);border-radius:999px;padding:5px 12px;font-variant-numeric:tabular-nums;}
   @media (max-width:640px){ .modal-body{flex-direction:column;} }
   .modal-col{flex:1 1 50%;padding:20px 24px;min-width:0;}
   .modal-col + .modal-col{border-left:1px solid var(--gray-200);}
@@ -491,12 +494,13 @@
 
   .mgr-factory-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--gray-100);}
   .mgr-factory-row:last-child{border-bottom:none;}
-  .mgr-factory-name{flex:0 0 84px;font-size:13.5px;font-weight:600;color:var(--navy-900);}
+  .mgr-factory-name{flex:0 0 200px;font-size:13.5px;font-weight:600;color:var(--navy-900);min-width:0;}
+  .mgr-factory-stores{display:block;font-size:11px;font-weight:400;color:var(--gray-600);margin-top:2px;line-height:1.45;}
   .mgr-factory-track{flex:1 1 auto;height:16px;background:#e9f0f2;border-radius:5px;min-width:60px;position:relative;}
   .mgr-factory-fill{height:100%;border-radius:5px;transition:width .6s cubic-bezier(.2,.7,.3,1);}
-  /* เส้นอ้างอิงบนแถบ: แกนยาวถึง 120% → เส้นบาง = 80% (66.67%), เส้นหนา = 100% ความจุ (83.33%) */
+  /* แถบ = ความจุของโรง (เต็มหลอด = 100%) · เส้นบาง = เกณฑ์ใกล้เต็ม 80% · เกินพิกัด = เต็มหลอด + ลายทางเฉียง */
   .mgr-factory-mark{position:absolute;top:-4px;bottom:-4px;width:1px;background:#9fb3b9;pointer-events:none;}
-  .mgr-factory-mark.cap{width:2px;background:var(--navy-900);}
+  .mgr-factory-fill.over{background:repeating-linear-gradient(-45deg, #ff6a05 0 7px, #c24e00 7px 14px) !important;}
   .mgr-factory-nums{flex:0 0 200px;text-align:right;font-size:11.5px;color:var(--gray-600);font-variant-numeric:tabular-nums;}
   .mgr-factory-nums b{color:var(--navy-900);font-weight:600;}
   .mgr-factory-remaining{margin-top:3px;font-size:11px;font-weight:500;}
@@ -523,9 +527,8 @@
     border-radius:10px;padding:9px 14px;margin-bottom:14px;
   }
   .family-capacity-context b{color:var(--navy-900);}
-  .family-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:6px;}
-  @media (max-width:1100px){ .family-grid{grid-template-columns:repeat(2,1fr);} }
-  @media (max-width:600px){ .family-grid{grid-template-columns:1fr;} }
+  .family-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:6px;align-items:start;}
+  @media (max-width:860px){ .family-grid{grid-template-columns:1fr;} }
   .family-card{
     background:linear-gradient(160deg, var(--white), #fcfbf8 140%);border:1px solid var(--gray-200);border-radius:16px;
     padding:19px 21px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.22s cubic-bezier(.2,.7,.3,1);
@@ -544,7 +547,18 @@
   .family-sub{font-size:12px;color:var(--gray-600);margin-top:3px;}
   .family-capacity-line{font-size:11.5px;color:var(--gray-600);margin-top:6px;}
   .family-track{height:8px;border-radius:6px;background:var(--gray-100);margin-top:12px;overflow:hidden;}
-  .family-fill{height:100%;border-radius:6px;transition:width .5s ease;}
+  .family-fill{height:100%;border-radius:6px;transition:width .5s ease;display:flex;overflow:hidden;}
+  .family-fill > span{display:block;height:100%;}
+  /* กลุ่มย่อยในการ์ด (เช่น Pipe / CH) — ตารางเล็กแยกยอดให้เห็นชัดว่าอะไรเท่าไหร่ */
+  .family-parts{margin-top:12px;border-top:1px dashed var(--gray-200);padding-top:10px;display:flex;flex-direction:column;gap:8px;}
+  .family-part{display:grid;grid-template-columns:auto 1fr auto;column-gap:10px;row-gap:3px;align-items:center;}
+  .family-part .fp-name{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--navy-900);}
+  .family-part .fp-sw{width:11px;height:11px;border-radius:3px;flex:none;}
+  .family-part .fp-desc{font-weight:400;font-size:12px;color:var(--gray-600);}
+  .family-part .fp-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--navy-900);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .family-part .fp-meta{grid-column:2 / 4;font-size:11.5px;color:var(--gray-600);text-align:right;}
+  .family-part .fp-bar{grid-column:1 / 4;height:5px;border-radius:4px;background:var(--gray-100);overflow:hidden;}
+  .family-part .fp-bar > span{display:block;height:100%;border-radius:4px;}
   .family-desc{font-size:10.5px;color:var(--gray-400);margin-top:10px;line-height:1.5;}
 
   /* ===== Material lookup view ===== */
@@ -754,10 +768,9 @@
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe / CH / Section — น้ำหนักรวมทั้งเครือข่าย · ชี้ที่ ⓘ เพื่อดูวิธีคำนวณ</span></div>
+    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe (แยก Pipe · CH) / Section — น้ำหนักรวมทั้งเครือข่าย · ชี้ที่ ⓘ เพื่อดูวิธีคำนวณ</span></div>
     <div class="family-capacity-context" id="familyCapacityContext">กำลังโหลด...</div>
     <div class="family-grid" id="familyCards">
-      <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
@@ -1065,10 +1078,10 @@
           <th class="cell-num">สต็อก (ตัน)</th><th class="cell-num">เปลี่ยนแปลง</th>
           <th class="cell-num">รับเข้า</th><th class="cell-num">จ่ายออก</th>
           <th class="cell-num">ย้ายภายใน</th><th class="cell-num">ไม่เคลื่อนไหว</th>
-          <th class="cell-num">Flat</th><th class="cell-num">Pipe</th><th class="cell-num">CH</th><th class="cell-num">Section</th>
+          <th class="cell-num">Flat</th><th class="cell-num" title="Pipe รวม CH — บรรทัดล่างแยกยอดแต่ละกลุ่มย่อย">Pipe (Pipe · CH)</th><th class="cell-num">Section</th>
           <th class="cell-num">SKU</th>
         </tr></thead>
-        <tbody id="trendTbody"><tr><td colspan="13"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+        <tbody id="trendTbody"><tr><td colspan="12"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1509,15 +1522,17 @@ function sequentialColor(hue, sat, pct){
 /* ============================================================
    FAMILY_DEFS — นิยามกลุ่มสินค้าหลัก ใช้ร่วมกันทั้งหน้า Dashboard และหน้าแนวโน้ม
    ยืนยันกับผู้ใช้แล้วว่า: Flat = Flat Bars + Plate + HS (แผ่นเหล็กรีดร้อน ขนาดเดียวกับ Plate),
-   Pipe = Pipe, CH = CH (ตัวซี — แยกออกจาก Pipe ตามคำขอ 12 ต.ค. 2569),
+   Pipe = Pipe + CH (ตัวซี) อยู่ในการ์ดเดียวกัน แต่แสดงยอดแยก Pipe / CH ชัดเจนผ่าน parts (คำขอ 12 ต.ค. 2569),
    Section = Beam ทั้งหมด (มี AK/HB/IB/WF/UC/RB/RW/SB/SD/SR/Sheet Pile ฯลฯ อยู่แล้ว)
-   รายการที่ไม่เข้าพวก 4 กลุ่มนี้ (Scrap, DUMMY_KG/PC, ไม่ระบุ) = "อื่นๆ" ไม่แสดงเป็นการ์ด
+   รายการที่ไม่เข้าพวก 3 กลุ่มนี้ (Scrap, DUMMY_KG/PC, ไม่ระบุ) = "อื่นๆ" ไม่แสดงเป็นการ์ด
+   parts = กลุ่มย่อยภายในการ์ด (ยอดของ parts รวมกัน = ยอดของการ์ดพอดี เพราะแบ่งตาม Group Product)
    color = สีแบรนด์ (การ์ด/แถบ) · chartColor = เฉดเข้มของสีเดียวกัน ใช้กับเส้นกราฟบนพื้นขาวให้มองเห็นชัด
 ============================================================ */
 const FAMILY_DEFS = [
   { key:'flat',    label:'Flat',    icon:'📄', color:'#0c3843', chartColor:'#0c3843', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
-  { key:'pipe',    label:'Pipe',    icon:'⭕', color:'#8bbade', chartColor:'#4f8fc2', groupProducts:['Pipe'], desc:'ท่อ (Pipe)' },
-  { key:'ch',      label:'CH',      icon:'🔩', color:'#fdc440', chartColor:'#d9a21a', groupProducts:['CH'], desc:'ตัวซี (CH)' },
+  { key:'pipe',    label:'Pipe',    icon:'⭕', color:'#8bbade', chartColor:'#4f8fc2', groupProducts:['Pipe','CH'], desc:'ท่อ + ตัวซี (Pipe / CH)',
+    parts:[ { label:'Pipe', desc:'ท่อ',   groupProducts:['Pipe'], color:'#4f8fc2' },
+            { label:'CH',   desc:'ตัวซี', groupProducts:['CH'],   color:'#fdc440' } ] },
   { key:'section', label:'Section', icon:'🏗️', color:'#ff6a05', chartColor:'#ff6a05', groupProducts:['Beam'], desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
 ];
 const FAMILY_OTHER = 'อื่นๆ';
@@ -1547,6 +1562,7 @@ const DashboardPage = (() => {
   let movementByDate = {}; // dateKey -> { prevKey, gapDays, inT, outT, netT }
   let locDailyTons = {};   // locDisplay -> dateKey -> ตัน
   let locGroupSale = {};   // locDisplay -> groupSale -> dateKey -> ตัน
+  let locContents = {};    // locDisplay -> สิ่งที่จัดเก็บ (ดู buildLocContents)
 
   // เกณฑ์ระดับการใช้พื้นที่ต่อโรงงาน: ปกติ ≤80% / ใกล้เต็ม 80–100% / เกินพิกัด >100%
   const Tier = {
@@ -1628,6 +1644,7 @@ const DashboardPage = (() => {
   function renderScoped(){
     const scopedRows = getScopedRows();
     const scopedLocUtil = buildScopedLocUtil(scopedRows);
+    locContents = buildLocContents(scopedRows);
     populateFilterOptions(scopedRows);
     renderKpis(scopedRows);
     const capacitySummary = renderCapacityOverview(scopedLocUtil);
@@ -1837,6 +1854,35 @@ const DashboardPage = (() => {
     return { totalCapacity, totalUsed, totalRemain, overallPct };
   }
 
+  // ===== สิ่งที่จัดเก็บในแต่ละโรง (ตาม Group Product จากแถวสต็อกของวันที่เลือก) =====
+  // คืนค่า { locDisplay: { items:[{gp, fam, t}] เรียงมาก→น้อย, byFam:{Flat,Pipe,...: ตัน}, total } }
+  // ใช้ทั้งแถวรายโรง, การ์ด "ต้องดูวันนี้" และ popup — แหล่งเดียวกัน ตัวเลขจึงตรงกันทุกที่
+  function buildLocContents(rows){
+    const out = {};
+    (rows || []).forEach(r => {
+      const loc = locationDisplayCode(r.location_code); if (!loc) return;
+      const gp = r.group_product || 'ไม่ระบุ';
+      const t = (Number(r.total_weight) || 0) / 1000;
+      const c = (out[loc] = out[loc] || { byGp:{}, byFam:{}, total:0 });
+      c.byGp[gp] = (c.byGp[gp] || 0) + t;
+      const fam = familyLabelOf(r.group_product);
+      c.byFam[fam] = (c.byFam[fam] || 0) + t;
+      c.total += t;
+    });
+    Object.values(out).forEach(c => {
+      c.items = Object.entries(c.byGp).map(([gp, t]) => ({ gp, fam: familyLabelOf(gp === 'ไม่ระบุ' ? null : gp), t })).sort((a,b) => b.t - a.t);
+      c.mainFam = Object.entries(c.byFam).filter(([f]) => f !== FAMILY_OTHER).sort((a,b) => b[1] - a[1])[0]?.[0] || FAMILY_OTHER;
+    });
+    return out;
+  }
+  // ข้อความสั้น "Pipe 6,619 · CH 19 · ไม่ระบุ 3 ตัน" (ตัดรายการที่ต่ำกว่า 0.5 ตัน)
+  function contentsText(c, max = 4){
+    if (!c || !c.items.length) return 'ไม่มีสต็อก';
+    const shown = c.items.filter(i => i.t >= 0.5);
+    const head = shown.slice(0, max).map(i => `${i.gp} ${fmtNum(i.t,0)}`).join(' · ');
+    return head + (shown.length > max ? ` · +${shown.length - max} กลุ่ม` : '') + ' ตัน';
+  }
+
   // ===== Executive Brief: สรุปเป็นประโยค + KPI การเปลี่ยนแปลง + "ต้องดูวันนี้" =====
   // ทุกตัวเลขอิง "วันที่นำเข้าที่เลือก" เทียบกับ "รอบก่อนหน้า" (ไม่ผูกกับตัวกรองด้านล่าง เหมือนการ์ดภาพรวมพื้นที่)
   const BRIEF_HORIZON_DAYS = 180; // คาดการณ์ไกลกว่านี้ไม่มีความหมาย → แสดงว่า "ยังไม่ใกล้เต็ม"
@@ -1948,17 +1994,29 @@ const DashboardPage = (() => {
       const ds = drivers(loc);
       return ds.length ? 'เพิ่มขึ้นจาก ' + ds.map(x => `${x.name} ${x.pct !== null ? '+' + x.pct.toFixed(1) + '%' : '(ใหม่)'} (+${fmtNum(x.d,0)} ตัน)`).join(' และ ') : '';
     };
+    // 🐞 เดิมแนะนำ "โรงที่ว่างมากสุด" โดยไม่ดูว่าโรงนั้นเก็บอะไร → เสนอให้ย้าย Pipe ไป Fac B+E (HS/Plate) / Fac L (Beam)
+    // ซึ่งผิดหลักการจัดเก็บ ตอนนี้แนะนำเฉพาะโรงที่ "เก็บสินค้ากลุ่มหลักเดียวกันอยู่แล้วจริง" (ดูจากสต็อกของวันที่เลือก)
+    const holds = (loc, fam) => ((locContents[loc] || {}).byFam || {})[fam] >= 0.5;
     const roomyTxt = (exclude) => {
-      const r = roomy.filter(f => f.loc !== exclude).slice(0, 2);
-      return r.length ? 'โรงที่ยังรับได้มากสุด: ' + r.map(f => `${f.loc} (${f.pct.toFixed(0)}%, ว่าง ${fmtNum(f.remain,0)} ตัน)`).join(', ') : '';
+      if (!exclude){
+        const r = roomy.slice(0, 2);
+        return r.length ? 'โรงที่ว่างมากสุด: ' + r.map(f => `${f.loc} (${f.pct.toFixed(0)}%, ว่าง ${fmtNum(f.remain,0)} ตัน · เก็บ ${(locContents[f.loc]||{}).mainFam || '—'})`).join(', ') : '';
+      }
+      const fam = (locContents[exclude] || {}).mainFam;
+      if (!fam || fam === FAMILY_OTHER) return '';
+      const same = roomy.filter(f => f.loc !== exclude && holds(f.loc, fam)).slice(0, 2);
+      return same.length
+        ? `โรงที่เก็บ ${fam} อยู่แล้วและยังรับได้: ` + same.map(f => `${f.loc} (${f.pct.toFixed(0)}%, ว่าง ${fmtNum(f.remain,0)} ตัน)`).join(', ')
+        : `ไม่มีโรงที่เก็บ ${fam} ที่ยังว่าง (ต่ำกว่า 80%) — ต้องเร่งจ่ายออกหรือจัดพื้นที่ใหม่`;
     };
+    const storesTxt = (loc) => 'เก็บ: ' + contentsText(locContents[loc]);
     const deltaTxt = (f) => f.delta === null ? '' : ` (${sign(f.delta)}${fmtNum(Math.abs(f.delta),0)} ตัน)`;
     const cards = [];
     crit.slice(0, 2).forEach(f => cards.push({
       accent:'var(--tier-critical)', tag: f.noCap ? 'ไม่มีข้อมูลความจุ' : 'เกินพิกัด', loc: f.loc,
       title: f.noCap ? `${f.loc} · มีสต็อก ${fmtNum(f.used,0)} ตัน` : `${f.loc} · ${f.pct.toFixed(0)}% เกิน ${fmtNum(-f.remain,0)} ตัน`,
       body: f.noCap ? 'ยังไม่มีพื้นที่จัดเก็บของโรงนี้ในไฟล์ Area — นำเข้าไฟล์ Area ให้ครบเพื่อคำนวณ % ได้'
-                    : [driverTxt(f.loc), roomyTxt(f.loc)].filter(Boolean).join(' · ') || 'ใช้พื้นที่เกินความจุแล้ว',
+                    : [storesTxt(f.loc), driverTxt(f.loc), roomyTxt(f.loc)].filter(Boolean).join(' · '),
     }));
     warn.slice(0, Math.max(1, 3 - cards.length)).forEach(f => {
       const gap = mv ? mv.gapDays : 0;
@@ -1967,7 +2025,7 @@ const DashboardPage = (() => {
       cards.push({
         accent:'var(--tier-warn)', tag:'ใกล้เต็ม', loc: f.loc,
         title: `${f.loc} · ${f.pct.toFixed(0)}%${deltaTxt(f)}`,
-        body: `เหลือที่ว่างราว ${fmtNum(Math.max(0,f.remain),0)} ตัน` + (daysToFull !== null
+        body: storesTxt(f.loc) + ` · เหลือที่ว่างราว ${fmtNum(Math.max(0,f.remain),0)} ตัน` + (daysToFull !== null
           ? ` · ด้วยอัตรารอบล่าสุด +${fmtNum(ratePerDay,0)} ตัน/วัน จะเต็มในราว ${fmtNum(daysToFull,0)} วัน`
           : ' · รอบล่าสุดไม่ได้เพิ่มขึ้น') + (driverTxt(f.loc) ? ' · ' + driverTxt(f.loc) : ''),
       });
@@ -2040,8 +2098,28 @@ const DashboardPage = (() => {
         ? `เหลือ ${fmtNum(famRemain,1)} ตัน`
         : `เกินพิกัด ${fmtNum(Math.abs(famRemain),1)} ตัน`;
 
+      // กลุ่มย่อยในการ์ด (Pipe / CH): ยอด · % ภายในการ์ด · SKU · โรงที่เก็บ
+      const partsHtml = { bar:'', list:'' };
+      if (fam.parts && fam.parts.length){
+        const parts = fam.parts.map(pt => {
+          const pr = famRows.filter(r => pt.groupProducts.includes(r.group_product));
+          const w = pr.reduce((s,r) => s + (Number(r.total_weight)||0), 0);
+          return { ...pt, w, sku: new Set(pr.map(r => r.material)).size,
+                   share: weight > 0 ? w / weight * 100 : 0,
+                   locs: Array.from(new Set(pr.map(r => locationDisplayCode(r.location_code)).filter(Boolean))).sort() };
+        });
+        partsHtml.bar = parts.map(pt => `<span style="width:${pt.share}%;background:${pt.color};" title="${escapeHtml(pt.label)} ${pt.share.toFixed(1)}%"></span>`).join('');
+        partsHtml.list = `<div class="family-parts" aria-label="แยกตามกลุ่มย่อย">${parts.map(pt => `
+            <div class="family-part" title="${escapeHtml(`${pt.label}: ${fmtNum(pt.w/1000,2)} ตัน = ${pt.share.toFixed(1)}% ของกลุ่ม ${fam.label} · ${fmtNum(pt.sku)} SKU\nเก็บอยู่ที่: ${pt.locs.join(', ') || '—'}`)}">
+              <span class="fp-name"><span class="fp-sw" style="background:${pt.color};"></span>${escapeHtml(pt.label)} <span class="fp-desc">${escapeHtml(pt.desc)}</span></span>
+              <span></span>
+              <span class="fp-val">${fmtNum(pt.w/1000,2)} ตัน</span>
+              <span class="fp-meta">${pt.share.toFixed(1)}% ของ ${escapeHtml(fam.label)} · ${fmtNum(pt.sku)} SKU · ${escapeHtml(pt.locs.join(', ') || '—')}</span>
+              <div class="fp-bar"><span style="width:${pt.share}%;background:${pt.color};"></span></div>
+            </div>`).join('')}</div>`;
+      }
       const famInfoTitle = `น้ำหนัก ${fmtNum(weight/1000,2)} ตัน = ผลรวม total_weight ของทุกแถวที่ Group Product อยู่ในกลุ่ม: ${fam.groupProducts.join(', ')} (เฉพาะวันที่นำเข้าที่เลือกไว้)\n`
-        + `% ของสต็อกทั้งหมด = น้ำหนักกลุ่มนี้ ÷ น้ำหนักสต็อกรวมทุกกลุ่ม (รวม Scrap/อื่นๆ ที่ไม่ใช่ 4 กลุ่มนี้ด้วย) × 100\n`
+        + `% ของสต็อกทั้งหมด = น้ำหนักกลุ่มนี้ ÷ น้ำหนักสต็อกรวมทุกกลุ่ม (รวม Scrap/อื่นๆ ที่ไม่ใช่ 3 กลุ่มนี้ด้วย) × 100\n`
         + `เก็บได้ ${fmtNum(famCapacity,1)} ตัน = ผลรวมความจุ (actual_capacity_tons) เฉพาะโรงงานที่มีสต็อกกลุ่มนี้จัดเก็บอยู่จริง: ${famLocations.length ? famLocations.join(', ') : '—'}\n`
         + `${famRemain >= 0 ? 'เหลือ' : 'เกินพิกัด'} = ความจุของกลุ่มนี้ − น้ำหนักที่ใช้ของกลุ่มนี้`;
       return `
@@ -2052,7 +2130,8 @@ const DashboardPage = (() => {
           <div class="family-capacity-line">
             เก็บได้ <b>${fmtNum(famCapacity,1)} ตัน</b> · <span class="mgr-factory-remaining ${famRemainCls}" style="display:inline;">${famRemainText}</span>
           </div>
-          <div class="family-track"><div class="family-fill" style="width:${Math.min(100,pct)}%;background:${fam.color};"></div></div>
+          <div class="family-track"><div class="family-fill" style="width:${Math.min(100,pct)}%;background:${fam.color};">${partsHtml.bar}</div></div>
+          ${partsHtml.list}
           <div class="family-desc">${escapeHtml(fam.desc)}</div>
           <div class="family-desc" style="margin-top:2px;">อ้างอิงความจุจากโรงงานที่มีสต็อกกลุ่มนี้จริง: ${famLocations.length ? escapeHtml(famLocations.join(', ')) : '—'}</div>
         </div>`;
@@ -2082,7 +2161,9 @@ const DashboardPage = (() => {
     // โรงงานที่ยังไม่มีข้อมูลความจุมี pct = 0 จึงเคยหลุดไปอยู่ท้ายสุด ทั้งที่ต้องรีบตรวจ — ดันขึ้นบนสุด
     const sorted = withPct.slice().sort((a,b) => (b.noCapacity?1:0) - (a.noCapacity?1:0) || b.pct - a.pct);
     list.innerHTML = sorted.map(r => {
-      const widthPct = Math.min(120, r.pct) / 120 * 100; // แกนยาวถึง 120% ให้เห็นส่วนที่เกินความจุ
+      // แถบ = ความจุของโรงนั้น (เต็มหลอด = 100%) · เกินพิกัด = เต็มหลอด + ลายทางเฉียง (ผู้ใช้สับสนกับสเกล 120% เดิม)
+      const widthPct = Math.min(100, r.pct);
+      const overCls = !r.noCapacity && r.pct > 100 ? ' over' : '';
       const remainingCls = r.remaining < 0 ? 'over' : 'ok';
       const remainingText = r.remaining >= 0
         ? `เหลือ ${fmtNum(r.remaining,1)} ตัน`
@@ -2095,8 +2176,8 @@ const DashboardPage = (() => {
       const remainingTitle = `${r.remaining >= 0 ? 'เหลือ' : 'เกินพื้นที่'} = ความจุของโรงงานนี้ ${fmtNum(r.capacity,1)} ตัน − ใช้ไปแล้ว ${fmtNum(r.used,1)} ตัน`;
       return `
         <div class="mgr-factory-row" data-location="${escapeHtml(r.location_code)}" title="คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้างในโรงงานนี้">
-          <div class="mgr-factory-name">${escapeHtml(r.location_code)}</div>
-          <div class="mgr-factory-track" title="เส้นบาง = 80% · เส้นหนา = 100% ของความจุ"><div class="mgr-factory-fill" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div><span class="mgr-factory-mark" style="left:66.67%;"></span><span class="mgr-factory-mark cap" style="left:83.33%;"></span></div>
+          <div class="mgr-factory-name">${escapeHtml(r.location_code)}<span class="mgr-factory-stores" title="สิ่งที่จัดเก็บในโรงนี้ (ตาม Group Product) ของวันที่เลือก">${escapeHtml(contentsText(locContents[r.location_code], 3))}</span></div>
+          <div class="mgr-factory-track" title="เต็มหลอด = ความจุ 100% · เส้นบาง = เกณฑ์ใกล้เต็ม 80%${overCls ? ' · ลายทาง = เกินความจุแล้ว' : ''}"><div class="mgr-factory-fill${overCls}" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div><span class="mgr-factory-mark" style="left:80%;"></span></div>
           <div class="mgr-factory-nums" title="${escapeHtml(r.noCapacity ? 'โรงงานนี้ยังไม่มีข้อมูลพื้นที่จัดเก็บ (actual_capacity_tons) ในไฟล์ Area จึงคำนวณ % ใช้พื้นที่ไม่ได้' : pctTitle)}">
             ${r.noCapacity
               ? `<b>—</b> · ใช้ ${fmtNum(r.used,1)} ตัน <span class="cell-muted">(ยังไม่มีข้อมูลความจุ)</span>`
@@ -2165,6 +2246,13 @@ const DashboardPage = (() => {
           </div>
           <button class="modal-close" aria-label="ปิด">&times;</button>
         </div>
+        ${rows.length ? `<div class="loc-gp-strip" aria-label="กลุ่มสินค้าที่จัดเก็บ">
+          <div class="modal-col-title" style="margin:0 0 8px;">🧱 เก็บอะไรอยู่ (ตาม Group Product)</div>
+          <div class="loc-gp-list">${(buildLocContents(rows)[locationCode] || { items: [] }).items.map(i => {
+            const pct = grandTotalWeight > 0 ? i.t * 1000 / grandTotalWeight * 100 : 0;
+            return `<span class="loc-gp-chip"><b>${escapeHtml(i.gp)}</b> ${fmtNum(i.t,1)} ตัน <span class="cell-muted">(${pct.toFixed(1)}%)</span></span>`;
+          }).join('')}</div>
+        </div>` : ''}
         <div class="modal-body">
           ${rows.length
             ? renderColumn('🏷️', 'ตาม Group Sale', 'group_sale') + renderColumn('📦', 'ตาม Product Type', 'product_type')
@@ -3747,7 +3835,7 @@ const TrendsPage = (() => {
     ['trendTotalChart','trendFlowChart','trendDimChart'].forEach(id => {
       const e = el(id); if (e) e.innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
     });
-    el('trendTbody').innerHTML = '<tr><td colspan="13"><div class="empty-state">กำลังโหลด...</div></td></tr>';
+    el('trendTbody').innerHTML = '<tr><td colspan="12"><div class="empty-state">กำลังโหลด...</div></td></tr>';
     el('trendLocTbody').innerHTML = '<tr><td colspan="8"><div class="empty-state">กำลังโหลด...</div></td></tr>';
   }
 
@@ -3781,7 +3869,8 @@ const TrendsPage = (() => {
       daily = (dailyRes.data || []).filter(r => r.date_key).map(r => ({
         dateKey: r.date_key, t: keyToTime(r.date_key),
         tons: (+r.total_weight_kg || 0)/1000, rows: +r.row_count || 0, sku: +r.sku_count || 0,
-        fam: {}, // { Flat, Pipe, CH, Section } ตัน — เติมจาก breakdown.family ด้านล่าง
+        fam: {}, // { Flat, Pipe, Section } ตัน — เติมจาก breakdown.family ด้านล่าง
+        parts: {}, // { Pipe: {Pipe, CH} } ตัน — กลุ่มย่อยภายในกลุ่มหลัก
         qty: 0,
       }));
 
@@ -3823,7 +3912,11 @@ const TrendsPage = (() => {
       // จำนวนชิ้นรวมต่อรอบ อ่านจากมิติ family (ครอบคลุมทุกแถวพอดี ไม่ซ้ำ)
       daily.forEach(d => {
         d.qty = Object.values(breakdown.family || {}).reduce((s,byDate) => s + ((byDate[d.dateKey]||{}).qty || 0), 0);
-        FAMILY_DEFS.forEach(f => { d.fam[f.label] = (((breakdown.family || {})[f.label] || {})[d.dateKey] || {}).tons || 0; });
+        FAMILY_DEFS.forEach(f => {
+          d.fam[f.label] = (((breakdown.family || {})[f.label] || {})[d.dateKey] || {}).tons || 0;
+          if (f.parts) d.parts[f.label] = Object.fromEntries(f.parts.map(pt => [pt.label,
+            pt.groupProducts.reduce((s, gp) => s + ((((breakdown.group_product || {})[gp] || {})[d.dateKey] || {}).tons || 0), 0)]));
+        });
       });
 
       capacityByLoc = {};
@@ -3840,7 +3933,7 @@ const TrendsPage = (() => {
       ['trendTotalChart','trendFlowChart','trendDimChart'].forEach(id => {
         const x = el(id); if (x) x.innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${msg}</div>`;
       });
-      el('trendTbody').innerHTML = '<tr><td colspan="13"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
+      el('trendTbody').innerHTML = '<tr><td colspan="12"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
       el('trendLocTbody').innerHTML = '<tr><td colspan="8"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
       toast('โหลดข้อมูลแนวโน้มไม่สำเร็จ: ' + friendlyDbError(e), 'error');
     }
@@ -4165,7 +4258,7 @@ const TrendsPage = (() => {
   /* ---------- ตารางรายรอบ ---------- */
   function renderTable(rows){
     const tbody = el('trendTbody');
-    if (!rows.length){ tbody.innerHTML = '<tr><td colspan="13"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>'; return; }
+    if (!rows.length){ tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>'; return; }
     tbody.innerHTML = rows.slice().reverse().map((d, ri) => {
       const idx = rows.length - 1 - ri;
       const prev = idx > 0 ? rows[idx-1] : null;
@@ -4180,7 +4273,8 @@ const TrendsPage = (() => {
           <td class="cell-num" style="color:var(--danger);">${m ? '−'+fmtNum(m.outT,1) : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num cell-muted" title="ของที่แค่ย้ายที่เก็บ ไม่ได้เข้า-ออกคลังจริง">${m ? fmtNum(m.internalT,1) : '—'}</td>
           <td class="cell-num" title="${m?escapeHtml(`${fmtNum(m.lotsUnchanged)} ล็อตที่น้ำหนักไม่เปลี่ยนเลยจากรอบก่อน`):''}">${m ? fmtNum(m.unchangedT,1) : '<span class="cell-muted">—</span>'}</td>
-          ${FAMILY_DEFS.map(f => `<td class="cell-num">${fmtNum(d.fam[f.label] || 0,1)}</td>`).join('')}
+          ${FAMILY_DEFS.map(f => `<td class="cell-num">${fmtNum(d.fam[f.label] || 0,1)}${f.parts
+            ? `<div class="cell-muted trend-parts" style="font-size:11px;white-space:nowrap;">${f.parts.map(pt => `${escapeHtml(pt.label)} ${fmtNum((d.parts[f.label]||{})[pt.label] || 0,1)}`).join(' · ')}</div>` : ''}</td>`).join('')}
           <td class="cell-num">${fmtNum(d.sku)}</td>
         </tr>`;
     }).join('');
@@ -4190,7 +4284,7 @@ const TrendsPage = (() => {
     const rows = scoped();
     if (!rows.length){ toast('ไม่มีข้อมูลให้ export', 'error'); return; }
     const headers = ['Date','Gap Days','Stock (Ton)','Change (Ton)','In (Ton)','Out (Ton)','Internal Move (Ton)',
-                     'Unchanged (Ton)', ...FAMILY_DEFS.map(f => f.label), 'SKU','Qty','Utilization %'];
+                     'Unchanged (Ton)', ...FAMILY_DEFS.flatMap(f => f.parts ? [`${f.label} total`, ...f.parts.map(pt => `${f.label}: ${pt.label}`)] : [f.label]), 'SKU','Qty','Utilization %'];
     const lines = [headers.join(',')];
     rows.forEach((d, i) => {
       const m = movement[d.dateKey] || {};
@@ -4200,7 +4294,7 @@ const TrendsPage = (() => {
         (m.inT ?? '') === '' ? '' : m.inT.toFixed(2), (m.outT ?? '') === '' ? '' : m.outT.toFixed(2),
         (m.internalT ?? '') === '' ? '' : m.internalT.toFixed(2),
         (m.unchangedT ?? '') === '' ? '' : m.unchangedT.toFixed(2),
-        ...FAMILY_DEFS.map(f => (d.fam[f.label] || 0).toFixed(2)), d.sku, d.qty,
+        ...FAMILY_DEFS.flatMap(f => [(d.fam[f.label] || 0).toFixed(2), ...(f.parts || []).map(pt => (((d.parts[f.label] || {})[pt.label]) || 0).toFixed(2))]), d.sku, d.qty,
         totalCapacity > 0 ? (d.tons/totalCapacity*100).toFixed(2) : '',
       ].map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(','));
     });
@@ -4220,7 +4314,7 @@ const TrendsPage = (() => {
     if (!rows.length){
       ['trendTotalChart','trendFlowChart','trendDimChart'].forEach(id =>
         el(id).innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลสต็อกที่มีวันที่นำเข้าชัดเจน — นำเข้าข้อมูลอย่างน้อย 1 รอบก่อน</div>');
-      el('trendTbody').innerHTML = '<tr><td colspan="13"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
+      el('trendTbody').innerHTML = '<tr><td colspan="12"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
       el('trendLocTbody').innerHTML = '<tr><td colspan="8"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
       return;
     }
