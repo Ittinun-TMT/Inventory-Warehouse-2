@@ -6,22 +6,29 @@
 <title>Inventory Warehouse 2 | ระบบคลังสินค้า</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+Thai:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
-    --navy-900:#081c38;
-    --navy-800:#0F3460;
-    --navy-700:#1a4a8a;
-    --navy-100:#e8edf5;
-    --orange-500:#E85D04;
-    --orange-400:#FA7E19;
+    /* โทนสีแบรนด์ (core-value): #0c3843 · #ff6a05 · #fdc440 · #8bbade — ค่าอื่นเป็นเฉดของ 4 สีนี้ */
+    --navy-900:#0c3843;
+    --navy-800:#0c3843;
+    --navy-700:#1d5a6a;
+    --navy-100:#e6eff2;
+    --orange-500:#ff6a05;
+    --orange-400:#ff8a3d;
     --orange-100:#fff1e6;
-    --gold-500:#C9971F;
-    --gold-400:#E4B84A;
-    --gold-100:#faf3e0;
+    --gold-500:#a87a00;   /* ทองเข้ม — ใช้เป็นสีตัวอักษรบนพื้นขาว (#fdc440 ตรงๆ อ่านไม่ออกบนพื้นขาว) */
+    --gold-400:#fdc440;
+    --gold-100:#fff6dc;
+    --blue-300:#8bbade;
+    --blue-600:#2f74a8;   /* ฟ้าเข้ม — ตัวเลข/เส้นที่ต้องอ่านบนพื้นขาว */
+    --tier-normal:#8bbade;
+    --tier-warn:#fdc440;
+    --tier-critical:#ff6a05;
+    --ink-2:#33525b;
     --white:#ffffff;
     --gray-50:#f8f9fa;
     --gray-100:#f1f3f5;
@@ -32,31 +39,28 @@
     --gray-500:#868e96;
     --gray-600:#6c757d;
     --gray-800:#343a40;
-    --danger:#dc3545;
-    --success:#198754;
-    --warning:#ffc107;
+    --danger:#c24e00;
+    --success:#1f6e8c;
+    --warning:#fdc440;
     --radius:16px;
-    --shadow:0 2px 8px rgba(8,28,56,0.06), 0 1px 2px rgba(8,28,56,0.04);
+    --shadow:0 1px 3px rgba(12,56,67,0.08), 0 1px 2px rgba(12,56,67,0.04);
     --shadow-md:0 6px 20px rgba(8,28,56,0.10), 0 2px 6px rgba(8,28,56,0.05);
     --shadow-lg:0 16px 40px rgba(8,28,56,0.16), 0 4px 12px rgba(8,28,56,0.08);
-    --gradient-navy:linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 55%, var(--navy-700) 100%);
+    --gradient-navy:linear-gradient(135deg, #082b33 0%, var(--navy-800) 55%, var(--navy-700) 100%);
     --gradient-gold:linear-gradient(90deg, var(--gold-500), var(--gold-400));
     --gradient-orange:linear-gradient(90deg, var(--orange-500), var(--orange-400));
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    font-family:'Kanit', sans-serif;
-    background:
-      radial-gradient(1100px 500px at 8% -8%, rgba(15,52,96,0.05), transparent 60%),
-      radial-gradient(900px 460px at 100% 0%, rgba(201,151,31,0.05), transparent 55%),
-      linear-gradient(180deg, var(--gray-50) 0%, var(--white) 320px);
+    font-family:'IBM Plex Sans Thai', 'Kanit', sans-serif;
+    background:#f4f7f8;
     color:var(--navy-900);
     min-height:100vh;
     letter-spacing:.1px;
   }
   a{color:inherit;text-decoration:none;}
-  button{font-family:'Kanit', sans-serif;cursor:pointer;}
+  button{font-family:'IBM Plex Sans Thai', 'Kanit', sans-serif;cursor:pointer;}
   ::-webkit-scrollbar{height:10px;width:10px;}
   ::-webkit-scrollbar-thumb{background:var(--gray-400);border-radius:10px;}
   ::-webkit-scrollbar-track{background:transparent;}
@@ -64,28 +68,27 @@
   /* ===== Navbar ===== */
   .navbar{
     height:70px;
-    background:var(--gradient-navy);
+    background:var(--white);
     display:flex;align-items:center;justify-content:space-between;
     padding:0 26px;
     position:sticky;top:0;z-index:100;
-    box-shadow:var(--shadow-lg);
-    border-bottom:1px solid rgba(228,184,74,0.28);
+    box-shadow:0 1px 0 rgba(12,56,67,.06);
+    border-bottom:2px solid var(--navy-900);
   }
-  .brand{display:flex;align-items:center;gap:12px;font-weight:600;font-size:19px;color:var(--white);letter-spacing:.2px;}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:18px;color:var(--navy-900);letter-spacing:.2px;}
   .brand .logo-badge{
     width:40px;height:40px;border-radius:11px;
-    background:var(--gradient-gold);
+    background:var(--navy-900);
     display:flex;align-items:center;justify-content:center;font-size:20px;
-    box-shadow:0 3px 12px rgba(201,151,31,0.45), inset 0 1px 0 rgba(255,255,255,0.35);
   }
-  .brand small{display:block;font-weight:300;font-size:11.5px;color:#b9c8e0;margin-top:1px;letter-spacing:.3px;}
+  .brand small{display:block;font-weight:500;font-size:11.5px;color:var(--gray-600);margin-top:1px;letter-spacing:1.2px;}
   .nav-links{display:flex;gap:6px;}
   .nav-link{
-    color:#c9d6e8;font-size:14.5px;font-weight:500;padding:9px 18px;border-radius:10px;
-    transition:.18s;
+    color:#4a6b75;font-size:14.5px;font-weight:500;padding:12px 16px;border-radius:0;
+    transition:.18s;box-shadow:inset 0 -3px 0 transparent;
   }
-  .nav-link:hover{background:rgba(255,255,255,0.08);color:var(--white);}
-  .nav-link.active{background:var(--gradient-orange);color:var(--white);box-shadow:0 3px 10px rgba(232,93,4,.35);}
+  .nav-link:hover{color:var(--navy-900);background:var(--navy-100);}
+  .nav-link.active{color:var(--navy-900);font-weight:600;box-shadow:inset 0 -3px 0 var(--orange-500);}
 
   /* มือถือ/จอแคบ: navbar เดิมไม่มีจุดตัดเลย ทำให้ทั้งหน้าล้นแนวนอนบนมือถือ (< ~610px) —
      แก้โดยย่อโลโก้/ซ่อนคำบรรยายใต้โลโก้ และให้เมนูลิงก์เลื่อนแนวนอนได้เองแทนที่จะดันทั้งหน้าให้กว้างเกิน viewport */
@@ -116,6 +119,8 @@
     content:'';display:inline-block;width:4px;height:18px;border-radius:3px;
     background:var(--gradient-gold);flex:none;
   }
+  /* หัวข้อที่จัดซ้าย-ขวา (มีปุ่มด้านขวา): แถบสีของ ::before เป็น flex item แยก จึงถูกดันห่างจากชื่อหัวข้อ → ซ่อน */
+  .section-title[style*="space-between"]::before{display:none;}
   .section-title .tag{
     font-size:11.5px;font-weight:400;color:var(--gray-600);background:var(--gray-100);
     padding:3px 11px;border-radius:20px;border:1px solid var(--gray-200);
@@ -287,7 +292,7 @@
   .auth-hint{font-size:11.5px;color:var(--gray-600);margin-top:3px;font-weight:400;}
   .auth-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .auth-form input{
-    font-family:'Kanit',sans-serif;font-size:13px;border:1px solid var(--gray-200);border-radius:9px;
+    font-family:'IBM Plex Sans Thai','Kanit',sans-serif;font-size:13px;border:1px solid var(--gray-200);border-radius:9px;
     padding:8px 12px;background:var(--white);color:var(--navy-900);min-width:170px;
   }
   .auth-form input:focus{outline:2px solid var(--orange-400);}
@@ -335,7 +340,7 @@
     display:flex;flex-wrap:wrap;gap:10px;align-items:center;
   }
   .filter-bar input[type=text]{
-    font-family:'Kanit', sans-serif;font-size:13.5px;
+    font-family:'IBM Plex Sans Thai', 'Kanit', sans-serif;font-size:13.5px;
     border:1px solid var(--gray-200);border-radius:9px;padding:9px 12px;
     background:var(--gray-50);color:var(--navy-900);min-width:130px;
   }
@@ -345,7 +350,7 @@
   /* ===== Multi-select filter (แทน <select> เดิม — เลือกได้มากกว่า 1 ตัวเลือกต่อฟิลด์) ===== */
   .msel{position:relative;}
   .msel-btn{
-    font-family:'Kanit', sans-serif;font-size:13px;border:1px solid var(--gray-200);border-radius:9px;
+    font-family:'IBM Plex Sans Thai', 'Kanit', sans-serif;font-size:13px;border:1px solid var(--gray-200);border-radius:9px;
     padding:9px 26px 9px 12px;background:var(--gray-50);color:var(--navy-900);cursor:pointer;
     min-width:150px;text-align:left;position:relative;white-space:nowrap;
   }
@@ -358,7 +363,7 @@
   }
   .msel-panel.open{display:block;}
   .msel-actions{display:flex;gap:12px;padding:2px 4px 8px;margin-bottom:6px;border-bottom:1px solid var(--gray-100);}
-  .msel-actions button{font-family:'Kanit', sans-serif;font-size:11.5px;border:none;background:none;color:var(--navy-700);cursor:pointer;text-decoration:underline;padding:0;}
+  .msel-actions button{font-family:'IBM Plex Sans Thai', 'Kanit', sans-serif;font-size:11.5px;border:none;background:none;color:var(--navy-700);cursor:pointer;text-decoration:underline;padding:0;}
   .msel-list{max-height:240px;overflow-y:auto;}
   .msel-option{display:flex;align-items:center;gap:8px;padding:6px 6px;font-size:13px;color:var(--navy-900);cursor:pointer;border-radius:6px;}
   .msel-option:hover{background:var(--gray-50);}
@@ -418,6 +423,34 @@
   .pagination button:hover:not(:disabled){background:var(--gray-100);}
   .pagination button.active{background:var(--gradient-orange);color:#fff;border-color:var(--orange-500);box-shadow:0 2px 6px rgba(224,122,44,.3);}
 
+  /* ===== Executive Brief (แนวทาง B) — สรุปเป็นประโยค + สิ่งที่ต้องดูวันนี้ ===== */
+  .brief{margin:4px 0 26px;}
+  .brief-eyebrow{font-size:12.5px;font-weight:600;letter-spacing:1.2px;color:var(--gray-600);}
+  .brief-headline{font-family:'Noto Serif Thai',serif;font-weight:700;font-size:clamp(23px,3vw,34px);line-height:1.45;margin:6px 0 8px;color:var(--navy-900);text-wrap:balance;}
+  .brief-headline .hl-alert{color:var(--danger);}
+  .brief-lede{font-size:16px;line-height:1.75;color:var(--ink-2);max-width:880px;margin:0 0 18px;}
+  .brief-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  @media (max-width:980px){ .brief-kpis{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:520px){ .brief-kpis{grid-template-columns:1fr;} }
+  .brief-kpi{background:var(--white);border-radius:14px;padding:16px 18px;border-top:4px solid var(--accent,var(--navy-900));box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .brief-kpi .k-label{font-size:13.5px;color:var(--gray-600);font-weight:500;display:flex;gap:5px;align-items:center;}
+  .brief-kpi .k-value{font-family:'IBM Plex Mono',monospace;font-size:27px;font-weight:600;line-height:1.2;color:var(--navy-900);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
+  .brief-kpi .k-unit{font-family:'IBM Plex Sans Thai',sans-serif;font-size:14px;color:var(--gray-600);font-weight:500;}
+  .brief-kpi .k-sub{font-size:13.5px;font-weight:500;color:var(--navy-900);}
+  .brief-kpi .k-sub.up{color:var(--danger);}
+  .brief-kpi .k-note{font-size:12px;color:var(--gray-500);}
+  .brief-h2{font-size:18px;font-weight:700;margin:22px 0 10px;color:var(--navy-900);}
+  .brief-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;}
+  .brief-action{background:var(--white);border:0;border-left:6px solid var(--accent);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px;text-align:left;font:inherit;color:inherit;min-height:44px;}
+  button.brief-action{cursor:pointer;transition:.18s ease;}
+  button.brief-action:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+  button.brief-action:focus-visible{outline:3px solid var(--blue-300);outline-offset:2px;}
+  .brief-action .a-tag{align-self:flex-start;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--accent);color:#06222a;}
+  .brief-action .a-title{font-size:17px;font-weight:700;color:var(--navy-900);}
+  .brief-action .a-body{font-size:14.5px;line-height:1.65;color:var(--ink-2);}
+  .brief-action .a-more{font-size:12.5px;color:var(--gray-600);}
+  .brief-foot{font-size:12px;color:var(--gray-500);margin-top:10px;line-height:1.6;}
+
   /* ===== Manager view ===== */
   .mgr-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
   @media (max-width:980px){ .mgr-hero{grid-template-columns:repeat(2,1fr);} }
@@ -428,11 +461,11 @@
   }
   .mgr-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
   .mgr-card::before{
-    content:"";position:absolute;top:0;left:0;right:0;height:3px;
-    background:var(--gradient-gold);
+    content:"";position:absolute;top:0;left:0;right:0;height:4px;
+    background:var(--navy-900);
   }
   .mgr-label{font-size:12.5px;color:var(--gray-600);font-weight:500;letter-spacing:.1px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
-  .mgr-value{font-size:26px;font-weight:600;color:var(--navy-900);margin-top:7px;font-variant-numeric:tabular-nums;letter-spacing:.2px;}
+  .mgr-value{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;color:var(--navy-900);margin-top:7px;font-variant-numeric:tabular-nums;letter-spacing:.2px;}
   .mgr-sub{font-size:11.5px;color:var(--gray-400);margin-top:2px;}
 
   .mgr-status-row{display:flex;gap:14px;flex-wrap:wrap;}
@@ -440,9 +473,9 @@
     font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;
     display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
   }
-  .mgr-status-pill.normal{background:rgba(25,135,84,.12);color:var(--success);}
-  .mgr-status-pill.warn{background:rgba(255,193,7,.18);color:#8a6300;}
-  .mgr-status-pill.critical{background:rgba(220,53,69,.12);color:var(--danger);}
+  .mgr-status-pill.normal{background:#e3eef6;color:var(--navy-900);}
+  .mgr-status-pill.warn{background:var(--tier-warn);color:#06222a;}
+  .mgr-status-pill.critical{background:var(--tier-critical);color:#06222a;}
 
   .mgr-gauge-wrap{
     background:linear-gradient(160deg, var(--white), #fcfbf8 140%);border:1px solid var(--gray-200);border-radius:var(--radius);
@@ -459,8 +492,11 @@
   .mgr-factory-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--gray-100);}
   .mgr-factory-row:last-child{border-bottom:none;}
   .mgr-factory-name{flex:0 0 84px;font-size:13.5px;font-weight:600;color:var(--navy-900);}
-  .mgr-factory-track{flex:1 1 auto;height:20px;background:var(--gray-100);border-radius:10px;overflow:hidden;min-width:60px;box-shadow:inset 0 1px 2px rgba(8,28,56,.06);}
-  .mgr-factory-fill{height:100%;border-radius:10px;transition:width .6s cubic-bezier(.2,.7,.3,1);}
+  .mgr-factory-track{flex:1 1 auto;height:16px;background:#e9f0f2;border-radius:5px;min-width:60px;position:relative;}
+  .mgr-factory-fill{height:100%;border-radius:5px;transition:width .6s cubic-bezier(.2,.7,.3,1);}
+  /* เส้นอ้างอิงบนแถบ: แกนยาวถึง 120% → เส้นบาง = 80% (66.67%), เส้นหนา = 100% ความจุ (83.33%) */
+  .mgr-factory-mark{position:absolute;top:-4px;bottom:-4px;width:1px;background:#9fb3b9;pointer-events:none;}
+  .mgr-factory-mark.cap{width:2px;background:var(--navy-900);}
   .mgr-factory-nums{flex:0 0 200px;text-align:right;font-size:11.5px;color:var(--gray-600);font-variant-numeric:tabular-nums;}
   .mgr-factory-nums b{color:var(--navy-900);font-weight:600;}
   .mgr-factory-remaining{margin-top:3px;font-size:11px;font-weight:500;}
@@ -469,7 +505,7 @@
   .mgr-factory-share{flex:0 0 110px;text-align:right;font-size:11px;color:var(--gray-400);line-height:1.5;}
   .mgr-factory-share b{color:var(--navy-800);font-weight:600;font-size:12.5px;}
   .mgr-factory-row[data-location]{cursor:pointer;border-radius:10px;margin:0 -12px;padding:13px 12px;transition:.18s ease;}
-  .mgr-factory-row[data-location]:hover{background:var(--gold-100);}
+  .mgr-factory-row[data-location]:hover{background:var(--navy-100);}
 
   /* จอแคบ/มือถือ: แถวโรงงานเดิมมีความกว้างขั้นต่ำรวม ~510px (ชื่อ+ตัวเลข+สัดส่วน+ป้ายสถานะ) ทำให้ทั้งหน้าล้นแนวนอน
      แก้โดยให้แถบพื้นที่ (track) ตกลงไปเป็นบรรทัดของตัวเอง ส่วนชื่อ/ตัวเลข/สัดส่วนห่อบรรทัดกันเองแทน */
@@ -487,8 +523,9 @@
     border-radius:10px;padding:9px 14px;margin-bottom:14px;
   }
   .family-capacity-context b{color:var(--navy-900);}
-  .family-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:6px;}
-  @media (max-width:860px){ .family-grid{grid-template-columns:1fr;} }
+  .family-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:6px;}
+  @media (max-width:1100px){ .family-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:600px){ .family-grid{grid-template-columns:1fr;} }
   .family-card{
     background:linear-gradient(160deg, var(--white), #fcfbf8 140%);border:1px solid var(--gray-200);border-radius:16px;
     padding:19px 21px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.22s cubic-bezier(.2,.7,.3,1);
@@ -569,7 +606,7 @@
   }
   .date-filter-icon{font-size:13px;flex:none;}
   .date-filter-select{
-    font-family:'Kanit', sans-serif;font-size:12.5px;font-weight:500;color:var(--navy-900);
+    font-family:'IBM Plex Sans Thai', 'Kanit', sans-serif;font-size:12.5px;font-weight:500;color:var(--navy-900);
     border:none;background:transparent;padding:4px 2px;cursor:pointer;outline:none;max-width:190px;
   }
   .date-filter-select:disabled{color:var(--gray-400);cursor:not-allowed;}
@@ -583,7 +620,7 @@
   /* ===== Segmented control (เลือกตัวชี้วัด / มิติ บนหน้าแนวโน้ม) ===== */
   .seg-group{display:inline-flex;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap;}
   .seg-btn{
-    font-family:'Kanit',sans-serif;font-size:12px;font-weight:500;color:var(--gray-600);
+    font-family:'IBM Plex Sans Thai','Kanit',sans-serif;font-size:12px;font-weight:500;color:var(--gray-600);
     background:transparent;border:none;border-radius:8px;padding:6px 13px;cursor:pointer;transition:.15s;white-space:nowrap;
   }
   .seg-btn:hover{color:var(--navy-900);}
@@ -621,7 +658,7 @@
   /* ===== Trends page (แนวโน้มสต็อกรายวัน) ===== */
   .trend-range-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
   .trend-range-btn{
-    font-family:'Kanit', sans-serif;font-size:12.5px;font-weight:500;color:var(--navy-800);
+    font-family:'IBM Plex Sans Thai', 'Kanit', sans-serif;font-size:12.5px;font-weight:500;color:var(--navy-800);
     background:var(--white);border:1px solid var(--gray-200);border-radius:20px;padding:6px 16px;cursor:pointer;transition:.15s;
   }
   .trend-range-btn:hover{background:var(--gray-100);}
@@ -636,8 +673,8 @@
 
 <div class="navbar">
   <a href="#/dashboard" class="brand">
-    <span class="logo-badge">📦</span>
-    <span>Inventory Warehouse 2<small>ระบบคลังสินค้า • WH2</small></span>
+    <span class="logo-badge" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 36 36"><path d="M8 27V13l10-6 10 6v14M14 27v-8h8v8" fill="none" stroke="#fdc440" stroke-width="2.6" stroke-linejoin="round"/></svg></span>
+    <span>คลังสินค้า WH2<small>TMT STEEL · INVENTORY WAREHOUSE 2</small></span>
   </a>
   <div class="nav-links">
     <a href="#/dashboard" class="nav-link" data-route="dashboard">แดชบอร์ด</a>
@@ -664,6 +701,16 @@
       </div>
     </div>
     <div class="historical-banner" id="historicalBanner" style="display:none;"></div>
+
+    <section class="brief" id="execBrief" aria-label="สรุปสำหรับผู้บริหาร">
+      <div class="brief-eyebrow" id="briefEyebrow">รายงานประจำวัน</div>
+      <h1 class="brief-headline" id="briefHeadline">กำลังสรุปข้อมูล…</h1>
+      <p class="brief-lede" id="briefLede"></p>
+      <div class="brief-kpis" id="briefKpis"></div>
+      <h2 class="brief-h2">ต้องดูวันนี้</h2>
+      <div class="brief-actions" id="briefActions"><div class="viz-empty">กำลังโหลด...</div></div>
+      <div class="brief-foot" id="briefFoot"></div>
+    </section>
 
     <div class="mgr-hero">
       <div class="mgr-card">
@@ -707,9 +754,10 @@
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe / Section — น้ำหนักรวมทั้งเครือข่าย · ชี้ที่ ⓘ เพื่อดูวิธีคำนวณ</span></div>
+    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe / CH / Section — น้ำหนักรวมทั้งเครือข่าย · ชี้ที่ ⓘ เพื่อดูวิธีคำนวณ</span></div>
     <div class="family-capacity-context" id="familyCapacityContext">กำลังโหลด...</div>
     <div class="family-grid" id="familyCards">
+      <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
@@ -812,7 +860,7 @@
 
     <div class="import-card" style="max-width:100%;">
       <div class="desc">พิมพ์หรือวางรหัส Material ได้เลย (Copy มาจาก Excel ได้ — รองรับหลายรายการ คั่นด้วยขึ้นบรรทัดใหม่, comma หรือ tab)</div>
-      <textarea id="lookupInput" rows="4" placeholder="เช่น&#10;1BP0012-020-0058&#10;3RP01005018-0233" style="font-family:'Kanit',sans-serif;font-size:13.5px;border:1px solid var(--gray-200);border-radius:9px;padding:10px 12px;background:var(--gray-50);color:var(--navy-900);resize:vertical;"></textarea>
+      <textarea id="lookupInput" rows="4" placeholder="เช่น&#10;1BP0012-020-0058&#10;3RP01005018-0233" style="font-family:'IBM Plex Sans Thai','Kanit',sans-serif;font-size:13.5px;border:1px solid var(--gray-200);border-radius:9px;padding:10px 12px;background:var(--gray-50);color:var(--navy-900);resize:vertical;"></textarea>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
         <button class="btn btn-primary" id="btnLookup">🔎 ค้นหา</button>
         <button class="btn btn-outline" id="btnLookupClear">✕ ล้าง</button>
@@ -1017,10 +1065,10 @@
           <th class="cell-num">สต็อก (ตัน)</th><th class="cell-num">เปลี่ยนแปลง</th>
           <th class="cell-num">รับเข้า</th><th class="cell-num">จ่ายออก</th>
           <th class="cell-num">ย้ายภายใน</th><th class="cell-num">ไม่เคลื่อนไหว</th>
-          <th class="cell-num">Flat</th><th class="cell-num">Pipe</th><th class="cell-num">Section</th>
+          <th class="cell-num">Flat</th><th class="cell-num">Pipe</th><th class="cell-num">CH</th><th class="cell-num">Section</th>
           <th class="cell-num">SKU</th>
         </tr></thead>
-        <tbody id="trendTbody"><tr><td colspan="12"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
+        <tbody id="trendTbody"><tr><td colspan="13"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1357,24 +1405,60 @@ function mergeLocationRows(rows){
 //      และหยุดเมื่อได้ 0 แถวเท่านั้น จึงครบเสมอไม่ว่าเซิร์ฟเวอร์จะตัดที่เท่าไหร่
 // applyFilters: callback สำหรับใส่เงื่อนไขฝั่งเซิร์ฟเวอร์ เช่น q => q.gte('imported_at', a).lt('imported_at', b)
 // สำคัญต่อ performance: ให้ Postgres กรองก่อนส่งกลับ ไม่ใช่ดึงทั้งตารางมากรองที่เบราว์เซอร์
+// ⚡ OPTIMIZE (12 ต.ค. 2569): เดิมดึงทีละหน้าต่อกัน (11 หน้า = รอ 11 รอบ) → ตอนนี้หน้าแรกขอ count มาด้วย
+// แล้วยิงหน้าที่เหลือพร้อมกันทีละ FETCH_CONCURRENCY หน้า ใช้ "ขนาดหน้าที่เซิร์ฟเวอร์ให้มาจริง" คำนวณ offset
+// (ยังรองรับกรณี Max Rows ถูกลดต่ำกว่า 1000) และถ้าได้แถวไม่ครบตาม count (ข้อมูลเปลี่ยนระหว่างดึง)
+// จะไล่ต่อแบบทีละหน้าจนได้ 0 แถวเหมือนเดิม — จึงไม่มีทางขาดแถวแบบเงียบๆ
+const FETCH_CONCURRENCY = 6;
 async function fetchAllRows(table, selectCols, orderCol = 'id', applyFilters){
   const PAGE_SIZE = 1000;
   const MAX_PAGES = 500; // กันลูปไม่สิ้นสุดกรณีเซิร์ฟเวอร์ตอบผิดปกติ (สูงสุด ~500,000 แถว)
-  let all = [];
-  let from = 0;
-  for (let page = 0; page < MAX_PAGES; page++) {
-    let q = sb.from(table).select(selectCols);
+  const pageQuery = (from, size, withCount) => {
+    let q = withCount ? sb.from(table).select(selectCols, { count: 'exact' }) : sb.from(table).select(selectCols);
     if (applyFilters) q = applyFilters(q);
-    q = q.range(from, from + PAGE_SIZE - 1);
+    q = q.range(from, from + size - 1);
     if (orderCol) q = q.order(orderCol, { ascending: true });
-    const { data, error } = await q;
-    if (error) throw error;
-    if (!data || !data.length) break; // ไม่มีข้อมูลเหลือแล้ว = ครบจริง
-    all = all.concat(data);
-    from += data.length; // เลื่อนตาม "จำนวนแถวที่เซิร์ฟเวอร์ให้มาจริง" ไม่ใช่ขนาดหน้าที่เราขอ
+    return q;
+  };
+  // ไล่ต่อทีละหน้า (ทางสำรอง) จนกว่าจะได้ 0 แถว
+  const sequentialFrom = async (start, acc) => {
+    let from = start;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const { data, error } = await pageQuery(from, PAGE_SIZE, false);
+      if (error) throw error;
+      if (!data || !data.length) break; // ไม่มีข้อมูลเหลือแล้ว = ครบจริง
+      acc = acc.concat(data);
+      from += data.length; // เลื่อนตาม "จำนวนแถวที่เซิร์ฟเวอร์ให้มาจริง" ไม่ใช่ขนาดหน้าที่เราขอ
+    }
+    return acc;
+  };
+
+  const first = await pageQuery(0, PAGE_SIZE, true);
+  if (first.error) throw first.error;
+  let all = first.data || [];
+  const total = typeof first.count === 'number' ? first.count : null;
+  const pageSize = all.length;
+  if (!pageSize) return all;
+  if (total === null) return sequentialFrom(pageSize, all); // ไม่ได้ count → ทางเดิม
+  if (pageSize >= total) return all;
+
+  const offsets = [];
+  for (let f = pageSize; f < total && offsets.length < MAX_PAGES; f += pageSize) offsets.push(f);
+  const pages = new Array(offsets.length);
+  for (let i = 0; i < offsets.length; i += FETCH_CONCURRENCY) {
+    const chunk = offsets.slice(i, i + FETCH_CONCURRENCY);
+    const res = await Promise.all(chunk.map(f => pageQuery(f, pageSize, false)));
+    res.forEach((r, j) => { if (r.error) throw r.error; pages[i + j] = r.data || []; });
   }
+  pages.forEach(pg => { all = all.concat(pg); });
+  // ได้ไม่ครบตาม count (เช่น มีการนำเข้าระหว่างดึง) → ไล่ต่อจากจุดที่มีแบบทีละหน้า
+  if (all.length < total) all = await sequentialFrom(all.length, all);
   return all;
 }
+
+// คอลัมน์ที่หน้าเว็บใช้จริงจาก v_stock_enriched — ระบุชัดแทน '*' เพื่อลดขนาดข้อมูลที่ส่งมา
+// และไม่พังถ้าฝั่ง SQL เพิ่มคอลัมน์ใหม่ (เช่น date_key/family หลัง migration)
+const ENRICHED_COLS = 'id,material,material_description,batch,unrestricted_qty,storage_location,total_weight,group_sale,group_product,product_type,location_code,imported_at';
 
 /* ============================================================
    DATE-KEY HELPERS — ใช้ร่วมกันทั้งหน้า Dashboard / Import / แนวโน้ม
@@ -1425,14 +1509,27 @@ function sequentialColor(hue, sat, pct){
 /* ============================================================
    FAMILY_DEFS — นิยามกลุ่มสินค้าหลัก ใช้ร่วมกันทั้งหน้า Dashboard และหน้าแนวโน้ม
    ยืนยันกับผู้ใช้แล้วว่า: Flat = Flat Bars + Plate + HS (แผ่นเหล็กรีดร้อน ขนาดเดียวกับ Plate),
-   Pipe = Pipe + CH (ตัวซี), Section = Beam ทั้งหมด (มี AK/HB/IB/WF/UC/RB/RW/SB/SD/SR/Sheet Pile ฯลฯ อยู่แล้ว)
-   รายการที่ไม่เข้าพวก 3 กลุ่มนี้ (Scrap, DUMMY_KG/PC, ไม่ระบุ) ไม่แสดงเป็นการ์ด/เส้นแนวโน้ม
+   Pipe = Pipe, CH = CH (ตัวซี — แยกออกจาก Pipe ตามคำขอ 12 ต.ค. 2569),
+   Section = Beam ทั้งหมด (มี AK/HB/IB/WF/UC/RB/RW/SB/SD/SR/Sheet Pile ฯลฯ อยู่แล้ว)
+   รายการที่ไม่เข้าพวก 4 กลุ่มนี้ (Scrap, DUMMY_KG/PC, ไม่ระบุ) = "อื่นๆ" ไม่แสดงเป็นการ์ด
+   color = สีแบรนด์ (การ์ด/แถบ) · chartColor = เฉดเข้มของสีเดียวกัน ใช้กับเส้นกราฟบนพื้นขาวให้มองเห็นชัด
 ============================================================ */
 const FAMILY_DEFS = [
-  { key:'flat', label:'Flat', icon:'📄', color:'#2a78d6', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
-  { key:'pipe', label:'Pipe', icon:'⭕', color:'#eb6834', groupProducts:['Pipe','CH'], desc:'ท่อ + ตัวซี (Pipe / CH)' },
-  { key:'section', label:'Section', icon:'🏗️', color:'#1baf7a', groupProducts:['Beam'], desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
+  { key:'flat',    label:'Flat',    icon:'📄', color:'#0c3843', chartColor:'#0c3843', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
+  { key:'pipe',    label:'Pipe',    icon:'⭕', color:'#8bbade', chartColor:'#4f8fc2', groupProducts:['Pipe'], desc:'ท่อ (Pipe)' },
+  { key:'ch',      label:'CH',      icon:'🔩', color:'#fdc440', chartColor:'#d9a21a', groupProducts:['CH'], desc:'ตัวซี (CH)' },
+  { key:'section', label:'Section', icon:'🏗️', color:'#ff6a05', chartColor:'#ff6a05', groupProducts:['Beam'], desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
 ];
+const FAMILY_OTHER = 'อื่นๆ';
+// Group Product → ชื่อกลุ่มหลัก (Flat/Pipe/CH/Section/อื่นๆ) — แหล่งเดียวของ mapping ทั้งระบบ
+// หน้าแนวโน้มใช้ตัวนี้แปลงมิติ group_product ของ SQL เป็นกลุ่มหลักเอง จึงไม่ขึ้นกับว่า matview ฝั่ง SQL
+// ยังรวม CH ไว้ใน Pipe (ก่อนรัน migration) หรือแยกแล้ว — ตัวเลขถูกเสมอทั้งสองสถานะ
+const FAMILY_BY_GP = FAMILY_DEFS.reduce((m, f) => { f.groupProducts.forEach(gp => { m[gp] = f.label; }); return m; }, {});
+function familyLabelOf(groupProduct){ return FAMILY_BY_GP[groupProduct] || FAMILY_OTHER; }
+function familyChartColor(label){
+  const f = FAMILY_DEFS.find(x => x.label === label);
+  return f ? f.chartColor : OTHER_SLOT_COLOR;
+}
 
 /* ============================================================
    DASHBOARD PAGE
@@ -1445,12 +1542,17 @@ const DashboardPage = (() => {
   // รองรับข้อมูลหลายวันที่ (โหมด "วางเติม") — ภาพรวมแสดงวันล่าสุดเสมอ เลือกดูย้อนหลังได้ผ่าน dropdown
   let availableDateKeys = []; // เรียงล่าสุดก่อน เช่น ['2026-08-24','2026-08-20',...]
   let selectedDateKey = null;
+  // ข้อมูลประกอบ Executive Brief (aggregate ฝั่งเซิร์ฟเวอร์ ขนาดเล็ก ไม่โตตามจำนวนแถวสต็อก)
+  let dailyTons = {};      // dateKey -> ตันรวม
+  let movementByDate = {}; // dateKey -> { prevKey, gapDays, inT, outT, netT }
+  let locDailyTons = {};   // locDisplay -> dateKey -> ตัน
+  let locGroupSale = {};   // locDisplay -> groupSale -> dateKey -> ตัน
 
   // เกณฑ์ระดับการใช้พื้นที่ต่อโรงงาน: ปกติ ≤80% / ใกล้เต็ม 80–100% / เกินพิกัด >100%
   const Tier = {
     of(pct){ return pct > 100 ? 'critical' : pct > 80 ? 'warn' : 'normal'; },
     label(tier){ return tier === 'critical' ? '⛔ เกินพิกัด' : tier === 'warn' ? '⚠️ ใกล้เต็ม' : '✅ ปกติ'; },
-    color(tier){ return tier === 'critical' ? 'var(--danger)' : tier === 'warn' ? 'var(--warning)' : 'var(--success)'; },
+    color(tier){ return tier === 'critical' ? 'var(--tier-critical)' : tier === 'warn' ? 'var(--tier-warn)' : 'var(--tier-normal)'; },
   };
 
   // LOCATION_MERGE_GROUPS / locationDisplayCode / locationMembersOf / mergeLocationRows
@@ -1529,6 +1631,7 @@ const DashboardPage = (() => {
     populateFilterOptions(scopedRows);
     renderKpis(scopedRows);
     const capacitySummary = renderCapacityOverview(scopedLocUtil);
+    renderBrief(scopedLocUtil, capacitySummary, scopedRows);
     renderFamilyCards(scopedRows, scopedLocUtil, capacitySummary);
     renderFactoryPanel(scopedLocUtil, scopedRows);
     applyFilters();
@@ -1592,12 +1695,36 @@ const DashboardPage = (() => {
   async function loadData(){
     setSummaryLoading();
     try {
-      const [dailyRes, capRes] = await Promise.all([
+      const [dailyRes, capRes, movRes, locDayRes, lgRes] = await Promise.all([
         sb.from('v_stock_daily').select('date_key,row_count,total_weight_kg').order('date_key', { ascending: false }),
         sb.from('v_location_capacity').select('location_code,actual_capacity_tons').order('location_code'),
+        sb.from('v_movement_daily').select('date_key,prev_date_key,gap_days,in_kg,out_kg,net_kg'),
+        sb.from('v_location_daily').select('date_key,location_code,total_weight_kg'),
+        sb.from('v_location_group_daily').select('date_key,location_code,dim_value,weight_kg').eq('dim_type', 'group_sale'),
       ]);
       if (dailyRes.error) throw dailyRes.error;
       if (capRes.error) throw capRes.error;
+
+      // ข้อมูลประกอบสรุปผู้บริหาร — ถ้าโหลดส่วนนี้ไม่ได้ ส่วนอื่นของแดชบอร์ดยังทำงานต่อ (สรุปจะบอกว่าข้อมูลไม่ครบ)
+      dailyTons = {};
+      (dailyRes.data || []).forEach(r => { if (r.date_key) dailyTons[r.date_key] = (+r.total_weight_kg || 0) / 1000; });
+      movementByDate = {};
+      if (!movRes.error) (movRes.data || []).forEach(r => { movementByDate[r.date_key] = {
+        prevKey: r.prev_date_key, gapDays: +r.gap_days || 0,
+        inT: (+r.in_kg || 0)/1000, outT: (+r.out_kg || 0)/1000, netT: (+r.net_kg || 0)/1000 }; });
+      locDailyTons = {};
+      if (!locDayRes.error) (locDayRes.data || []).forEach(r => {
+        const loc = locationDisplayCode(r.location_code); if (!loc) return;
+        locDailyTons[loc] = locDailyTons[loc] || {};
+        locDailyTons[loc][r.date_key] = (locDailyTons[loc][r.date_key] || 0) + (+r.total_weight_kg || 0)/1000;
+      });
+      locGroupSale = {};
+      if (!lgRes.error) (lgRes.data || []).forEach(r => {
+        const loc = locationDisplayCode(r.location_code); if (!loc) return;
+        const g = (locGroupSale[loc] = locGroupSale[loc] || {});
+        g[r.dim_value] = g[r.dim_value] || {};
+        g[r.dim_value][r.date_key] = (g[r.dim_value][r.date_key] || 0) + (+r.weight_kg || 0)/1000;
+      });
 
       availableDateKeys = (dailyRes.data || []).map(r => r.date_key).filter(Boolean);
       // locUtil เก็บแค่ความจุ (คงที่) — ยอด "ใช้ไปกี่ตัน" คำนวณจากแถวของวันที่เลือกใน buildScopedLocUtil()
@@ -1629,7 +1756,7 @@ const DashboardPage = (() => {
     }
     const { startIso, endIso } = bkkDayRange(selectedDateKey);
     try {
-      allRows = await fetchAllRows('v_stock_enriched', '*', 'id',
+      allRows = await fetchAllRows('v_stock_enriched', ENRICHED_COLS, 'id',
         q => q.gte('imported_at', startIso).lt('imported_at', endIso));
       renderScoped();
     } catch (e) {
@@ -1710,7 +1837,167 @@ const DashboardPage = (() => {
     return { totalCapacity, totalUsed, totalRemain, overallPct };
   }
 
-  // ===== การ์ดกลุ่มสินค้าหลัก (Flat / Pipe / Section) — จัดกลุ่มตาม Group Product จริงในฐานข้อมูล =====
+  // ===== Executive Brief: สรุปเป็นประโยค + KPI การเปลี่ยนแปลง + "ต้องดูวันนี้" =====
+  // ทุกตัวเลขอิง "วันที่นำเข้าที่เลือก" เทียบกับ "รอบก่อนหน้า" (ไม่ผูกกับตัวกรองด้านล่าง เหมือนการ์ดภาพรวมพื้นที่)
+  const BRIEF_HORIZON_DAYS = 180; // คาดการณ์ไกลกว่านี้ไม่มีความหมาย → แสดงว่า "ยังไม่ใกล้เต็ม"
+  function renderBrief(locRows, capacitySummary, scopedRows){
+    const headEl = el('briefHeadline');
+    if (!headEl) return;
+    const selKey = selectedDateKey;
+    if (!selKey){
+      el('briefEyebrow').textContent = 'รายงานประจำวัน';
+      headEl.textContent = 'ยังไม่มีข้อมูลสต็อก';
+      el('briefLede').textContent = 'นำเข้าไฟล์สต็อกที่หน้า "นำเข้าข้อมูล" เพื่อเริ่มสรุป';
+      el('briefKpis').innerHTML = ''; el('briefActions').innerHTML = ''; el('briefFoot').textContent = '';
+      return;
+    }
+    const idx = availableDateKeys.indexOf(selKey);
+    const prevKey = idx >= 0 && idx + 1 < availableDateKeys.length ? availableDateKeys[idx + 1] : null;
+    const curT = dailyTons[selKey] ?? ((scopedRows || []).reduce((s,r) => s + (+r.total_weight || 0), 0) / 1000);
+    const prevT = prevKey ? (dailyTons[prevKey] ?? null) : null;
+    const diffT = prevT !== null ? curT - prevT : null;
+    const diffPct = prevT ? diffT / prevT * 100 : null;
+    const { totalCapacity, totalRemain, overallPct } = capacitySummary;
+
+    // อัตราเฉลี่ยจากทุกคู่รอบจนถึงวันที่เลือก (ถ่วงด้วยจำนวนวันจริง)
+    const movHist = Object.entries(movementByDate).filter(([k]) => k <= selKey).map(([,m]) => m);
+    const sumGap = movHist.reduce((s,m) => s + (m.gapDays || 0), 0);
+    const outPerDay = sumGap > 0 ? movHist.reduce((s,m) => s + m.outT, 0) / sumGap : 0;
+    const netPerDay = sumGap > 0 ? movHist.reduce((s,m) => s + m.netT, 0) / sumGap : 0;
+    const doh = outPerDay > 0 ? curT / outPerDay : null;
+    let etaDays = null;
+    if (totalRemain > 0 && netPerDay > 0.05) etaDays = totalRemain / netPerDay;
+    const mv = movementByDate[selKey] && movementByDate[selKey].prevKey === prevKey ? movementByDate[selKey] : null;
+
+    // สถานะรายโรง (รวม Fac B+E แล้ว)
+    const facs = mergeLocationRows(locRows).map(r => {
+      const cap = +r.actual_capacity_tons || 0, used = +r.stock_weight_tons || 0;
+      const pct = cap > 0 ? used / cap * 100 : 0;
+      const noCap = cap <= 0 && used > 0;
+      const prevUsed = prevKey && locDailyTons[r.location_code] ? (locDailyTons[r.location_code][prevKey] ?? null) : null;
+      return { loc: r.location_code, cap, used, pct, noCap, remain: cap - used,
+               delta: prevUsed !== null ? used - prevUsed : null, tier: noCap ? 'critical' : Tier.of(pct) };
+    }).filter(f => f.cap > 0 || f.used > 0);
+    const crit = facs.filter(f => f.tier === 'critical').sort((a,b) => (b.noCap?1:0)-(a.noCap?1:0) || b.pct - a.pct);
+    const warn = facs.filter(f => f.tier === 'warn').sort((a,b) => b.pct - a.pct);
+    const roomy = facs.filter(f => f.tier === 'normal' && f.cap > 0 && f.remain > 0).sort((a,b) => b.remain - a.remain);
+
+    // ----- หัวเรื่อง -----
+    el('briefEyebrow').textContent = `รายงานประจำวัน · ข้อมูล ${fmtDateKey(selKey)}${prevKey ? ' เทียบ ' + fmtDateKey(prevKey) : ''}`;
+    let head = `สต็อกรวม ${fmtNum(curT,0)} ตัน`;
+    if (diffPct !== null && Math.abs(diffPct) >= 0.05) head += ` ${diffT > 0 ? 'เพิ่มขึ้น' : 'ลดลง'} ${Math.abs(diffPct).toFixed(1)}%`;
+    else if (diffPct !== null) head += ' ทรงตัว';
+    let alertTxt = '';
+    if (crit.length === 1) alertTxt = `${crit[0].loc} ${crit[0].noCap ? 'ยังไม่มีข้อมูลความจุ' : 'เกินพิกัดแล้ว'}`;
+    else if (crit.length > 1) alertTxt = `${crit.length} โรงเกินพิกัด (${crit.map(f => f.loc).join(', ')})`;
+    else if (warn.length) alertTxt = `${warn[0].loc} ใกล้เต็ม ${warn[0].pct.toFixed(0)}%`;
+    headEl.innerHTML = escapeHtml(head) + ' — ' + (alertTxt
+      ? `<span class="hl-alert">${escapeHtml(alertTxt)}</span>`
+      : 'ทุกโรงอยู่ในเกณฑ์ปกติ');
+
+    const lede = [];
+    if (mv) lede.push(`รอบนี้รับเข้า ${fmtNum(mv.inT,0)} ตัน จ่ายออก ${fmtNum(mv.outT,0)} ตัน (ห่างจากรอบก่อน ${mv.gapDays} วัน)`);
+    lede.push(`ใช้พื้นที่รวม ${overallPct.toFixed(1)}% ของความจุ ${fmtNum(totalCapacity,0)} ตัน`);
+    if (totalRemain <= 0) lede.push('พื้นที่รวมทั้งเครือข่ายเต็มแล้ว');
+    else if (etaDays !== null && etaDays <= BRIEF_HORIZON_DAYS) lede.push(`ถ้าอัตราสุทธิคงที่ พื้นที่ทั้งเครือข่ายจะเต็มในราว ${fmtNum(etaDays,0)} วัน`);
+    if (crit.length + warn.length) lede.push(`โรงที่ต้องตัดสินใจ: ${[...crit, ...warn].slice(0,3).map(f => f.loc).join(', ')}`);
+    el('briefLede').textContent = lede.join(' · ');
+
+    // ----- KPI 4 ช่อง -----
+    const kpi = (accent, label, value, unit, sub, subCls, note, info) => `
+      <div class="brief-kpi" style="--accent:${accent};">
+        <div class="k-label">${escapeHtml(label)}${info ? ` <span class="kpi-info" title="${escapeHtml(info)}">ⓘ</span>` : ''}</div>
+        <div class="k-value">${value}${unit ? ` <span class="k-unit">${escapeHtml(unit)}</span>` : ''}</div>
+        <div class="k-sub ${subCls||''}">${sub}</div>
+        <div class="k-note">${note}</div>
+      </div>`;
+    const sign = (v) => v > 0 ? '+' : v < 0 ? '−' : '';
+    el('briefKpis').innerHTML = [
+      kpi('var(--orange-500)', 'สต็อกเปลี่ยนแปลง',
+        diffT === null ? '—' : sign(diffT) + fmtNum(Math.abs(diffT),0), diffT === null ? '' : 'ตัน',
+        diffPct === null ? 'ยังไม่มีรอบก่อนให้เทียบ' : `${diffT >= 0 ? '▲' : '▼'} ${Math.abs(diffPct).toFixed(1)}% เทียบ ${escapeHtml(fmtDateKey(prevKey))}`,
+        diffT > 0 ? 'up' : '', prevT !== null ? `จาก ${fmtNum(prevT,0)} ตัน` : '&nbsp;',
+        'น้ำหนักสต็อกรวมของวันที่เลือก − รอบก่อนหน้า'),
+      kpi('var(--navy-900)', 'รับเข้า / จ่ายออก',
+        mv ? `${fmtNum(mv.inT,0)} <span class="k-unit">/ ${fmtNum(mv.outT,0)}</span>` : '—', mv ? 'ตัน' : '',
+        mv ? `สุทธิ ${sign(mv.netT)}${fmtNum(Math.abs(mv.netT),0)} ตัน` : 'ยังไม่มีข้อมูลการไหล', '',
+        mv ? `รอบ ${escapeHtml(fmtDateKey(mv.prevKey))} → ${escapeHtml(fmtDateKey(selKey))}` : '&nbsp;',
+        'เทียบ snapshot ระดับ Material × Batch ระหว่าง 2 รอบ — ส่วนที่เพิ่มขึ้น = รับเข้า, ส่วนที่ลดลง = จ่ายออก (หักการย้ายที่เก็บภายในแล้ว)'),
+      kpi('var(--gold-400)', 'Days on Hand',
+        doh ? '≈ ' + fmtNum(doh,0) : '—', doh ? 'วัน' : '',
+        outPerDay > 0 ? `จ่ายออกเฉลี่ย ${fmtNum(outPerDay,0)} ตัน/วัน` : 'ยังไม่มีข้อมูลการจ่ายออก', '',
+        sumGap > 0 ? `เฉลี่ยจาก ${movHist.length} คู่รอบ (${sumGap} วัน)` : '&nbsp;',
+        'DOH = สต็อกรวม ÷ อัตราจ่ายออกเฉลี่ยต่อวัน = ของที่มีพอจ่ายอีกกี่วันถ้าไม่รับเข้าเพิ่ม'),
+      kpi('var(--blue-300)', 'เครือข่ายเต็มใน',
+        totalRemain <= 0 ? 'เต็มแล้ว' : (etaDays !== null && etaDays <= BRIEF_HORIZON_DAYS ? '~' + fmtNum(etaDays,0) : '—'),
+        totalRemain > 0 && etaDays !== null && etaDays <= BRIEF_HORIZON_DAYS ? 'วัน' : '',
+        totalRemain > 0 ? `ว่าง ${fmtNum(totalRemain,0)} ตัน (${Math.max(0,100-overallPct).toFixed(1)}%)` : `เกินรวม ${fmtNum(Math.abs(totalRemain),0)} ตัน`, '',
+        sumGap > 0 ? (netPerDay > 0.05 ? `สุทธิเพิ่มเฉลี่ย ${fmtNum(netPerDay,0)} ตัน/วัน` : 'สต็อกรวมไม่ได้เพิ่มขึ้น') : '&nbsp;',
+        'พื้นที่ว่างรวม ÷ อัตราสุทธิเฉลี่ยต่อวัน (เส้นตรง ไม่รวมแผนรับเข้า/ฤดูกาล) — เกิน 180 วันแสดงเป็น "—"'),
+    ].join('');
+
+    // ----- ต้องดูวันนี้ -----
+    const drivers = (loc) => {
+      const g = locGroupSale[loc]; if (!g || !prevKey) return [];
+      return Object.entries(g).map(([name, byDate]) => {
+        const cur = byDate[selKey] || 0, prev = byDate[prevKey] || 0;
+        return { name, d: cur - prev, pct: prev > 0 ? (cur - prev) / prev * 100 : null };
+      }).filter(x => x.d > 0.05).sort((a,b) => b.d - a.d).slice(0, 2);
+    };
+    const driverTxt = (loc) => {
+      const ds = drivers(loc);
+      return ds.length ? 'เพิ่มขึ้นจาก ' + ds.map(x => `${x.name} ${x.pct !== null ? '+' + x.pct.toFixed(1) + '%' : '(ใหม่)'} (+${fmtNum(x.d,0)} ตัน)`).join(' และ ') : '';
+    };
+    const roomyTxt = (exclude) => {
+      const r = roomy.filter(f => f.loc !== exclude).slice(0, 2);
+      return r.length ? 'โรงที่ยังรับได้มากสุด: ' + r.map(f => `${f.loc} (${f.pct.toFixed(0)}%, ว่าง ${fmtNum(f.remain,0)} ตัน)`).join(', ') : '';
+    };
+    const deltaTxt = (f) => f.delta === null ? '' : ` (${sign(f.delta)}${fmtNum(Math.abs(f.delta),0)} ตัน)`;
+    const cards = [];
+    crit.slice(0, 2).forEach(f => cards.push({
+      accent:'var(--tier-critical)', tag: f.noCap ? 'ไม่มีข้อมูลความจุ' : 'เกินพิกัด', loc: f.loc,
+      title: f.noCap ? `${f.loc} · มีสต็อก ${fmtNum(f.used,0)} ตัน` : `${f.loc} · ${f.pct.toFixed(0)}% เกิน ${fmtNum(-f.remain,0)} ตัน`,
+      body: f.noCap ? 'ยังไม่มีพื้นที่จัดเก็บของโรงนี้ในไฟล์ Area — นำเข้าไฟล์ Area ให้ครบเพื่อคำนวณ % ได้'
+                    : [driverTxt(f.loc), roomyTxt(f.loc)].filter(Boolean).join(' · ') || 'ใช้พื้นที่เกินความจุแล้ว',
+    }));
+    warn.slice(0, Math.max(1, 3 - cards.length)).forEach(f => {
+      const gap = mv ? mv.gapDays : 0;
+      const ratePerDay = f.delta !== null && gap > 0 ? f.delta / gap : 0;
+      const daysToFull = ratePerDay > 0.05 && f.remain > 0 ? f.remain / ratePerDay : null;
+      cards.push({
+        accent:'var(--tier-warn)', tag:'ใกล้เต็ม', loc: f.loc,
+        title: `${f.loc} · ${f.pct.toFixed(0)}%${deltaTxt(f)}`,
+        body: `เหลือที่ว่างราว ${fmtNum(Math.max(0,f.remain),0)} ตัน` + (daysToFull !== null
+          ? ` · ด้วยอัตรารอบล่าสุด +${fmtNum(ratePerDay,0)} ตัน/วัน จะเต็มในราว ${fmtNum(daysToFull,0)} วัน`
+          : ' · รอบล่าสุดไม่ได้เพิ่มขึ้น') + (driverTxt(f.loc) ? ' · ' + driverTxt(f.loc) : ''),
+      });
+    });
+    if (!crit.length && !warn.length) cards.push({ accent:'var(--tier-normal)', tag:'ปกติ', title:'ทุกโรงใช้พื้นที่ไม่เกิน 80%',
+      body: roomyTxt(null) || 'ไม่มีโรงที่ต้องดูเป็นพิเศษในรอบนี้' });
+    cards.push(totalRemain <= 0
+      ? { accent:'var(--tier-critical)', tag:'ทั้งเครือข่าย', title:`พื้นที่รวมเกินความจุ ${fmtNum(-totalRemain,0)} ตัน`, body:'ต้องเร่งจ่ายออกหรือหาพื้นที่เพิ่ม' }
+      : etaDays !== null && etaDays <= BRIEF_HORIZON_DAYS
+        ? { accent:'var(--tier-normal)', tag:'แนวโน้ม', title:`เครือข่ายเต็มใน ~${fmtNum(etaDays,0)} วัน`,
+            body:`สุทธิเพิ่มเฉลี่ย ~${fmtNum(netPerDay,0)} ตัน/วัน จาก ${movHist.length} คู่รอบ · ว่างอีก ${fmtNum(totalRemain,0)} ตัน — ควรวางแผนพื้นที่ล่วงหน้า` }
+        : { accent:'var(--tier-normal)', tag:'แนวโน้ม', title: sumGap > 0 ? 'สต็อกรวมยังไม่เร่งตัว' : 'ยังไม่มีข้อมูลแนวโน้ม',
+            body: sumGap > 0 ? `อัตราสุทธิเฉลี่ย ${sign(netPerDay)}${fmtNum(Math.abs(netPerDay),0)} ตัน/วัน — ยังไม่ใกล้เต็มภายใน ${BRIEF_HORIZON_DAYS} วัน` : 'ต้องมีข้อมูลอย่างน้อย 2 รอบ' });
+
+    el('briefActions').innerHTML = cards.slice(0, 4).map(c => c.loc
+      ? `<button type="button" class="brief-action" style="--accent:${c.accent};" data-loc="${escapeHtml(c.loc)}">
+           <span class="a-tag">${escapeHtml(c.tag)}</span><span class="a-title">${escapeHtml(c.title)}</span>
+           <span class="a-body">${escapeHtml(c.body)}</span><span class="a-more">คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้าง</span></button>`
+      : `<div class="brief-action" style="--accent:${c.accent};">
+           <span class="a-tag">${escapeHtml(c.tag)}</span><span class="a-title">${escapeHtml(c.title)}</span>
+           <span class="a-body">${escapeHtml(c.body)}</span></div>`).join('');
+    el('briefActions').querySelectorAll('button[data-loc]').forEach(b => b.addEventListener('click', () => {
+      msLocation.setValues([b.dataset.loc]);
+      applyFilters();
+      openLocationBreakdownModal(b.dataset.loc, getScopedRows());
+    }));
+    el('briefFoot').textContent = 'การคาดการณ์เป็นเส้นตรงจากข้อมูลที่นำเข้า ไม่รวมแผนรับเข้า/ฤดูกาล · ตัวขับ = Group Sale ที่เพิ่มมากที่สุดในโรงนั้นเทียบรอบก่อน';
+  }
+
+  // ===== การ์ดกลุ่มสินค้าหลัก (Flat / Pipe / CH / Section) — จัดกลุ่มตาม Group Product จริงในฐานข้อมูล =====
   // นิยาม FAMILY_DEFS อยู่ที่ scope กลาง (global) แล้ว — ใช้ร่วมกับหน้าแนวโน้มด้วย ไม่ประกาศซ้ำที่นี่
   function renderFamilyCards(rows, locRows, capacitySummary){
     const box = el('familyCards');
@@ -1754,14 +2041,14 @@ const DashboardPage = (() => {
         : `เกินพิกัด ${fmtNum(Math.abs(famRemain),1)} ตัน`;
 
       const famInfoTitle = `น้ำหนัก ${fmtNum(weight/1000,2)} ตัน = ผลรวม total_weight ของทุกแถวที่ Group Product อยู่ในกลุ่ม: ${fam.groupProducts.join(', ')} (เฉพาะวันที่นำเข้าที่เลือกไว้)\n`
-        + `% ของสต็อกทั้งหมด = น้ำหนักกลุ่มนี้ ÷ น้ำหนักสต็อกรวมทุกกลุ่ม (รวม Scrap/อื่นๆ ที่ไม่ใช่ 3 กลุ่มนี้ด้วย) × 100\n`
+        + `% ของสต็อกทั้งหมด = น้ำหนักกลุ่มนี้ ÷ น้ำหนักสต็อกรวมทุกกลุ่ม (รวม Scrap/อื่นๆ ที่ไม่ใช่ 4 กลุ่มนี้ด้วย) × 100\n`
         + `เก็บได้ ${fmtNum(famCapacity,1)} ตัน = ผลรวมความจุ (actual_capacity_tons) เฉพาะโรงงานที่มีสต็อกกลุ่มนี้จัดเก็บอยู่จริง: ${famLocations.length ? famLocations.join(', ') : '—'}\n`
         + `${famRemain >= 0 ? 'เหลือ' : 'เกินพิกัด'} = ความจุของกลุ่มนี้ − น้ำหนักที่ใช้ของกลุ่มนี้`;
       return `
         <div class="family-card" style="--family-color:${fam.color};">
           <div class="family-head"><span class="family-icon" style="background:${tintHex(fam.color,0.14)};">${fam.icon}</span><span class="family-name">${escapeHtml(fam.label)}</span><span class="kpi-info" title="${escapeHtml(famInfoTitle)}">ⓘ</span></div>
           <div class="family-value">${fmtNum(weight/1000,2)} ตัน</div>
-          <div class="family-sub"><b style="color:${fam.color};">${pct.toFixed(1)}%</b> ของสต็อกทั้งหมด · ${fmtNum(skuCount)} SKU</div>
+          <div class="family-sub"><b style="color:var(--navy-900);">${pct.toFixed(1)}%</b> ของสต็อกทั้งหมด · ${fmtNum(skuCount)} SKU</div>
           <div class="family-capacity-line">
             เก็บได้ <b>${fmtNum(famCapacity,1)} ตัน</b> · <span class="mgr-factory-remaining ${famRemainCls}" style="display:inline;">${famRemainText}</span>
           </div>
@@ -1795,7 +2082,7 @@ const DashboardPage = (() => {
     // โรงงานที่ยังไม่มีข้อมูลความจุมี pct = 0 จึงเคยหลุดไปอยู่ท้ายสุด ทั้งที่ต้องรีบตรวจ — ดันขึ้นบนสุด
     const sorted = withPct.slice().sort((a,b) => (b.noCapacity?1:0) - (a.noCapacity?1:0) || b.pct - a.pct);
     list.innerHTML = sorted.map(r => {
-      const widthPct = Math.min(100, r.pct);
+      const widthPct = Math.min(120, r.pct) / 120 * 100; // แกนยาวถึง 120% ให้เห็นส่วนที่เกินความจุ
       const remainingCls = r.remaining < 0 ? 'over' : 'ok';
       const remainingText = r.remaining >= 0
         ? `เหลือ ${fmtNum(r.remaining,1)} ตัน`
@@ -1809,7 +2096,7 @@ const DashboardPage = (() => {
       return `
         <div class="mgr-factory-row" data-location="${escapeHtml(r.location_code)}" title="คลิกเพื่อดูว่ามีอะไรจัดเก็บบ้างในโรงงานนี้">
           <div class="mgr-factory-name">${escapeHtml(r.location_code)}</div>
-          <div class="mgr-factory-track"><div class="mgr-factory-fill" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div></div>
+          <div class="mgr-factory-track" title="เส้นบาง = 80% · เส้นหนา = 100% ของความจุ"><div class="mgr-factory-fill" style="width:${widthPct}%;background:${Tier.color(r.tier)};"></div><span class="mgr-factory-mark" style="left:66.67%;"></span><span class="mgr-factory-mark cap" style="left:83.33%;"></span></div>
           <div class="mgr-factory-nums" title="${escapeHtml(r.noCapacity ? 'โรงงานนี้ยังไม่มีข้อมูลพื้นที่จัดเก็บ (actual_capacity_tons) ในไฟล์ Area จึงคำนวณ % ใช้พื้นที่ไม่ได้' : pctTitle)}">
             ${r.noCapacity
               ? `<b>—</b> · ใช้ ${fmtNum(r.used,1)} ตัน <span class="cell-muted">(ยังไม่มีข้อมูลความจุ)</span>`
@@ -2316,12 +2603,12 @@ const DashboardPage = (() => {
     return `<div style="overflow-x:auto;">
         <svg viewBox="0 0 ${width} ${height}" style="width:100%;min-width:560px;height:auto;">
           ${grid}${diagonal}${refs}
-          <polyline points="${pts.join(' ')}" fill="none" stroke="#E85D04" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+          <polyline points="${pts.join(' ')}" fill="none" stroke="#ff6a05" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
           ${markers}
         </svg>
       </div>
       <div class="legend-row" style="margin-top:6px;">
-        <div class="legend-item"><span class="legend-swatch" style="background:#E85D04;"></span>น้ำหนักสะสมจริง</div>
+        <div class="legend-item"><span class="legend-swatch" style="background:#ff6a05;"></span>น้ำหนักสะสมจริง</div>
         <div class="legend-item"><span class="legend-swatch" style="background:#adb5bd;"></span>เส้นอ้างอิงกรณีทุก SKU หนักเท่ากัน</div>
         <div class="legend-item" style="color:var(--gray-400);">รวม ${fmtNum(n)} SKU · ${fmtNum(totalKg/1000, 2)} ตัน</div>
       </div>`;
@@ -2402,7 +2689,7 @@ const LookupPage = (() => {
     const out = [];
     for (let i = 0; i < codes.length; i += CHUNK){
       const part = codes.slice(i, i + CHUNK);
-      const rows = await fetchAllRows('v_stock_enriched', '*', 'id', q => {
+      const rows = await fetchAllRows('v_stock_enriched', ENRICHED_COLS, 'id', q => {
         let qq = q.in('material', part);
         if (scopeRange) qq = qq.gte('imported_at', scopeRange.startIso).lt('imported_at', scopeRange.endIso);
         return qq;
@@ -3336,8 +3623,8 @@ const TrendsPage = (() => {
 
     const refs = (opts.refLines || []).map(r => {
       if (r.y > sc.max || r.y < sc.min) return '';
-      return `<line x1="${padL}" y1="${yAt(r.y)}" x2="${width-padR}" y2="${yAt(r.y)}" stroke="${r.color||'#C9971F'}" stroke-width="1.4" stroke-dasharray="6 4"/>`
-        + `<text x="${padL+6}" y="${yAt(r.y)-6}" font-size="10.5" font-weight="600" fill="${r.color||'#C9971F'}">${escapeHtml(r.label)}</text>`;
+      return `<line x1="${padL}" y1="${yAt(r.y)}" x2="${width-padR}" y2="${yAt(r.y)}" stroke="${r.color||'#d9a21a'}" stroke-width="1.4" stroke-dasharray="6 4"/>`
+        + `<text x="${padL+6}" y="${yAt(r.y)-6}" font-size="10.5" font-weight="600" fill="${r.color||'#a87a00'}">${escapeHtml(r.label)}</text>`;
     }).join('');
 
     const body = series.map(s => {
@@ -3383,7 +3670,7 @@ const TrendsPage = (() => {
            +  `<text x="${padL-8}" y="${yAt(v)+4}" text-anchor="end" font-size="10.5" fill="#6c757d">${fmtNum(Math.abs(v),0)}</text>`;
     }
 
-    const IN_COLOR = '#1baf7a', OUT_COLOR = '#eb6834', NET_COLOR = '#0F3460';
+    const IN_COLOR = '#4f8fc2', OUT_COLOR = '#ff6a05', NET_COLOR = '#0c3843';
     let bars = '', netPts = [], labels = '';
     rows.forEach((r, i) => {
       const cx = padL + slot * (i + 0.5);
@@ -3430,12 +3717,37 @@ const TrendsPage = (() => {
     </svg>`;
   }
 
+  // { groupProduct -> { dateKey -> {tons,sku,qty} } } → { กลุ่มหลัก -> { dateKey -> {tons,sku,qty} } }
+  function deriveFamilyDim(byGp){
+    const out = {};
+    Object.entries(byGp).forEach(([gp, byDate]) => {
+      const fam = familyLabelOf(gp);
+      out[fam] = out[fam] || {};
+      Object.entries(byDate).forEach(([k, c]) => {
+        const t = out[fam][k] || { tons:0, sku:0, qty:0 };
+        t.tons += c.tons || 0; t.sku += c.sku || 0; t.qty += c.qty || 0;
+        out[fam][k] = t;
+      });
+    });
+    return out;
+  }
+  // แบบเดียวกันสำหรับ locGroup (ค่าเป็นตันตรงๆ)
+  function deriveFamilyTons(byGp){
+    const out = {};
+    Object.entries(byGp).forEach(([gp, byDate]) => {
+      const fam = familyLabelOf(gp);
+      out[fam] = out[fam] || {};
+      Object.entries(byDate).forEach(([k, t]) => { out[fam][k] = (out[fam][k] || 0) + (t || 0); });
+    });
+    return out;
+  }
+
   /* ---------- โหลดข้อมูล ---------- */
   function setLoading(){
     ['trendTotalChart','trendFlowChart','trendDimChart'].forEach(id => {
       const e = el(id); if (e) e.innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
     });
-    el('trendTbody').innerHTML = '<tr><td colspan="12"><div class="empty-state">กำลังโหลด...</div></td></tr>';
+    el('trendTbody').innerHTML = '<tr><td colspan="13"><div class="empty-state">กำลังโหลด...</div></td></tr>';
     el('trendLocTbody').innerHTML = '<tr><td colspan="8"><div class="empty-state">กำลังโหลด...</div></td></tr>';
   }
 
@@ -3443,7 +3755,7 @@ const TrendsPage = (() => {
     setLoading();
     try {
       const [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes, aggRes, lgRes] = await Promise.all([
-        sb.from('v_stock_daily').select('date_key,row_count,sku_count,total_weight_kg,flat_kg,pipe_kg,section_kg').order('date_key'),
+        sb.from('v_stock_daily').select('date_key,row_count,sku_count,total_weight_kg').order('date_key'),
         sb.from('v_movement_daily').select('*').order('date_key'),
         sb.from('v_movement_by_location').select('*'),
         sb.from('v_daily_breakdown').select('*'),
@@ -3469,7 +3781,7 @@ const TrendsPage = (() => {
       daily = (dailyRes.data || []).filter(r => r.date_key).map(r => ({
         dateKey: r.date_key, t: keyToTime(r.date_key),
         tons: (+r.total_weight_kg || 0)/1000, rows: +r.row_count || 0, sku: +r.sku_count || 0,
-        flat: (+r.flat_kg||0)/1000, pipe: (+r.pipe_kg||0)/1000, section: (+r.section_kg||0)/1000,
+        fam: {}, // { Flat, Pipe, CH, Section } ตัน — เติมจาก breakdown.family ด้านล่าง
         qty: 0,
       }));
 
@@ -3503,9 +3815,15 @@ const TrendsPage = (() => {
         cell.qty  += +r.qty||0;
         breakdown[dim][val][r.date_key] = cell;
       });
+      // กลุ่มหลัก (Flat/Pipe/CH/Section/อื่นๆ) คำนวณใหม่จากมิติ group_product เสมอ — ไม่พึ่ง family ของ SQL
+      // (Group Product หนึ่งตัวอยู่กลุ่มหลักเดียว และ Material หนึ่งตัวมี Group Product เดียว → ผลรวมตัน/ชิ้น/SKU ตรงเป๊ะ)
+      breakdown.family = deriveFamilyDim(breakdown.group_product || {});
+      Object.values(locGroup).forEach(byDim => { byDim.family = deriveFamilyTons(byDim.group_product || {}); });
+
       // จำนวนชิ้นรวมต่อรอบ อ่านจากมิติ family (ครอบคลุมทุกแถวพอดี ไม่ซ้ำ)
       daily.forEach(d => {
         d.qty = Object.values(breakdown.family || {}).reduce((s,byDate) => s + ((byDate[d.dateKey]||{}).qty || 0), 0);
+        FAMILY_DEFS.forEach(f => { d.fam[f.label] = (((breakdown.family || {})[f.label] || {})[d.dateKey] || {}).tons || 0; });
       });
 
       capacityByLoc = {};
@@ -3522,7 +3840,7 @@ const TrendsPage = (() => {
       ['trendTotalChart','trendFlowChart','trendDimChart'].forEach(id => {
         const x = el(id); if (x) x.innerHTML = `<div class="viz-empty">⚠️ โหลดข้อมูลไม่สำเร็จ: ${msg}</div>`;
       });
-      el('trendTbody').innerHTML = '<tr><td colspan="12"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
+      el('trendTbody').innerHTML = '<tr><td colspan="13"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
       el('trendLocTbody').innerHTML = '<tr><td colspan="8"><div class="empty-state">โหลดข้อมูลไม่สำเร็จ</div></td></tr>';
       toast('โหลดข้อมูลแนวโน้มไม่สำเร็จ: ' + friendlyDbError(e), 'error');
     }
@@ -3592,7 +3910,7 @@ const TrendsPage = (() => {
       card('เปลี่ยนแปลงรอบล่าสุด', prev ? deltaHtml(last.tons - prev.tons, 'ตัน', 1, prev.tons) : '<span class="cell-muted">—</span>',
         prev ? `เทียบ ${escapeHtml(fmtDateKey(prev.dateKey))} (ห่าง ${lastMov?lastMov.gapDays:'-'} วัน)` : '&nbsp;',
         'ผลต่างน้ำหนักสต็อกรวมระหว่างรอบล่าสุดกับรอบก่อนหน้า'),
-      card('รับเข้า / จ่ายออก', `<span style="color:#1baf7a;">${fmtNum(totalIn,0)}</span> / <span style="color:#eb6834;">${fmtNum(totalOut,0)}</span>`,
+      card('รับเข้า / จ่ายออก', `<span style="color:var(--blue-600);">${fmtNum(totalIn,0)}</span> / <span style="color:var(--danger);">${fmtNum(totalOut,0)}</span>`,
         `รวมทั้งช่วง (ตัน) · สุทธิ ${totalIn-totalOut>=0?'+':'−'}${fmtNum(Math.abs(totalIn-totalOut),0)}`,
         'คำนวณจากการเทียบ snapshot ระดับ Material × Batch ระหว่างรอบที่ติดกัน — ส่วนที่เพิ่มขึ้นนับเป็นรับเข้า ส่วนที่ลดลงนับเป็นจ่ายออก (หักการย้ายที่เก็บภายในออกแล้ว)'),
       card('Days on Hand', doh ? fmtNum(doh,0) + ' วัน' : '<span class="cell-muted">—</span>',
@@ -3607,9 +3925,9 @@ const TrendsPage = (() => {
   function renderMainChart(rows){
     const cfg = {
       weight: { label:'น้ำหนักรวม', get:(d)=>d.tons, fmt:(v)=>fmtNum(v,1)+' ตัน', tick:(v)=>fmtNum(v,0),
-                ref: totalCapacity>0 ? [{y: totalCapacity, label:`ความจุรวม ${fmtNum(totalCapacity,0)} ตัน`, color:'#C9971F'}] : [] },
+                ref: totalCapacity>0 ? [{y: totalCapacity, label:`ความจุรวม ${fmtNum(totalCapacity,0)} ตัน`, color:'#a87a00'}] : [] },
       pct:    { label:'% ใช้พื้นที่', get:(d)=> totalCapacity>0 ? d.tons/totalCapacity*100 : 0, fmt:(v)=>v.toFixed(1)+'%', tick:(v)=>fmtNum(v,0)+'%',
-                ref: [{y:100, label:'เต็มความจุ', color:'#dc3545'}, {y:80, label:'เกณฑ์ใกล้เต็ม 80%', color:'#C9971F'}] },
+                ref: [{y:100, label:'เต็มความจุ', color:'#c24e00'}, {y:80, label:'เกณฑ์ใกล้เต็ม 80%', color:'#a87a00'}] },
       sku:    { label:'จำนวน SKU', get:(d)=>d.sku, fmt:(v)=>fmtNum(v,0)+' SKU', tick:(v)=>fmtNum(v,0), ref: [] },
       qty:    { label:'จำนวนชิ้น (Unrestricted)', get:(d)=>d.qty, fmt:(v)=>fmtNum(v,0)+' หน่วย', tick:(v)=>fmtNum(v,0), ref: [] },
     }[metricSel];
@@ -3620,7 +3938,7 @@ const TrendsPage = (() => {
       : '⚠️ รวมหลายหน่วยนับ (เส้น/แผ่น/กก.) ใช้เทียบอย่างหยาบ';
 
     el('trendTotalChart').innerHTML = buildTimeChart(
-      [{ label: cfg.label, color:'#1a4a8a', points: rows.map(d => ({ key:d.dateKey, t:d.t, y:cfg.get(d) })) }],
+      [{ label: cfg.label, color:'#0c3843', points: rows.map(d => ({ key:d.dateKey, t:d.t, y:cfg.get(d) })) }],
       { refLines: cfg.ref, valueFmt: cfg.fmt, tickFmt: cfg.tick }
     );
   }
@@ -3672,7 +3990,7 @@ const TrendsPage = (() => {
 
     tbody.innerHTML = list.map(s => {
       const tier = s.pct === null ? 'normal' : s.pct > 100 ? 'critical' : s.pct > 80 ? 'warn' : 'normal';
-      const sparkColor = s.slopeWeek > 0 ? '#0F3460' : s.slopeWeek < 0 ? '#E85D04' : '#adb5bd';
+      const sparkColor = s.slopeWeek > 0 ? '#0c3843' : s.slopeWeek < 0 ? '#ff6a05' : '#adb5bd';
       let forecastHtml = '<span class="cell-muted">ทรงตัว</span>';
       if (s.forecast){
         if (s.forecast.type === 'over') forecastHtml = '<span class="mgr-status-pill critical">⛔ เกินความจุแล้ว</span>';
@@ -3693,7 +4011,7 @@ const TrendsPage = (() => {
           <td class="cell-num">${fmtNum(s.latest,1)}</td>
           <td class="cell-num">${s.prev !== null ? deltaHtml(s.latest - s.prev, 'ตัน', 1, s.prev) : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num"><span class="${s.slopeWeek>0?'trend-up':s.slopeWeek<0?'trend-down':'trend-flat'}">${s.slopeWeek>=0?'+':'−'}${fmtNum(Math.abs(s.slopeWeek),1)}</span></td>
-          <td class="cell-num" style="font-size:11.5px;"><span style="color:#1baf7a;">+${fmtNum(s.mv.inT,1)}</span> / <span style="color:#eb6834;">−${fmtNum(s.mv.outT,1)}</span></td>
+          <td class="cell-num" style="font-size:11.5px;"><span style="color:var(--blue-600);">+${fmtNum(s.mv.inT,1)}</span> / <span style="color:var(--danger);">−${fmtNum(s.mv.outT,1)}</span></td>
           <td class="cell-num">${s.pct===null?'<span class="cell-muted">—</span>':`<span class="mgr-status-pill ${tier}">${s.pct.toFixed(0)}%</span>`}</td>
           <td title="${escapeHtml(fcTitle)}">${forecastHtml}</td>
         </tr>`;
@@ -3727,8 +4045,8 @@ const TrendsPage = (() => {
         </div>
         <div class="modal-body" style="flex-direction:column;padding:20px 24px;">
           <div class="modal-col-title">ระดับสต็อก</div>
-          ${buildTimeChart([{ label: loc, color:'#1a4a8a', points: s.points }],
-              { height: 240, refLines: s.cap>0 ? [{y:s.cap, label:`ความจุ ${fmtNum(s.cap,0)} ตัน`, color:'#C9971F'}] : [],
+          ${buildTimeChart([{ label: loc, color:'#0c3843', points: s.points }],
+              { height: 240, refLines: s.cap>0 ? [{y:s.cap, label:`ความจุ ${fmtNum(s.cap,0)} ตัน`, color:'#a87a00'}] : [],
                 valueFmt:(v)=>fmtNum(v,1)+' ตัน' })}
           <div class="modal-col-title" style="margin-top:20px;">การไหลเข้า-ออกของพื้นที่นี้</div>
           <div class="cell-muted" style="font-size:11px;margin-bottom:8px;">ระดับนี้นับ "การย้ายระหว่างโรงงาน" รวมด้วย เพราะมองจากมุมของพื้นที่นี้ว่ามีของเข้ามา/ออกไปเท่าไหร่</div>
@@ -3785,7 +4103,7 @@ const TrendsPage = (() => {
     const rowsHtml = entries.map(e => {
       const diff = e.prev === null ? null : e.latest - e.prev;
       const share = totalLatest > 0 ? e.latest/totalLatest*100 : 0;
-      const color = e.latest >= (e.prev || 0) ? '#0F3460' : '#E85D04';
+      const color = e.latest >= (e.prev || 0) ? '#0c3843' : '#ff6a05';
       return `
         <tr>
           <td><b>${escapeHtml(e.v)}</b></td>
@@ -3830,7 +4148,7 @@ const TrendsPage = (() => {
     const rest = ranked.slice(CATEGORICAL_SLOTS.length);
 
     const series = shown.map((r,i) => ({
-      label: r.v, color: CATEGORICAL_SLOTS[i],
+      label: r.v, color: dimSel === 'family' ? familyChartColor(r.v) : CATEGORICAL_SLOTS[i],
       points: rows.map(d => ({ key:d.dateKey, t:d.t, y: (byVal[r.v][d.dateKey] || {}).tons ?? null })),
     }));
     if (rest.length){
@@ -3847,7 +4165,7 @@ const TrendsPage = (() => {
   /* ---------- ตารางรายรอบ ---------- */
   function renderTable(rows){
     const tbody = el('trendTbody');
-    if (!rows.length){ tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>'; return; }
+    if (!rows.length){ tbody.innerHTML = '<tr><td colspan="13"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>'; return; }
     tbody.innerHTML = rows.slice().reverse().map((d, ri) => {
       const idx = rows.length - 1 - ri;
       const prev = idx > 0 ? rows[idx-1] : null;
@@ -3858,13 +4176,11 @@ const TrendsPage = (() => {
           <td class="cell-num">${m && m.gapDays ? m.gapDays + ' วัน' : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num">${fmtNum(d.tons,1)}</td>
           <td class="cell-num">${prev ? deltaHtml(d.tons - prev.tons, 'ตัน', 1, prev.tons) : '<span class="cell-muted">—</span>'}</td>
-          <td class="cell-num" style="color:#1baf7a;">${m ? '+'+fmtNum(m.inT,1) : '<span class="cell-muted">—</span>'}</td>
-          <td class="cell-num" style="color:#eb6834;">${m ? '−'+fmtNum(m.outT,1) : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num" style="color:var(--blue-600);">${m ? '+'+fmtNum(m.inT,1) : '<span class="cell-muted">—</span>'}</td>
+          <td class="cell-num" style="color:var(--danger);">${m ? '−'+fmtNum(m.outT,1) : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num cell-muted" title="ของที่แค่ย้ายที่เก็บ ไม่ได้เข้า-ออกคลังจริง">${m ? fmtNum(m.internalT,1) : '—'}</td>
           <td class="cell-num" title="${m?escapeHtml(`${fmtNum(m.lotsUnchanged)} ล็อตที่น้ำหนักไม่เปลี่ยนเลยจากรอบก่อน`):''}">${m ? fmtNum(m.unchangedT,1) : '<span class="cell-muted">—</span>'}</td>
-          <td class="cell-num">${fmtNum(d.flat,1)}</td>
-          <td class="cell-num">${fmtNum(d.pipe,1)}</td>
-          <td class="cell-num">${fmtNum(d.section,1)}</td>
+          ${FAMILY_DEFS.map(f => `<td class="cell-num">${fmtNum(d.fam[f.label] || 0,1)}</td>`).join('')}
           <td class="cell-num">${fmtNum(d.sku)}</td>
         </tr>`;
     }).join('');
@@ -3874,7 +4190,7 @@ const TrendsPage = (() => {
     const rows = scoped();
     if (!rows.length){ toast('ไม่มีข้อมูลให้ export', 'error'); return; }
     const headers = ['Date','Gap Days','Stock (Ton)','Change (Ton)','In (Ton)','Out (Ton)','Internal Move (Ton)',
-                     'Unchanged (Ton)','Flat','Pipe','Section','SKU','Qty','Utilization %'];
+                     'Unchanged (Ton)', ...FAMILY_DEFS.map(f => f.label), 'SKU','Qty','Utilization %'];
     const lines = [headers.join(',')];
     rows.forEach((d, i) => {
       const m = movement[d.dateKey] || {};
@@ -3884,7 +4200,7 @@ const TrendsPage = (() => {
         (m.inT ?? '') === '' ? '' : m.inT.toFixed(2), (m.outT ?? '') === '' ? '' : m.outT.toFixed(2),
         (m.internalT ?? '') === '' ? '' : m.internalT.toFixed(2),
         (m.unchangedT ?? '') === '' ? '' : m.unchangedT.toFixed(2),
-        d.flat.toFixed(2), d.pipe.toFixed(2), d.section.toFixed(2), d.sku, d.qty,
+        ...FAMILY_DEFS.map(f => (d.fam[f.label] || 0).toFixed(2)), d.sku, d.qty,
         totalCapacity > 0 ? (d.tons/totalCapacity*100).toFixed(2) : '',
       ].map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(','));
     });
@@ -3904,7 +4220,7 @@ const TrendsPage = (() => {
     if (!rows.length){
       ['trendTotalChart','trendFlowChart','trendDimChart'].forEach(id =>
         el(id).innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลสต็อกที่มีวันที่นำเข้าชัดเจน — นำเข้าข้อมูลอย่างน้อย 1 รอบก่อน</div>');
-      el('trendTbody').innerHTML = '<tr><td colspan="12"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
+      el('trendTbody').innerHTML = '<tr><td colspan="13"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
       el('trendLocTbody').innerHTML = '<tr><td colspan="8"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
       return;
     }
