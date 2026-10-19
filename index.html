@@ -789,7 +789,7 @@
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe (แยก Pipe · CH) / Section — น้ำหนักรวมทั้งเครือข่าย · ชี้ที่ ⓘ เพื่อดูวิธีคำนวณ</span></div>
+    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe (แยก Pipe · Pipe GI · C Channel · C Channel GI) / Section — น้ำหนักรวมทั้งเครือข่าย · ชี้ที่ ⓘ เพื่อดูวิธีคำนวณ</span></div>
     <div class="family-capacity-context" id="familyCapacityContext">กำลังโหลด...</div>
     <div class="family-grid" id="familyCards">
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
@@ -1099,7 +1099,7 @@
           <th class="cell-num">สต็อก (ตัน)</th><th class="cell-num">เปลี่ยนแปลง</th>
           <th class="cell-num">รับเข้า</th><th class="cell-num">จ่ายออก</th>
           <th class="cell-num">ย้ายภายใน</th><th class="cell-num">ไม่เคลื่อนไหว</th>
-          <th class="cell-num">Flat</th><th class="cell-num" title="Pipe รวม CH — บรรทัดล่างแยกยอดแต่ละกลุ่มย่อย">Pipe (Pipe · CH)</th><th class="cell-num">Section</th>
+          <th class="cell-num">Flat</th><th class="cell-num" title="Pipe รวม C Channel — บรรทัดล่างแยก Pipe / Pipe GI / CH / CH GI (GI = Galvanized)">Pipe + C Channel</th><th class="cell-num">Section</th>
           <th class="cell-num">SKU</th>
         </tr></thead>
         <tbody id="trendTbody"><tr><td colspan="12"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
@@ -1551,9 +1551,12 @@ function sequentialColor(hue, sat, pct){
 ============================================================ */
 const FAMILY_DEFS = [
   { key:'flat',    label:'Flat',    icon:'📄', color:'#0c3843', chartColor:'#0c3843', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
-  { key:'pipe',    label:'Pipe',    icon:'⭕', color:'#8bbade', chartColor:'#4f8fc2', groupProducts:['Pipe','CH'], desc:'ท่อ + ตัวซี (Pipe / CH)',
-    parts:[ { label:'Pipe', desc:'ท่อ',   groupProducts:['Pipe'], color:'#4f8fc2' },
-            { label:'CH',   desc:'ตัวซี', groupProducts:['CH'],   color:'#fdc440' } ] },
+  { key:'pipe',    label:'Pipe',    icon:'⭕', color:'#8bbade', chartColor:'#4f8fc2', groupProducts:['Pipe','CH'], desc:'ท่อ + ตัวซี (Pipe / CH) · GI = Galvanized (ชุบสังกะสี)',
+    // 4 ประเภทตามที่ผู้ใช้กำหนด (19 ต.ค. 2569): Galvanized = GI — ดู isGalvanized()
+    parts:[ { label:'Pipe',                 short:'Pipe',  desc:'ท่อ (ไม่ชุบ + ท่อประปา)',  groupProducts:['Pipe'], gi:false, color:'#2f74a8' },
+            { label:'Pipe Galvanized',      short:'Pipe GI', desc:'ท่อชุบ GI',  groupProducts:['Pipe'], gi:true,  color:'#8bbade' },
+            { label:'C Channel',            short:'CH',    desc:'ตัวซี (ไม่ชุบ)', groupProducts:['CH'],   gi:false, color:'#d9a21a' },
+            { label:'C Channel Galvanized', short:'CH GI', desc:'ตัวซีชุบ GI',  groupProducts:['CH'],   gi:true,  color:'#fdc440' } ] },
   { key:'section', label:'Section', icon:'🏗️', color:'#ff6a05', chartColor:'#ff6a05', groupProducts:['Beam'], desc:'ฉาก + รางน้ำ + Beam ทั้งหมด (Beam)' },
 ];
 const FAMILY_OTHER = 'อื่นๆ';
@@ -1562,6 +1565,26 @@ const FAMILY_OTHER = 'อื่นๆ';
 // ยังรวม CH ไว้ใน Pipe (ก่อนรัน migration) หรือแยกแล้ว — ตัวเลขถูกเสมอทั้งสองสถานะ
 const FAMILY_BY_GP = FAMILY_DEFS.reduce((m, f) => { f.groupProducts.forEach(gp => { m[gp] = f.label; }); return m; }, {});
 function familyLabelOf(groupProduct){ return FAMILY_BY_GP[groupProduct] || FAMILY_OTHER; }
+// Galvanized (GI) = รหัส Material มี "GI" (เช่น 3SPGI…, 3CHGITS…, 1GI-BS…) หรือคำอธิบายมี GI / สังกะสี / กัลวา
+// ตรวจกับข้อมูลจริง 14 ต.ค. 2569: ใช้ Group Sale (Pipe-GI/CH-GI) อย่างเดียวจะตกหล่น เช่น ท่อประปา GI ใน Code1,
+// ซีมีขอบ…GI ที่อยู่ CH-A/CH-D, ท่อเคลือบสังกะสี — จึงดูที่ตัวสินค้าเอง (กฎเดียวกับ SQL view v_pipe_ch_split_daily)
+// ยกเว้น: ท่อประปา (รวมท่อประปา GI / ท่อเคลือบสังกะสี BS-M, BS-S) ไม่นับเป็นกลุ่ม GI → อยู่ใน Pipe (ผู้ใช้กำหนด 19 ต.ค. 2569)
+function isWaterPipe(productType, description){
+  return /ประปา/.test(productType || '') || /ประปา/.test(description || '');
+}
+function isGalvanized(material, description, productType){
+  if (isWaterPipe(productType, description)) return false;
+  return /GI/.test(material || '') || /(GI|สังกะสี|กัลวา)/.test(description || '');
+}
+function partMatches(pt, row){
+  return pt.groupProducts.includes(row.group_product) && isGalvanized(row.material, row.material_description, row.product_type) === pt.gi;
+}
+// ชื่อประเภทสั้นของแถวสต็อก: Pipe / Pipe GI / CH / CH GI ส่วนกลุ่มอื่นใช้ Group Product ตามเดิม
+const ALL_PARTS = FAMILY_DEFS.flatMap(f => f.parts || []);
+function typeShortOf(row){
+  const pt = ALL_PARTS.find(x => partMatches(x, row));
+  return pt ? pt.short : (row.group_product || 'ไม่ระบุ');
+}
 function familyChartColor(label){
   const f = FAMILY_DEFS.find(x => x.label === label);
   return f ? f.chartColor : OTHER_SLOT_COLOR;
@@ -1882,7 +1905,7 @@ const DashboardPage = (() => {
     const out = {};
     (rows || []).forEach(r => {
       const loc = locationDisplayCode(r.location_code); if (!loc) return;
-      const gp = r.group_product || 'ไม่ระบุ';
+      const gp = typeShortOf(r); // Pipe / Pipe GI / CH / CH GI / HS / Plate / …
       const t = (Number(r.total_weight) || 0) / 1000;
       const c = (out[loc] = out[loc] || { byGp:{}, byFam:{}, total:0 });
       c.byGp[gp] = (c.byGp[gp] || 0) + t;
@@ -1891,7 +1914,7 @@ const DashboardPage = (() => {
       c.total += t;
     });
     Object.values(out).forEach(c => {
-      c.items = Object.entries(c.byGp).map(([gp, t]) => ({ gp, fam: familyLabelOf(gp === 'ไม่ระบุ' ? null : gp), t })).sort((a,b) => b.t - a.t);
+      c.items = Object.entries(c.byGp).map(([gp, t]) => ({ gp, t })).sort((a,b) => b.t - a.t);
       c.mainFam = Object.entries(c.byFam).filter(([f]) => f !== FAMILY_OTHER).sort((a,b) => b[1] - a[1])[0]?.[0] || FAMILY_OTHER;
     });
     return out;
@@ -2123,7 +2146,7 @@ const DashboardPage = (() => {
       const partsHtml = { bar:'', list:'' };
       if (fam.parts && fam.parts.length){
         const parts = fam.parts.map(pt => {
-          const pr = famRows.filter(r => pt.groupProducts.includes(r.group_product));
+          const pr = famRows.filter(r => partMatches(pt, r));
           const w = pr.reduce((s,r) => s + (Number(r.total_weight)||0), 0);
           return { ...pt, w, sku: new Set(pr.map(r => r.material)).size,
                    share: weight > 0 ? w / weight * 100 : 0,
@@ -3644,6 +3667,7 @@ const TrendsPage = (() => {
   let capacityByLoc = {};
   let totalCapacity = 0;
   let importHealth = {}; // dateKey -> จำนวนครั้งที่นำเข้าในวันนั้น
+  let splitByDate = null; // dateKey -> { 'Pipe|0', 'Pipe|1', 'CH|0', 'CH|1' } ตัน (จาก v_pipe_ch_split_daily)
   let aggStatus = null;  // { refreshed_at, is_stale }
   let rangeSel = 'all';  // '30' | '90' | 'all'
   let metricSel = 'weight';
@@ -3866,7 +3890,7 @@ const TrendsPage = (() => {
   async function loadData(){
     setLoading();
     try {
-      const [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes, aggRes, lgRes] = await Promise.all([
+      const [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes, aggRes, lgRes, splitRes] = await Promise.all([
         sb.from('v_stock_daily').select('date_key,row_count,sku_count,total_weight_kg').order('date_key'),
         sb.from('v_movement_daily').select('*').order('date_key'),
         sb.from('v_movement_by_location').select('*'),
@@ -3875,9 +3899,20 @@ const TrendsPage = (() => {
         sb.from('v_import_health').select('*'),
         sb.from('v_agg_status').select('*').maybeSingle(),
         sb.from('v_location_group_daily').select('date_key,location_code,dim_type,dim_value,weight_kg'),
+        sb.from('v_pipe_ch_split_daily').select('date_key,group_product,is_gi,weight_kg'),
       ]);
       for (const r of [dailyRes, movRes, movLocRes, bdRes, capRes, healthRes, lgRes]) if (r.error) throw r.error;
       aggStatus = aggRes.error ? null : aggRes.data;
+      // แยก Pipe / Pipe GI / C Channel / C Channel GI ต่อรอบ — ถ้า view นี้โหลดไม่ได้ ยังแสดงยอด Pipe/CH รวมได้ (GI เป็น —)
+      splitByDate = null;
+      if (!splitRes.error && splitRes.data){
+        splitByDate = {};
+        splitRes.data.forEach(r => {
+          const k = `${r.group_product}|${r.is_gi ? 1 : 0}`;
+          splitByDate[r.date_key] = splitByDate[r.date_key] || {};
+          splitByDate[r.date_key][k] = (splitByDate[r.date_key][k] || 0) + (+r.weight_kg || 0)/1000;
+        });
+      }
 
       // โรงงาน × กลุ่มสินค้า × วันที่ (รวม Fac B+E ให้ตรงกับที่อื่น)
       locGroup = {};
@@ -3938,8 +3973,15 @@ const TrendsPage = (() => {
         d.qty = Object.values(breakdown.family || {}).reduce((s,byDate) => s + ((byDate[d.dateKey]||{}).qty || 0), 0);
         FAMILY_DEFS.forEach(f => {
           d.fam[f.label] = (((breakdown.family || {})[f.label] || {})[d.dateKey] || {}).tons || 0;
-          if (f.parts) d.parts[f.label] = Object.fromEntries(f.parts.map(pt => [pt.label,
-            pt.groupProducts.reduce((s, gp) => s + ((((breakdown.group_product || {})[gp] || {})[d.dateKey] || {}).tons || 0), 0)]));
+          if (f.parts) d.parts[f.label] = Object.fromEntries(f.parts.map(pt => {
+            if (splitByDate) {
+              const m = splitByDate[d.dateKey] || {};
+              return [pt.label, pt.groupProducts.reduce((s, gp) => s + (m[`${gp}|${pt.gi ? 1 : 0}`] || 0), 0)];
+            }
+            // ไม่มีข้อมูลแยก GI: ใส่ยอดรวมของ Group Product ไว้ที่ประเภท "ไม่ชุบ" และ GI = null (แสดง —)
+            if (pt.gi) return [pt.label, null];
+            return [pt.label, pt.groupProducts.reduce((s, gp) => s + ((((breakdown.group_product || {})[gp] || {})[d.dateKey] || {}).tons || 0), 0)];
+          }));
         });
       });
 
@@ -4297,8 +4339,14 @@ const TrendsPage = (() => {
           <td class="cell-num" style="color:var(--danger);">${m ? '−'+fmtNum(m.outT,1) : '<span class="cell-muted">—</span>'}</td>
           <td class="cell-num cell-muted" title="ของที่แค่ย้ายที่เก็บ ไม่ได้เข้า-ออกคลังจริง">${m ? fmtNum(m.internalT,1) : '—'}</td>
           <td class="cell-num" title="${m?escapeHtml(`${fmtNum(m.lotsUnchanged)} ล็อตที่น้ำหนักไม่เปลี่ยนเลยจากรอบก่อน`):''}">${m ? fmtNum(m.unchangedT,1) : '<span class="cell-muted">—</span>'}</td>
-          ${FAMILY_DEFS.map(f => `<td class="cell-num">${fmtNum(d.fam[f.label] || 0,1)}${f.parts
-            ? `<div class="cell-muted trend-parts" style="font-size:11px;white-space:nowrap;">${f.parts.map(pt => `${escapeHtml(pt.label)} ${fmtNum((d.parts[f.label]||{})[pt.label] || 0,1)}`).join(' · ')}</div>` : ''}</td>`).join('')}
+          ${FAMILY_DEFS.map(f => {
+            if (!f.parts) return `<td class="cell-num">${fmtNum(d.fam[f.label] || 0,1)}</td>`;
+            const v = (pt) => { const x = (d.parts[f.label] || {})[pt.label]; return x === null || x === undefined ? '—' : fmtNum(x,1); };
+            // แสดง 2 บรรทัด: Pipe · Pipe GI / CH · CH GI
+            const lines = [];
+            for (let i = 0; i < f.parts.length; i += 2) lines.push(f.parts.slice(i, i + 2).map(pt => `${escapeHtml(pt.short)} ${v(pt)}`).join(' · '));
+            return `<td class="cell-num">${fmtNum(d.fam[f.label] || 0,1)}${lines.map(l => `<div class="cell-muted trend-parts" style="font-size:11px;white-space:nowrap;">${l}</div>`).join('')}</td>`;
+          }).join('')}
           <td class="cell-num">${fmtNum(d.sku)}</td>
         </tr>`;
     }).join('');
@@ -4308,7 +4356,7 @@ const TrendsPage = (() => {
     const rows = scoped();
     if (!rows.length){ toast('ไม่มีข้อมูลให้ export', 'error'); return; }
     const headers = ['Date','Gap Days','Stock (Ton)','Change (Ton)','In (Ton)','Out (Ton)','Internal Move (Ton)',
-                     'Unchanged (Ton)', ...FAMILY_DEFS.flatMap(f => f.parts ? [`${f.label} total`, ...f.parts.map(pt => `${f.label}: ${pt.label}`)] : [f.label]), 'SKU','Qty','Utilization %'];
+                     'Unchanged (Ton)', ...FAMILY_DEFS.flatMap(f => f.parts ? [`${f.label} + C Channel total`, ...f.parts.map(pt => pt.label)] : [f.label]), 'SKU','Qty','Utilization %'];
     const lines = [headers.join(',')];
     rows.forEach((d, i) => {
       const m = movement[d.dateKey] || {};
@@ -4318,7 +4366,7 @@ const TrendsPage = (() => {
         (m.inT ?? '') === '' ? '' : m.inT.toFixed(2), (m.outT ?? '') === '' ? '' : m.outT.toFixed(2),
         (m.internalT ?? '') === '' ? '' : m.internalT.toFixed(2),
         (m.unchangedT ?? '') === '' ? '' : m.unchangedT.toFixed(2),
-        ...FAMILY_DEFS.flatMap(f => [(d.fam[f.label] || 0).toFixed(2), ...(f.parts || []).map(pt => (((d.parts[f.label] || {})[pt.label]) || 0).toFixed(2))]), d.sku, d.qty,
+        ...FAMILY_DEFS.flatMap(f => [(d.fam[f.label] || 0).toFixed(2), ...(f.parts || []).map(pt => { const x = (d.parts[f.label] || {})[pt.label]; return x === null || x === undefined ? '' : x.toFixed(2); })]), d.sku, d.qty,
         totalCapacity > 0 ? (d.tons/totalCapacity*100).toFixed(2) : '',
       ].map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(','));
     });
