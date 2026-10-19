@@ -732,7 +732,8 @@
           <span class="date-filter-icon">📅</span>
           <select id="fDateKey" class="date-filter-select" title="เลือกดูข้อมูลของวันที่นำเข้า"></select>
         </div>
-        <button class="btn btn-navy btn-sm" id="btnCaptureSnapshot" style="font-size:12.5px;">📷 แคปรูป Dashboard</button>
+        <button class="btn btn-navy btn-sm" id="btnCaptureSummary" style="font-size:12.5px;" title="แคปเฉพาะส่วนสรุป (สรุปผู้บริหาร · พื้นที่ · กลุ่มสินค้า · รายโรง) เป็น JPG ขนาดไม่เกิน 4 MB — เหมาะแนบอีเมล">📧 แคปสรุป (ส่งอีเมล)</button>
+        <button class="btn btn-outline btn-sm" id="btnCaptureSnapshot" style="font-size:12.5px;" title="แคปทั้งหน้าเป็น JPG ขนาดไม่เกิน 4 MB">📷 แคปทั้งหน้า</button>
       </div>
     </div>
     <div class="historical-banner" id="historicalBanner" style="display:none;"></div>
@@ -789,7 +790,7 @@
       </div>
     </div>
 
-    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat / Pipe (แยก Pipe · Pipe GI · C Channel · C Channel GI) / Section — น้ำหนักรวมทั้งเครือข่าย · ชี้ที่ ⓘ เพื่อดูวิธีคำนวณ</span></div>
+    <div class="section-title" style="margin-top:26px;">🧱 ภาพรวมตามกลุ่มสินค้าหลัก <span class="tag">Flat (แยก แผ่น · แบน) / Pipe (แยก Pipe · Pipe GI · C Channel · C Channel GI) / Section — น้ำหนักรวมทั้งเครือข่าย · ชี้ที่ ⓘ เพื่อดูวิธีคำนวณ</span></div>
     <div class="family-capacity-context" id="familyCapacityContext">กำลังโหลด...</div>
     <div class="family-grid" id="familyCards">
       <div class="family-card"><div class="skeleton" style="height:90px;"></div></div>
@@ -1099,7 +1100,7 @@
           <th class="cell-num">สต็อก (ตัน)</th><th class="cell-num">เปลี่ยนแปลง</th>
           <th class="cell-num">รับเข้า</th><th class="cell-num">จ่ายออก</th>
           <th class="cell-num">ย้ายภายใน</th><th class="cell-num">ไม่เคลื่อนไหว</th>
-          <th class="cell-num">Flat</th><th class="cell-num" title="Pipe รวม C Channel — บรรทัดล่างแยก Pipe / Pipe GI / CH / CH GI (GI = Galvanized)">Pipe + C Channel</th><th class="cell-num">Section</th>
+          <th class="cell-num" title="บรรทัดล่างแยก HRS (Hot Rolled Sheet = HS + Plate) / Flat Bar">Flat</th><th class="cell-num" title="Pipe รวม C Channel — บรรทัดล่างแยก Pipe / Pipe GI / CH / CH GI (GI = Galvanized)">Pipe + C Channel</th><th class="cell-num">Section</th>
           <th class="cell-num">SKU</th>
         </tr></thead>
         <tbody id="trendTbody"><tr><td colspan="12"><div class="empty-state">กำลังโหลด...</div></td></tr></tbody>
@@ -1550,7 +1551,10 @@ function sequentialColor(hue, sat, pct){
    color = สีแบรนด์ (การ์ด/แถบ) · chartColor = เฉดเข้มของสีเดียวกัน ใช้กับเส้นกราฟบนพื้นขาวให้มองเห็นชัด
 ============================================================ */
 const FAMILY_DEFS = [
-  { key:'flat',    label:'Flat',    icon:'📄', color:'#0c3843', chartColor:'#0c3843', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' },
+  { key:'flat',    label:'Flat',    icon:'📄', color:'#0c3843', chartColor:'#0c3843', groupProducts:['Flat Bars','Plate','HS'], desc:'แบน + แผ่น (Flat Bars / Plate / HS)' ,
+    // แยก แผ่น / แบน (ผู้ใช้ขอ 19 ต.ค. 2569): Hot Rolled Sheet = HS + Plate (เหล็กแผ่น) · Flat Bar = Flat Bars (เหล็กแบน)
+    parts:[ { label:'Hot Rolled Sheet', short:'HRS',      desc:'แผ่น (HS + Plate)', groupProducts:['HS','Plate'], color:'#0c3843' },
+            { label:'Flat Bar',         short:'Flat Bar', desc:'แบน (Flat Bars)',   groupProducts:['Flat Bars'],  color:'#5f8f9c' } ] },
   { key:'pipe',    label:'Pipe',    icon:'⭕', color:'#8bbade', chartColor:'#4f8fc2', groupProducts:['Pipe','CH'], desc:'ท่อ + ตัวซี (Pipe / CH) · GI = Galvanized (ชุบสังกะสี)',
     // 4 ประเภทตามที่ผู้ใช้กำหนด (19 ต.ค. 2569): Galvanized = GI — ดู isGalvanized()
     parts:[ { label:'Pipe',                 short:'Pipe',  desc:'ท่อ (ไม่ชุบ + ท่อประปา)',  groupProducts:['Pipe'], gi:false, color:'#2f74a8' },
@@ -1577,7 +1581,9 @@ function isGalvanized(material, description, productType){
   return /GI/.test(material || '') || /(GI|สังกะสี|กัลวา)/.test(description || '');
 }
 function partMatches(pt, row){
-  return pt.groupProducts.includes(row.group_product) && isGalvanized(row.material, row.material_description, row.product_type) === pt.gi;
+  if (!pt.groupProducts.includes(row.group_product)) return false;
+  // parts ที่ไม่ได้กำหนด gi (เช่น Hot Rolled Sheet / Flat Bar) แยกด้วย Group Product อย่างเดียว
+  return pt.gi === undefined ? true : isGalvanized(row.material, row.material_description, row.product_type) === pt.gi;
 }
 // ชื่อประเภทสั้นของแถวสต็อก: Pipe / Pipe GI / CH / CH GI ส่วนกลุ่มอื่นใช้ Group Product ตามเดิม
 const ALL_PARTS = FAMILY_DEFS.flatMap(f => f.parts || []);
@@ -1735,7 +1741,8 @@ const DashboardPage = (() => {
       applyFilters();
     });
     el('btnRefreshDashboard').addEventListener('click', loadData);
-    el('btnCaptureSnapshot').addEventListener('click', (e) => captureDashboardSnapshot(e.currentTarget));
+    el('btnCaptureSnapshot').addEventListener('click', (e) => captureDashboardSnapshot(e.currentTarget, 'full'));
+    el('btnCaptureSummary').addEventListener('click', (e) => captureDashboardSnapshot(e.currentTarget, 'summary'));
     el('btnAbcExport').addEventListener('click', exportAbcCsv);
   }
 
@@ -2318,24 +2325,63 @@ const DashboardPage = (() => {
 
   // ===== แคปรูป Dashboard (ตัดฟีเจอร์ส่งอีเมลออกตามคำขอผู้ใช้ — เหลือแค่แคป+ดาวน์โหลด ไม่มี modal/mailto อีกต่อไป) =====
   // แคปภาพ #view-dashboard ทั้งหมด (ไม่จำกัดแค่ viewport ที่มองเห็น ณ ขณะนั้น) แล้วดาวน์โหลดเป็นไฟล์ PNG ทันที
-  async function captureDashboardSnapshot(btn){
+  // ===== แคปภาพ Dashboard =====
+  // 🐞 เดิมแคปทั้งหน้าเป็น PNG ที่ scale 2 → ไฟล์ใหญ่หลายสิบ MB แนบ Outlook ไม่ได้
+  //    (error 0x80040610 "The message being sent exceeds the message size established for this user")
+  //    และหน้าที่ยาวมากเกินเพดาน canvas ของเบราว์เซอร์ (~16,384 px) จะได้ภาพว่าง
+  // ตอนนี้: เลือก scale ให้ไม่เกินเพดาน → บันทึกเป็น JPG → ลดคุณภาพ/ย่อขนาดอัตโนมัติจนไฟล์ ≤ 4 MB
+  //    (แนบอีเมลแล้วโตขึ้น ~33% จาก base64 ≈ 5.4 MB — ต่ำกว่าเพดานที่องค์กรนิยมตั้ง 10 MB)
+  const SNAPSHOT_MAX_BYTES = 4 * 1024 * 1024;
+  const SNAPSHOT_MAX_SIDE = 14000;      // ต่ำกว่าเพดาน canvas ของ Chrome/Edge (16,384 px) เผื่อไว้
+  const SNAPSHOT_MAX_PIXELS = 32e6;     // ~32 ล้านพิกเซล กันหน่วยความจำเต็มบนเครื่องสเปกต่ำ
+
+  function canvasToBlob(canvas, type, quality){
+    return new Promise(resolve => canvas.toBlob(resolve, type, quality));
+  }
+  // ลดคุณภาพ JPG ก่อน ถ้ายังใหญ่เกินค่อยย่อภาพลงทีละ 80% (สูงสุด 6 รอบ)
+  async function encodeSnapshotUnder(canvas, maxBytes){
+    let c = canvas;
+    for (let round = 0; round < 6; round++){
+      for (const q of [0.9, 0.8, 0.7]){
+        const blob = await canvasToBlob(c, 'image/jpeg', q);
+        if (blob && blob.size <= maxBytes) return { blob, width: c.width, height: c.height, quality: q };
+      }
+      const n = document.createElement('canvas');
+      n.width = Math.max(1, Math.round(c.width * 0.8));
+      n.height = Math.max(1, Math.round(c.height * 0.8));
+      const ctx = n.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(c, 0, 0, n.width, n.height);
+      c = n;
+    }
+    throw new Error('ภาพใหญ่เกินกว่าจะย่อให้ต่ำกว่า 4 MB ได้');
+  }
+
+  // mode: 'summary' = เฉพาะส่วนบนจนถึงรายโรงงาน (เหมาะแนบอีเมล) · 'full' = ทั้งหน้า
+  async function captureDashboardSnapshot(btn, mode = 'full'){
     const originalLabel = btn.textContent;
-    btn.disabled = true;
+    const buttons = [el('btnCaptureSnapshot'), el('btnCaptureSummary')].filter(Boolean);
+    buttons.forEach(b => { b.disabled = true; });
     btn.textContent = '⏳ กำลังแคปภาพ...';
-
+    const target = document.getElementById('view-dashboard');
+    const hidden = [];
     try {
-      const target = document.getElementById('view-dashboard');
-      const canvas = await html2canvas(target, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-      });
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error('ไม่สามารถสร้างไฟล์ภาพได้');
+      if (mode === 'summary'){
+        // ซ่อนทุกส่วนที่อยู่หลังรายโรงงาน (ตัวเลขสต็อก/ตัวกรอง/สรุปตาราง/Top 5/ABC) ระหว่างแคป แล้วคืนค่าใน finally
+        const anchor = el('mgrFactoryList');
+        let n = anchor ? anchor.nextElementSibling : null;
+        while (n){ hidden.push([n, n.style.display]); n.style.display = 'none'; n = n.nextElementSibling; }
+      }
+      const w = target.scrollWidth, h = target.scrollHeight;
+      const scale = Math.max(0.5, Math.min(2, SNAPSHOT_MAX_SIDE / h, SNAPSHOT_MAX_SIDE / w, Math.sqrt(SNAPSHOT_MAX_PIXELS / (w * h))));
+      const canvas = await html2canvas(target, { scale, backgroundColor: '#ffffff', useCORS: true,
+        // ไม่ต้องให้ปุ่มแคป (ที่กำลังขึ้นว่า "กำลังแคปภาพ...") ติดไปในรูป
+        ignoreElements: (node) => node.id === 'btnCaptureSummary' || node.id === 'btnCaptureSnapshot' });
+      const out = await encodeSnapshotUnder(canvas, SNAPSHOT_MAX_BYTES);
 
-      const dateKey = new Date().toISOString().slice(0,10);
-      const fileName = `dashboard-wh2-${dateKey}.png`;
-      const objUrl = URL.createObjectURL(blob);
+      const dateKey = selectedDateKey || new Date().toISOString().slice(0,10);
+      const fileName = `dashboard-wh2-${dateKey}${mode === 'summary' ? '-summary' : ''}.jpg`;
+      const objUrl = URL.createObjectURL(out.blob);
       const a = document.createElement('a');
       a.href = objUrl;
       a.download = fileName;
@@ -2343,13 +2389,16 @@ const DashboardPage = (() => {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(objUrl), 4000);
+      window.__lastSnapshot = { fileName, bytes: out.blob.size, width: out.width, height: out.height, quality: out.quality, scale };
 
-      toast('แคปภาพ Dashboard สำเร็จ — ดาวน์โหลดไฟล์แล้ว', 'success');
+      const mb = (out.blob.size / 1024 / 1024).toFixed(1);
+      toast(`แคปภาพสำเร็จ — ${fileName} · ${mb} MB (แนบอีเมลได้)`, 'success');
     } catch(err){
       console.error(err);
       toast('แคปภาพไม่สำเร็จ: ' + (err && err.message ? err.message : err), 'error');
     } finally {
-      btn.disabled = false;
+      hidden.forEach(([node, disp]) => { node.style.display = disp; });
+      buttons.forEach(b => { b.disabled = false; });
       btn.textContent = originalLabel;
     }
   }
@@ -3974,6 +4023,8 @@ const TrendsPage = (() => {
         FAMILY_DEFS.forEach(f => {
           d.fam[f.label] = (((breakdown.family || {})[f.label] || {})[d.dateKey] || {}).tons || 0;
           if (f.parts) d.parts[f.label] = Object.fromEntries(f.parts.map(pt => {
+            if (pt.gi === undefined) // แยกตาม Group Product อย่างเดียว (เช่น Hot Rolled Sheet / Flat Bar)
+              return [pt.label, pt.groupProducts.reduce((s, gp) => s + ((((breakdown.group_product || {})[gp] || {})[d.dateKey] || {}).tons || 0), 0)];
             if (splitByDate) {
               const m = splitByDate[d.dateKey] || {};
               return [pt.label, pt.groupProducts.reduce((s, gp) => s + (m[`${gp}|${pt.gi ? 1 : 0}`] || 0), 0)];
@@ -4356,7 +4407,7 @@ const TrendsPage = (() => {
     const rows = scoped();
     if (!rows.length){ toast('ไม่มีข้อมูลให้ export', 'error'); return; }
     const headers = ['Date','Gap Days','Stock (Ton)','Change (Ton)','In (Ton)','Out (Ton)','Internal Move (Ton)',
-                     'Unchanged (Ton)', ...FAMILY_DEFS.flatMap(f => f.parts ? [`${f.label} + C Channel total`, ...f.parts.map(pt => pt.label)] : [f.label]), 'SKU','Qty','Utilization %'];
+                     'Unchanged (Ton)', ...FAMILY_DEFS.flatMap(f => f.parts ? [(f.key === 'pipe' ? 'Pipe + C Channel total' : `${f.label} total`), ...f.parts.map(pt => pt.label)] : [f.label]), 'SKU','Qty','Utilization %'];
     const lines = [headers.join(',')];
     rows.forEach((d, i) => {
       const m = movement[d.dateKey] || {};
