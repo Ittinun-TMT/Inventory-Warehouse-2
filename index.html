@@ -796,6 +796,7 @@
   .plan-tip b{color:#fdc440;}
   svg rect[data-tip]:hover,svg rect[data-tip]:focus{filter:brightness(1.08);}
   svg rect.hover-col:hover,svg rect.hover-col:focus{fill:rgba(12,56,67,.06);outline:none;}
+.sum-over{color:var(--danger);font-weight:700}.sum-ok{color:var(--gray-600)}.neg-free{color:var(--danger);font-weight:600}td.ph-none{background:#f3f5f6;color:#8a9ba1;font-style:italic}
 </style>
 </head>
 <body>
@@ -1206,29 +1207,16 @@
   <!-- ============ PLANNING & CAPACITY VIEW ============ -->
   <div id="view-planning" class="route-view">
     <div class="section-title" style="justify-content:space-between;">
-      <span style="display:flex;align-items:center;gap:9px;">📐 Planning &amp; Capacity <span class="tag">แผนผลิต/รับเข้า (กรอกเอง) เทียบกับพื้นที่คลังจริง · ล่วงหน้า 6 เดือน</span></span>
+      <span style="display:flex;align-items:center;gap:9px;">📐 Planning &amp; Capacity <span class="tag">แผนผลิต (กรอกเอง) เทียบกับพื้นที่คลัง — นับจากสต็อกล่าสุดเท่านั้น ไม่มีการคาดการณ์</span></span>
     </div>
     <div class="auth-box" id="planAuthBox"></div>
     <div class="plan-meta" id="planMeta">กำลังโหลด...</div>
 
-    <div class="section-title" style="margin-top:6px;"><span class="plan-step">1</span> กรอกแผนผลิต / รับเข้า (ตันต่อเดือน) <span class="tag">ตัวเลขด้านล่างคำนวณใหม่ทันทีที่พิมพ์ · กดบันทึกเพื่อให้ทุกคนเห็น</span></div>
+    <div class="section-title" style="margin-top:6px;"><span class="plan-step">1</span> กรอกแผนผลิต (ตันต่อเดือน) <span class="tag">ผลด้านล่างคำนวณใหม่ทันทีที่พิมพ์ · กดบันทึกเพื่อให้ทุกคนเห็น</span></div>
     <div class="plan-toolbar">
-      <div class="btn-row">
-        <span style="font-size:12.5px;color:var(--gray-600);">เดือนที่ยังไม่กรอก</span>
-        <div class="seg-group" id="planEmptySeg" role="group" aria-label="เดือนที่ยังไม่กรอกแผนให้คิดอย่างไร">
-          <button type="button" class="seg-btn active" data-mode="avg" title="ใช้ค่าเฉลี่ยรับเข้าจริงต่อเดือนของประเภทนั้นแทน">ใช้ค่าเฉลี่ยจริง</button>
-          <button type="button" class="seg-btn" data-mode="zero" title="ถือว่าไม่มีการผลิต/รับเข้าเลย (กรณีแย่ที่สุดของการจ่ายออก)">นับเป็น 0</button>
-        </div>
-        <span style="font-size:12.5px;color:var(--gray-600);margin-left:6px;">อัตราจริงจาก</span>
-        <div class="seg-group" id="planLookbackSeg" role="group" aria-label="จำนวนรอบย้อนหลังที่ใช้คิดอัตรา">
-          <button type="button" class="seg-btn" data-pairs="3">3 รอบ</button>
-          <button type="button" class="seg-btn active" data-pairs="6">6 รอบ</button>
-          <button type="button" class="seg-btn" data-pairs="12">12 รอบ</button>
-        </div>
-      </div>
+      <div class="btn-row"><span style="font-size:12.5px;color:var(--gray-600);">ช่องว่าง = ยังไม่มีแผน (ไม่แสดงผลเดือนนั้น) · พิมพ์ 0 = ไม่ผลิต</span></div>
       <div class="btn-row">
         <span class="plan-dirty-badge" id="planDirtyBadge" style="display:none;"></span>
-        <button type="button" class="btn btn-outline btn-sm" id="btnPlanFillAvg" title="เติมเฉพาะช่องที่ยังว่าง ด้วยค่าเฉลี่ยรับเข้าจริงต่อเดือนของแต่ละประเภท">✨ เติมช่องว่างด้วยค่าเฉลี่ยรับเข้าจริง</button>
         <button type="button" class="btn btn-outline btn-sm" id="btnPlanReset">↺ ยกเลิกที่ยังไม่บันทึก</button>
         <button type="button" class="btn btn-outline btn-sm" id="btnPlanExport">⬇ Export CSV</button>
         <button type="button" class="btn btn-primary btn-sm" id="btnPlanSave">💾 บันทึกแผน</button>
@@ -1236,7 +1224,7 @@
     </div>
     <div class="history-table-wrap" style="margin-top:0;"><table class="plan-table" id="planInputTable"><tbody><tr><td><div class="empty-state">กำลังโหลด...</div></td></tr></tbody></table></div>
 
-    <div class="section-title" style="margin-top:28px;"><span class="plan-step">2</span> เทียบกับพื้นที่คลัง <span class="tag">สต็อกคาดการณ์ ณ สิ้นเดือน = สต็อกต้นเดือน + แผนผลิต − จ่ายออก (อัตราจริง)</span></div>
+    <div class="section-title" style="margin-top:28px;"><span class="plan-step">2</span> เทียบกับพื้นที่คลัง <span class="tag">ใช้พื้นที่ถ้าผลิตตามแผน = สต็อกล่าสุด + แผนผลิตเดือนนั้น</span></div>
     <div class="plan-kpis" id="planKpis" aria-label="สรุปคำตอบรายกลุ่ม"></div>
     <div class="plan-viewbar">
       <div class="seg-group" id="planViewSeg" role="group" aria-label="เลือกมุมมองกราฟ"></div>
@@ -1246,13 +1234,8 @@
     <div id="planView" aria-live="polite"></div>
     <div class="plan-tip" id="planTip" role="tooltip"></div>
     <details style="margin-top:16px;">
-      <summary style="cursor:pointer;font-weight:600;color:var(--navy-900);font-size:14px;">ดูเป็นตารางตัวเลข (รายกลุ่ม)</summary>
+      <summary style="cursor:pointer;font-weight:600;color:var(--navy-900);font-size:14px;">ดูเป็นตารางตัวเลข</summary>
       <div class="history-table-wrap"><table class="plan-table" id="planCompareTable"><tbody></tbody></table></div>
-    </details>
-
-    <details style="margin-top:16px;">
-      <summary style="cursor:pointer;font-weight:600;color:var(--navy-900);font-size:14px;">ดูสต็อกคาดการณ์แยกตามประเภทสินค้า</summary>
-      <div class="history-table-wrap"><table class="plan-table" id="planTypeTable"><tbody></tbody></table></div>
     </details>
     <div class="plan-note" id="planNote"></div>
   </div>
@@ -4623,165 +4606,139 @@ const TrendsPage = (() => {
 })();
 
 /* ============================================================
-   PLANNING & CAPACITY PAGE
-   แผนผลิต/รับเข้า (กรอกเอง, รายเดือน, แยกประเภทสินค้า) เทียบกับพื้นที่คลังจริง
-   - สต็อกตั้งต้น + อัตรารับเข้า/จ่ายออกจริงต่อประเภท มาจาก RPC plan_type_baseline(p_pairs)
-     (คิดที่ระดับ Material × Batch เหมือนหน้าแนวโน้ม — ยอดรวมทุกประเภทตรงกับ v_stock_daily / v_movement_daily)
-   - ความจุต่อกลุ่ม (Flat / Pipe + C Channel / Section) = ความจุของโรงที่เก็บกลุ่มนั้นจริง
-     ถ้าโรงหนึ่งเก็บหลายกลุ่ม จะแบ่งความจุตามสัดส่วนน้ำหนักที่เก็บอยู่จริง (ไม่นับซ้ำ)
-   - แผนเก็บในตาราง production_plan (อ่านได้ทุกคน · บันทึกได้เฉพาะผู้ล็อกอินด้วยรหัส 8 หลัก)
+   PLANNING & CAPACITY PAGE  (แบบไม่คาดการณ์ — ผู้ใช้กำหนด 28 ต.ค. 2569)
+   - นับจาก "สต็อกล่าสุด" เท่านั้น: ไม่ใช้อัตราจ่ายออก ไม่ยกยอดข้ามเดือน ไม่เติมค่าเฉลี่ยให้เดือนที่ว่าง
+   - ใช้พื้นที่ถ้าผลิตตามแผน (เดือน m) = สต็อกล่าสุดของกลุ่ม + แผนผลิตเดือน m ของกลุ่ม → เทียบความจุ
+     = ตอบคำถาม "ถ้าของที่ผลิตเดือนนี้เข้ามาวางบนสต็อกที่มีอยู่ตอนนี้ พื้นที่พอไหม / ขาดกี่ตัน"
+   - เดือนที่กลุ่มนั้นยังไม่กรอกแผนเลย = ไม่แสดงผล (—) · ประเภทที่ไม่กรอกในเดือนที่กรอกบางประเภทแล้ว = 0
+   - ความจุต่อกลุ่ม = ความจุโรงที่เก็บกลุ่มนั้นจริง แบ่งตามสัดส่วนน้ำหนักถ้าโรงเก็บหลายกลุ่ม (ไม่นับซ้ำ)
+   - สต็อกต่อประเภทมาจาก RPC plan_type_baseline (ยอดรวมตรงกับ v_stock_daily ล่าสุด)
+   - แผนเก็บใน production_plan (is_set=false = ล้างช่อง) · อ่านได้ทุกคน · บันทึกได้เฉพาะผู้ล็อกอินรหัส 8 หลัก
 ============================================================ */
 const PLAN_TYPES = [
   { code:'HRS',      label:'Hot Rolled Sheet',     short:'HRS',      fam:'Flat',    desc:'แผ่น (HS + Plate)',        color:'#0c3843' },
   { code:'FLAT_BAR', label:'Flat Bar',             short:'Flat Bar', fam:'Flat',    desc:'แบน (Flat Bars)',          color:'#5f8f9c' },
-  { code:'PIPE',     label:'Pipe',                 short:'Pipe',     fam:'Pipe',    desc:'ท่อ (ไม่ชุบ + ท่อประปา)',  color:'#2f74a8' },
-  { code:'PIPE_GI',  label:'Pipe Galvanized',      short:'Pipe GI',  fam:'Pipe',    desc:'ท่อชุบ GI',               color:'#8bbade' },
-  { code:'CH',       label:'C Channel',            short:'CH',       fam:'Pipe',    desc:'ตัวซี (ไม่ชุบ)',           color:'#d9a21a' },
-  { code:'CH_GI',    label:'C Channel Galvanized', short:'CH GI',    fam:'Pipe',    desc:'ตัวซีชุบ GI',              color:'#fdc440' },
-  { code:'SECTION',  label:'Section',              short:'Section',  fam:'Section', desc:'Beam ทั้งหมด',             color:'#ff6a05' },
+  { code:'PIPE',     label:'Pipe',                 short:'Pipe',     fam:'Pipe',    desc:'ท่อ (ไม่ชุบ + ท่อประปา)',  color:'#1f5f8b' },
+  { code:'PIPE_GI',  label:'Pipe Galvanized',      short:'Pipe GI',  fam:'Pipe',    desc:'ท่อชุบ GI',               color:'#7fb3da' },
+  { code:'CH',       label:'C Channel',            short:'CH',       fam:'Pipe',    desc:'ตัวซี (ไม่ชุบ)',           color:'#b07c00' },
+  { code:'CH_GI',    label:'C Channel Galvanized', short:'CH GI',    fam:'Pipe',    desc:'ตัวซีชุบ GI',              color:'#f2b630' },
+  { code:'SECTION',  label:'Section',              short:'Section',  fam:'Section', desc:'Beam ทั้งหมด',             color:'#e05a00' },
 ];
+// สีกลุ่มผ่าน validator (CVD ΔE ≥ 20, contrast ≥ 3:1) · ทั้งเครือข่าย = เข้ม + ลายประ (ไม่พึ่งสีอย่างเดียว)
 const PLAN_FAMS = [
-  { key:'Flat',    label:'Flat',             color:'#0c3843' },
+  { key:'Flat',    label:'Flat',             color:'#b07c00' },
   { key:'Pipe',    label:'Pipe + C Channel', color:'#2f74a8' },
-  { key:'Section', label:'Section',          color:'#ff6a05' },
+  { key:'Section', label:'Section',          color:'#e05a00' },
 ];
 const PLAN_MONTHS = 6;
-const PLAN_DAYS_PER_MONTH = 30.4375; // ใช้แปลงอัตราต่อวันเป็น "เฉลี่ยต่อเดือน" เพื่ออ้างอิงเท่านั้น
 
 const PlanningPage = (() => {
   let mounted = false;
-  let lookback = 6;
-  let baseline = {};      // code -> { stockT, inPerDay, outPerDay }
-  let otherStockT = 0;    // สต็อกที่ไม่อยู่ใน 7 ประเภท (Scrap / ไม่ระบุ) — ไม่อยู่ในการเทียบรายกลุ่ม
-  let meta = null;        // { baseDate, days, pairs, firstDate }
-  let saved = {};         // 'YYYY-MM-01|CODE' -> tons (ที่บันทึกในฐานข้อมูล)
+  let stockByType = {};   // code -> ตัน (สต็อกล่าสุด)
+  let otherStockT = 0;    // Scrap / ไม่ระบุ — ไม่อยู่ใน 7 ประเภท
+  let meta = null;        // { baseDate }
+  let saved = {};         // 'YYYY-MM-01|CODE' -> ตัน (เฉพาะช่องที่กรอกไว้)
   let edits = {};         // 'YYYY-MM-01|CODE' -> string ที่ผู้ใช้พิมพ์ (ยังไม่บันทึก)
-  let lastUpdate = null;  // { by, at }
-  let famCap = {};        // fam -> ตัน (ความจุที่แบ่งให้กลุ่มนั้น)
-  let famCapDetail = {};  // fam -> [{ loc, cap, share }]
-  let totalCap = 0;
+  let lastUpdate = null;
+  let famCap = {}, famCapDetail = {}, totalCap = 0;
   let loaded = false;
-  let emptyMode = 'avg';  // เดือนที่ยังไม่กรอกแผน: 'avg' = ใช้ค่าเฉลี่ยรับเข้าจริง · 'zero' = นับเป็น 0
+  let viewSel = 'heat';
+  const groupOn = { Flat:true, Pipe:true, Section:true, _net:true };
 
   const keyOf = (m, code) => `${m}|${code}`;
+  const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  // ''/ช่องว่าง = ยังไม่มีแผน (null) · ตัวเลข ≥ 0 · NaN = ไม่ถูกต้อง
   const parseTons = (str) => {
     const t = String(str ?? '').replace(/[,\s]/g, '');
-    if (t === '') return null; // ช่องว่าง = "ยังไม่กรอกแผน" (คนละความหมายกับกรอก 0)
+    if (t === '') return null;
     if (!/^\d+(\.\d+)?$/.test(t)) return NaN;
     const v = Number(t);
     return v > 1000000 ? NaN : v;
   };
+  const sameVal = (a, b) => (a === null || a === undefined) ? (b === null || b === undefined) : (b !== null && b !== undefined && Math.abs(a - b) <= 0.004);
   const dateFromKey = (k) => { const [y, m, d] = k.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
   const keyFromDate = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
   const monthLabel = (k) => dateFromKey(k).toLocaleDateString('th-TH', { month:'short', year:'2-digit', timeZone:'UTC' });
 
-  // เดือนที่วางแผน: เดือนของวันที่ข้อมูลล่าสุด + อีก 5 เดือน
   function planMonths(){
     if (!meta) return [];
     const b = dateFromKey(meta.baseDate);
     return Array.from({ length: PLAN_MONTHS }, (_, i) => keyFromDate(new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth() + i, 1))));
   }
-  // จำนวนวันที่ยังเหลือให้คำนวณในเดือนนั้น (เดือนแรกนับจากวันที่ข้อมูลล่าสุดถึงสิ้นเดือน)
-  function monthWindow(mKey){
-    const start = dateFromKey(mKey);
-    const next = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
-    const daysInMonth = Math.round((next - start) / 86400000);
-    const base = dateFromKey(meta.baseDate);
-    const from = base > start ? base : start;
-    const days = Math.max(0, Math.round((next - from) / 86400000));
-    return { days, daysInMonth, frac: daysInMonth ? days / daysInMonth : 0 };
+  function planValue(m, code){
+    const k = keyOf(m, code);
+    if (has(edits, k)) return parseTons(edits[k]);
+    return has(saved, k) ? saved[k] : null;
   }
-  // ค่าที่กรอก: number = กรอกแล้ว (รวม 0) · null = ยังไม่กรอก · NaN = ตัวเลขไม่ถูกต้อง
-  function planValue(mKey, code){
-    const k = keyOf(mKey, code);
-    if (Object.prototype.hasOwnProperty.call(edits, k)) return parseTons(edits[k]);
-    return Object.prototype.hasOwnProperty.call(saved, k) ? saved[k] : null;
-  }
-  const sameVal = (a, b) => (a === null || a === undefined) ? (b === null || b === undefined) : (b !== null && b !== undefined && Math.abs(a - b) <= 0.004);
   function dirtyCells(){
-    return Object.keys(edits).filter(k => {
-      const v = parseTons(edits[k]);
-      return Number.isNaN(v) || !sameVal(v, saved[k]);
-    });
-  }
-  // ค่าแผนที่ใช้คำนวณ (ทั้งเดือน): ถ้ายังไม่กรอก → ใช้ค่าเฉลี่ยรับเข้าจริง (หรือ 0 ตามที่เลือก) และติดธง assumed
-  function avgInMonth(mKey, code){
-    return ((baseline[code] || {}).inPerDay || 0) * monthWindow(mKey).daysInMonth;
-  }
-  function effectivePlan(mKey, code){
-    const v = planValue(mKey, code);
-    if (Number.isNaN(v)) return { v: 0, assumed: false, invalid: true };
-    if (v === null) return emptyMode === 'avg' ? { v: avgInMonth(mKey, code), assumed: true } : { v: 0, assumed: true };
-    return { v, assumed: false };
+    return Object.keys(edits).filter(k => { const v = parseTons(edits[k]); return Number.isNaN(v) || !sameVal(v, saved[k]); });
   }
 
-  /* ---------- คำนวณ ---------- */
-  function project(){
+  /* ---------- คำนวณ (ไม่มีการคาดการณ์) ---------- */
+  function compute(){
     const months = planMonths();
-    const byType = {};
-    PLAN_TYPES.forEach(t => {
-      const b = baseline[t.code] || { stockT:0, inPerDay:0, outPerDay:0 };
-      let s = b.stockT;
-      byType[t.code] = months.map(m => {
-        const w = monthWindow(m);
-        const ep = effectivePlan(m, t.code);
-        const plan = ep.v * w.frac;
-        const out = b.outPerDay * w.days;
-        const next = s + plan - out;
-        const floored = next < 0;           // จ่ายออกมากกว่าที่มี → สต็อกหมด (ไม่ติดลบ)
-        s = Math.max(0, next);
-        return { m, plan, out, end: s, floored, invalid: !!ep.invalid, assumed: ep.assumed };
-      });
-    });
-    const byFam = {};
+    const groups = {};
     PLAN_FAMS.forEach(f => {
       const types = PLAN_TYPES.filter(t => t.fam === f.key);
-      const startT = types.reduce((a, t) => a + ((baseline[t.code] || {}).stockT || 0), 0);
+      const nowT = types.reduce((a, t) => a + (stockByType[t.code] || 0), 0);
       const cap = famCap[f.key] || 0;
-      byFam[f.key] = {
-        startT, cap, startPct: cap > 0 ? startT / cap * 100 : null,
-        months: months.map((m, i) => {
-          const end = types.reduce((a, t) => a + byType[t.code][i].end, 0);
-          const plan = types.reduce((a, t) => a + byType[t.code][i].plan, 0);
-          const out = types.reduce((a, t) => a + byType[t.code][i].out, 0);
-          const nAssumed = types.filter(t => byType[t.code][i].assumed).length;
-          return { m, end, plan, out, pct: cap > 0 ? end / cap * 100 : null, assumed: nAssumed > 0, allAssumed: nAssumed === types.length };
+      groups[f.key] = {
+        key: f.key, label: f.label, color: f.color, cap, nowT, free: cap - nowT,
+        nowPct: cap > 0 ? nowT / cap * 100 : null,
+        months: months.map(m => {
+          const vals = types.map(t => ({ t, v: planValue(m, t.code) }));
+          const entered = vals.filter(x => x.v !== null && !Number.isNaN(x.v));
+          const known = entered.length > 0;
+          const plan = entered.reduce((a, x) => a + x.v, 0);
+          const total = nowT + plan;
+          return { m, known, plan, parts: vals, total, pct: known && cap > 0 ? total / cap * 100 : null,
+                   remain: cap - total, missingTypes: vals.filter(x => x.v === null).map(x => x.t.short) };
         }),
       };
     });
-    return { months, byType, byFam };
+    const nowNet = PLAN_FAMS.reduce((a, f) => a + groups[f.key].nowT, 0) + otherStockT;
+    groups._net = {
+      key:'_net', label:'ทั้งเครือข่าย', color:'#0c3843', cap: totalCap, nowT: nowNet, free: totalCap - nowNet,
+      nowPct: totalCap > 0 ? nowNet / totalCap * 100 : null,
+      months: months.map((m, i) => {
+        const known = PLAN_FAMS.some(f => groups[f.key].months[i].known);
+        const plan = PLAN_FAMS.reduce((a, f) => a + groups[f.key].months[i].plan, 0);
+        const total = nowNet + plan;
+        return { m, known, plan, total, pct: known && totalCap > 0 ? total / totalCap * 100 : null, remain: totalCap - total,
+                 missingTypes: PLAN_FAMS.filter(f => !groups[f.key].months[i].known).map(f => f.label) };
+      }),
+    };
+    return { months, groups };
   }
-  const tierOf = (pct) => pct === null ? 'normal' : pct > 100 ? 'critical' : pct > 80 ? 'warn' : 'normal';
-  const tierColor = (t) => t === 'critical' ? '#ff6a05' : t === 'warn' ? '#fdc440' : '#8bbade';
+  const tierOf = (pct) => pct === null ? 'none' : pct > 100 ? 'critical' : pct > 80 ? 'warn' : 'normal';
+  const TIER = {
+    normal:   { icon:'✓', word:'ปลอดภัย',  bg:'#eaf3f9', fg:'#0c3843', bar:'#8bbade' },
+    warn:     { icon:'!', word:'ใกล้เต็ม',  bg:'#fff3cf', fg:'#6b4b00', bar:'#fdc440' },
+    critical: { icon:'⛔', word:'เกินความจุ', bg:'#ffe3cf', fg:'#a83f00', bar:'#ff6a05' },
+    none:     { icon:'—', word:'ยังไม่มีแผน', bg:'#f3f5f6', fg:'#8a9ba1', bar:'#e3e8ea' },
+  };
   const pill = (pct) => pct === null ? '<span class="cell-muted">—</span>'
-    : `<span class="mgr-status-pill ${tierOf(pct)} plan-cell-pct">${pct.toFixed(0)}%</span>`;
+    : `<span class="mgr-status-pill ${pct > 100 ? 'critical' : pct > 80 ? 'warn' : 'normal'} plan-cell-pct">${pct.toFixed(0)}%</span>`;
+  const tipAttr = (html) => `data-tip="${escapeHtml(html)}"`;
 
   /* ---------- โหลดข้อมูล ---------- */
   async function loadData(){
     el('planMeta').textContent = 'กำลังโหลด...';
     try {
       const [baseRes, capRes] = await Promise.all([
-        sb.rpc('plan_type_baseline', { p_pairs: lookback }),
+        sb.rpc('plan_type_baseline', { p_pairs: 1 }), // ใช้เฉพาะยอดสต็อกล่าสุด (stock_kg) ไม่ใช้อัตราเข้า-ออก
         sb.from('v_location_capacity').select('location_code,actual_capacity_tons'),
       ]);
       if (baseRes.error) throw baseRes.error;
       if (capRes.error) throw capRes.error;
       const rows = baseRes.data || [];
       if (!rows.length) throw new Error('ยังไม่มีข้อมูลสต็อก — นำเข้าไฟล์สต็อกก่อน');
-
-      baseline = {}; otherStockT = 0;
-      const r0 = rows[0];
-      meta = { baseDate: r0.base_date, days: +r0.days || 0, pairs: +r0.pairs || 0, firstDate: r0.first_date };
+      stockByType = {}; otherStockT = 0;
+      meta = { baseDate: rows[0].base_date };
       rows.forEach(r => {
-        const stockT = (+r.stock_kg || 0) / 1000;
-        if (!PLAN_TYPES.some(t => t.code === r.type_code)){ otherStockT += stockT; return; }
-        baseline[r.type_code] = {
-          stockT,
-          inPerDay:  meta.days > 0 ? (+r.in_kg  || 0) / 1000 / meta.days : 0,
-          outPerDay: meta.days > 0 ? (+r.out_kg || 0) / 1000 / meta.days : 0,
-        };
+        const t = (+r.stock_kg || 0) / 1000;
+        if (PLAN_TYPES.some(x => x.code === r.type_code)) stockByType[r.type_code] = t; else otherStockT += t;
       });
-
       const months = planMonths();
       const [planRes, lgRes] = await Promise.all([
         sb.from('production_plan').select('plan_month,type_code,planned_tons,is_set,updated_by,updated_at')
@@ -4791,15 +4748,13 @@ const PlanningPage = (() => {
       ]);
       if (planRes.error) throw planRes.error;
       if (lgRes.error) throw lgRes.error;
-
       saved = {}; lastUpdate = null;
       (planRes.data || []).forEach(p => {
-        if (p.is_set !== false) saved[keyOf(p.plan_month, p.type_code)] = +p.planned_tons || 0; // is_set=false = ล้างช่องแล้ว
+        if (p.is_set !== false) saved[keyOf(p.plan_month, p.type_code)] = +p.planned_tons || 0;
         if (!lastUpdate || p.updated_at > lastUpdate.at) lastUpdate = { by: p.updated_by, at: p.updated_at };
       });
-      // แก้ไขที่ค้างอยู่แต่ตรงกับค่าที่บันทึกแล้ว → ล้างออก
-      Object.keys(edits).forEach(k => { if (!dirtyCells().includes(k)) delete edits[k]; });
-
+      const stillDirty = new Set(dirtyCells());
+      Object.keys(edits).forEach(k => { if (!stillDirty.has(k)) delete edits[k]; });
       computeCapacity(capRes.data || [], lgRes.data || []);
       loaded = true;
       renderAll();
@@ -4809,8 +4764,6 @@ const PlanningPage = (() => {
       toast('โหลดข้อมูล Planning ไม่สำเร็จ: ' + friendlyDbError(e), 'error');
     }
   }
-
-  // ความจุต่อกลุ่ม: ความจุของแต่ละโรง × สัดส่วนน้ำหนักของกลุ่มนั้นในโรง (ณ วันที่ข้อมูลล่าสุด)
   function computeCapacity(capRows, lgRows){
     const capByLoc = {};
     mergeLocationRows(capRows).forEach(r => { capByLoc[r.location_code] = +r.actual_capacity_tons || 0; });
@@ -4831,110 +4784,83 @@ const PlanningPage = (() => {
       if (!(cap > 0) || !(v.total > 0)) return;
       PLAN_FAMS.forEach(f => {
         const t = v.fam[f.key] || 0;
-        if (t < 0.5) return; // เศษเล็กน้อย (< 0.5 ตัน) ไม่ถือว่าโรงนี้เก็บกลุ่มนั้น
+        if (t < 0.5) return;
         const share = t / v.total;
         famCap[f.key] += cap * share;
-        famCapDetail[f.key].push({ loc, cap, share });
+        famCapDetail[f.key].push({ loc, share });
       });
     });
   }
 
   /* ---------- แสดงผล ---------- */
-  function renderAll(){
-    renderMeta();
-    renderInputTable();
-    renderResults();
-    refreshAuthUI();
-  }
+  function renderAll(){ renderMeta(); renderInputTable(); renderResults(); refreshAuthUI(); }
 
   function renderMeta(){
     const famTxt = PLAN_FAMS.map(f => `${f.label} ${fmtNum(famCap[f.key] || 0, 0)} ตัน (${(famCapDetail[f.key] || []).map(d => d.share < 0.995 ? `${d.loc} ${Math.round(d.share * 100)}%` : d.loc).join(', ') || '—'})`).join(' · ');
-    el('planMeta').innerHTML =
-      `สต็อกตั้งต้น ณ <b>${escapeHtml(fmtDateKey(meta.baseDate))}</b> (ข้อมูลล่าสุด) · อัตรารับเข้า/จ่ายออกจริงจาก <b>${meta.pairs} คู่รอบ</b> `
-      + `(${escapeHtml(fmtDateKey(meta.firstDate || meta.baseDate))} – ${escapeHtml(fmtDateKey(meta.baseDate))}, ${meta.days} วัน)<br/>`
-      + `ความจุต่อกลุ่ม: ${escapeHtml(famTxt)}`
+    el('planMeta').innerHTML = `สต็อกล่าสุด ณ <b>${escapeHtml(fmtDateKey(meta.baseDate))}</b> · ความจุต่อกลุ่ม: ${escapeHtml(famTxt)}`
       + (lastUpdate ? `<br/>แผนแก้ไขล่าสุดโดย <b>${escapeHtml(lastUpdate.by || '—')}</b> เมื่อ ${escapeHtml(fmtDateTime(lastUpdate.at))}` : '<br/>ยังไม่มีแผนที่บันทึกไว้สำหรับช่วงนี้');
-    el('planNote').innerHTML =
-      '<b>วิธีคำนวณ</b><br/>'
-      + '• สต็อกสิ้นเดือน = สต็อกต้นเดือน + แผนผลิต/รับเข้า − จ่ายออก (อัตราจ่ายออกเฉลี่ยต่อวันจริงของประเภทนั้น × จำนวนวัน) · ถ้าจ่ายออกมากกว่าที่มี สต็อกจะหยุดที่ 0 (มีเครื่องหมาย ⚠)<br/>'
-      + `• เดือนแรกคิดเฉพาะวันที่เหลือหลังวันที่ข้อมูลล่าสุด — แผนของเดือนนั้นถูกเฉลี่ยตามสัดส่วนวันที่เหลือ (เช่น เหลือ ${monthWindow(planMonths()[0]).days} จาก ${monthWindow(planMonths()[0]).daysInMonth} วัน)<br/>`
-      + '• ความจุของกลุ่ม = ความจุโรงที่เก็บกลุ่มนั้นจริง ถ้าโรงเดียวเก็บหลายกลุ่ม แบ่งความจุตามสัดส่วนน้ำหนักที่เก็บอยู่ (ไม่นับซ้ำ)<br/>'
-      + `• สต็อกนอก 7 ประเภท (Scrap / ไม่ระบุ ${fmtNum(otherStockT, 0)} ตัน) ไม่อยู่ในการเทียบรายกลุ่ม · เป็นการประมาณเชิงเส้น ไม่รวมฤดูกาลหรือคำสั่งซื้อพิเศษ`;
+    el('planNote').innerHTML = '<b>วิธีคำนวณ (ไม่มีการคาดการณ์)</b><br/>'
+      + '• ใช้พื้นที่ถ้าผลิตตามแผน = <b>สต็อกล่าสุด + แผนผลิตเดือนนั้น</b> ÷ ความจุ — แต่ละเดือนเทียบจากสต็อกล่าสุดตัวเดียวกัน ไม่ยกยอดข้ามเดือน และไม่หักการจ่ายออก<br/>'
+      + '• เดือนที่กลุ่มนั้นยังไม่กรอกแผนเลย จะไม่แสดงผล (—) · ถ้ากรอกบางประเภท ประเภทที่เว้นว่างนับเป็น 0<br/>'
+      + '• ความจุของกลุ่ม = ความจุโรงที่เก็บกลุ่มนั้นจริง ถ้าโรงเดียวเก็บหลายกลุ่ม แบ่งตามสัดส่วนน้ำหนักที่เก็บอยู่ (ไม่นับซ้ำ)<br/>'
+      + `• สต็อกนอก 7 ประเภท (Scrap / ไม่ระบุ ${fmtNum(otherStockT, 0)} ตัน) รวมอยู่ในแถว "ทั้งเครือข่าย" เท่านั้น`;
   }
 
   function renderInputTable(){
-    const months = planMonths();
-    const head = `<thead><tr>
-      <th>ประเภทสินค้า</th><th>สต็อกล่าสุด</th><th title="ค่าเฉลี่ยจริงต่อเดือนจากช่วงที่เลือก">รับเข้าจริง<br/>เฉลี่ย/เดือน</th><th title="ค่าเฉลี่ยจริงต่อเดือนจากช่วงที่เลือก — ใช้คำนวณจ่ายออกในอนาคต">จ่ายออกจริง<br/>เฉลี่ย/เดือน</th>
-      ${months.map((m, i) => `<th class="plan-month-head">${escapeHtml(monthLabel(m))}${i === 0 ? `<small>เหลือ ${monthWindow(m).days} วัน</small>` : '<small>ทั้งเดือน</small>'}</th>`).join('')}
-    </tr></thead>`;
+    const C = compute();
+    const months = C.months;
+    const head = `<thead><tr><th>ประเภทสินค้า</th><th>สต็อกล่าสุด (ตัน)</th><th title="ความจุของกลุ่ม − สต็อกล่าสุด">ที่ว่างตอนนี้ (ตัน)</th>
+      ${months.map(m => `<th>${escapeHtml(monthLabel(m))}</th>`).join('')}</tr></thead>`;
     let body = '';
     PLAN_FAMS.forEach(f => {
+      const G = C.groups[f.key];
       const types = PLAN_TYPES.filter(t => t.fam === f.key);
-      body += `<tr class="fam-row" data-fam="${f.key}"><td>${escapeHtml(f.label)}</td>
-        <td>${fmtNum(types.reduce((a, t) => a + ((baseline[t.code] || {}).stockT || 0), 0), 1)}</td>
-        <td class="ref">${fmtNum(types.reduce((a, t) => a + ((baseline[t.code] || {}).inPerDay || 0), 0) * PLAN_DAYS_PER_MONTH, 0)}</td>
-        <td class="ref">${fmtNum(types.reduce((a, t) => a + ((baseline[t.code] || {}).outPerDay || 0), 0) * PLAN_DAYS_PER_MONTH, 0)}</td>
-        ${months.map(m => `<td data-fam-sum="${m}">${famSumText(types, m)}</td>`).join('')}</tr>`;
+      body += `<tr class="fam-row" data-fam="${f.key}"><td>${escapeHtml(f.label)}</td><td>${fmtNum(G.nowT, 1)}</td>
+        <td class="${G.free < 0 ? 'neg-free' : ''}">${G.free >= 0 ? fmtNum(G.free, 0) : '−' + fmtNum(-G.free, 0)}</td>
+        ${months.map((m, i) => `<td data-fam-sum="${i}">${famSumHtml(G, i)}</td>`).join('')}</tr>`;
       types.forEach(t => {
-        const b = baseline[t.code] || { stockT:0, inPerDay:0, outPerDay:0 };
         body += `<tr><td><span class="pt-name"><span class="pt-sw" style="background:${t.color};"></span>${escapeHtml(t.label)} <span class="pt-desc">${escapeHtml(t.desc)}</span></span></td>
-          <td>${fmtNum(b.stockT, 1)}</td>
-          <td class="ref">${fmtNum(b.inPerDay * PLAN_DAYS_PER_MONTH, 0)}</td>
-          <td class="ref">${fmtNum(b.outPerDay * PLAN_DAYS_PER_MONTH, 0)}</td>
+          <td>${fmtNum(stockByType[t.code] || 0, 1)}</td><td></td>
           ${months.map(m => {
             const k = keyOf(m, t.code);
-            const has = Object.prototype.hasOwnProperty.call(edits, k);
-            const val = has ? edits[k] : (Object.prototype.hasOwnProperty.call(saved, k) ? String(saved[k]) : '');
-            // ช่องว่างแสดงค่าที่ระบบจะใช้แทน (ค่าเฉลี่ยรับเข้าจริง) เป็นตัวจาง — รู้ทันทีว่าตัวเลขในกราฟมาจากไหน
-            const ph = emptyMode === 'avg' ? '≈ ' + fmtNum(Math.round(avgInMonth(m, t.code)), 0) : '0';
+            const val = has(edits, k) ? edits[k] : (has(saved, k) ? String(saved[k]) : '');
             return `<td><input class="plan-input" type="text" inputmode="decimal" data-key="${k}" value="${escapeHtml(val)}"
-                     aria-label="แผน ${escapeHtml(t.label)} ${escapeHtml(monthLabel(m))} (ตัน)" placeholder="${escapeHtml(ph)}" /></td>`;
+                     aria-label="แผนผลิต ${escapeHtml(t.label)} ${escapeHtml(monthLabel(m))} (ตัน)" placeholder="–" /></td>`;
           }).join('')}</tr>`;
       });
     });
     el('planInputTable').innerHTML = head + `<tbody>${body}</tbody>`;
     el('planInputTable').querySelectorAll('.plan-input').forEach(inp => {
       markInput(inp);
-      inp.addEventListener('input', () => {
-        edits[inp.dataset.key] = inp.value;
-        markInput(inp);
-        scheduleResults();
-      });
-      inp.addEventListener('blur', () => { // จัดรูปแบบตัวเลขเมื่อออกจากช่อง (ไม่ยุ่งตอนกำลังพิมพ์)
+      inp.addEventListener('input', () => { edits[inp.dataset.key] = inp.value; markInput(inp); scheduleResults(); });
+      inp.addEventListener('blur', () => {
         const v = parseTons(inp.value);
-        if (!Number.isNaN(v) && inp.value.trim() !== ''){ inp.value = String(+v.toFixed(2)); edits[inp.dataset.key] = inp.value; }
+        if (v !== null && !Number.isNaN(v)){ inp.value = String(+v.toFixed(2)); edits[inp.dataset.key] = inp.value; }
       });
     });
     updateDirtyUI();
   }
+  // ผลรวมแผนของกลุ่มในเดือนนั้น เทียบที่ว่างตอนนี้ (แดงถ้าเกินที่ว่าง)
+  function famSumHtml(G, i){
+    const x = G.months[i];
+    if (!x.known) return '<span class="cell-muted">—</span>';
+    const over = x.plan > G.free;
+    return `<span class="${over ? 'sum-over' : 'sum-ok'}" title="${over ? `มากกว่าที่ว่าง ${fmtNum(x.plan - G.free, 0)} ตัน` : `อยู่ในที่ว่าง (เหลือ ${fmtNum(G.free - x.plan, 0)} ตัน)`}">${fmtNum(x.plan, 0)}${over ? ' ⛔' : ''}</span>`;
+  }
   function markInput(inp){
-    const k = inp.dataset.key;
     const v = parseTons(inp.value);
     inp.classList.toggle('invalid', Number.isNaN(v));
-    inp.classList.toggle('dirty', !Number.isNaN(v) && !sameVal(v, saved[k]));
-    inp.title = Number.isNaN(v) ? 'ใส่ตัวเลขตันที่ไม่ติดลบ (ไม่เกิน 1,000,000)'
-      : v === null ? (emptyMode === 'avg' ? 'ยังไม่กรอก — ระบบใช้ค่าเฉลี่ยรับเข้าจริงแทน (พิมพ์ 0 ถ้าไม่มีการผลิต)' : 'ยังไม่กรอก — นับเป็น 0') : '';
+    inp.classList.toggle('dirty', !Number.isNaN(v) && !sameVal(v, saved[inp.dataset.key]));
+    inp.title = Number.isNaN(v) ? 'ใส่ตัวเลขตันที่ไม่ติดลบ (ไม่เกิน 1,000,000)' : v === null ? 'ยังไม่มีแผน (พิมพ์ 0 ถ้าไม่ผลิต)' : '';
   }
   let resTimer = null;
   function scheduleResults(){
     clearTimeout(resTimer);
-    resTimer = setTimeout(() => { renderFamSums(); renderResults(); updateDirtyUI(); }, 150);
-  }
-  function famSumText(types, m){
-    const eps = types.map(t => effectivePlan(m, t.code));
-    const sum = eps.reduce((a, e) => a + e.v, 0);
-    const anyAssumed = eps.some(e => e.assumed) && emptyMode === 'avg';
-    return anyAssumed ? `<span class="assumed-val" title="มีช่องที่ยังไม่กรอก — ใช้ค่าเฉลี่ยรับเข้าจริงแทน">≈ ${fmtNum(sum, 0)}</span>` : fmtNum(sum, 0);
-  }
-  function renderFamSums(){
-    PLAN_FAMS.forEach(f => {
-      const types = PLAN_TYPES.filter(t => t.fam === f.key);
-      el('planInputTable').querySelectorAll(`tr[data-fam="${f.key}"] td[data-fam-sum]`).forEach(td => {
-        const m = td.dataset.famSum;
-        td.innerHTML = famSumText(types, m);
-      });
-    });
+    resTimer = setTimeout(() => {
+      const C = compute();
+      PLAN_FAMS.forEach(f => el('planInputTable').querySelectorAll(`tr[data-fam="${f.key}"] td[data-fam-sum]`).forEach(td => { td.innerHTML = famSumHtml(C.groups[f.key], +td.dataset.famSum); }));
+      renderResults(); updateDirtyUI();
+    }, 150);
   }
   function updateDirtyUI(){
     const d = dirtyCells();
@@ -4945,336 +4871,181 @@ const PlanningPage = (() => {
     refreshAuthUI();
   }
 
-  /* ======================================================================
-     ผลการเทียบกับพื้นที่คลัง — "คำตอบ" ก่อน แล้วค่อยเลือกมุมมองกราฟ 5 แบบ
-     สีกลุ่ม (ผ่าน validator: CVD ΔE ≥ 20, contrast ≥ 3:1): Flat #b07c00 · Pipe #2f74a8 · Section #e05a00
-     ทั้งเครือข่าย = เส้นประเข้ม #0c3843 (แยกด้วยลายเส้น + ป้ายชื่อ ไม่ใช่สีอย่างเดียว)
-     สีสถานะ (ปกติ/ใกล้เต็ม/เกิน) ใช้คู่กับไอคอน + คำ เสมอ
-  ====================================================================== */
-  const VIEW_GROUPS = [
-    { key:'Flat',    label:'Flat',             color:'#b07c00', dash:'' },
-    { key:'Pipe',    label:'Pipe + C Channel', color:'#2f74a8', dash:'' },
-    { key:'Section', label:'Section',          color:'#e05a00', dash:'' },
-    { key:'_net',    label:'ทั้งเครือข่าย',     color:'#0c3843', dash:'6 4' },
-  ];
-  // สีของประเภทในกราฟแท่งซ้อน (ซ้อนเฉพาะภายในกลุ่มเดียวกัน · มีช่องว่าง 2px + ป้ายตัวเลข)
-  const TYPE_STACK_COLORS = { HRS:'#0c3843', FLAT_BAR:'#5f8f9c', PIPE:'#1f5f8b', PIPE_GI:'#7fb3da', CH:'#b07c00', CH_GI:'#f2b630', SECTION:'#e05a00' };
+  /* ---------- ผลเทียบ: การ์ดคำตอบ + มุมมอง ---------- */
   const VIEWS = [
-    { key:'heat',  label:'🚦 สัญญาณไฟ',        hint:'ดูทีเดียวรู้ว่าเดือนไหน กลุ่มไหน ปลอดภัย / ใกล้เต็ม / เกินความจุ' },
-    { key:'pct',   label:'📈 % ใช้พื้นที่',      hint:'ทุกกลุ่มอยู่บนสเกลเดียวกัน (% ของความจุตัวเอง) — เทียบกันได้ตรงๆ แม้ความจุไม่เท่ากัน' },
-    { key:'stack', label:'📊 ตัน เทียบความจุ',   hint:'แท่ง = สต็อกแยกประเภท · กรอบประ = พื้นที่ว่างที่เหลือ · ลายส้ม = ส่วนที่ล้นความจุ' },
-    { key:'flow',  label:'⚖️ ผลิต vs จ่ายออก',  hint:'แท่งขึ้น = แผนผลิต/รับเข้า · แท่งลง = จ่ายออก (อัตราจริง) · จุด = สุทธิ — สุทธิเป็นบวกคือสต็อกโต' },
-    { key:'room',  label:'📦 ผลิตเพิ่มได้อีก',   hint:'ถ้าจะเพิ่มแผนผลิตในเดือนนั้น เพิ่มได้อีกไม่เกินกี่ตันก่อนจะเกินความจุในเดือนใดเดือนหนึ่งข้างหน้า' },
+    { key:'heat',  label:'🚦 สัญญาณไฟ',          hint:'แต่ละช่อง = ถ้าของที่ผลิตเดือนนั้นเข้ามาวางบนสต็อกล่าสุด จะใช้พื้นที่กี่ % · ช่องเทา = ยังไม่มีแผน' },
+    { key:'space', label:'📏 แผนผลิต vs ที่ว่าง',  hint:'แท่งน้ำเงิน = แผนผลิต · เส้นประเข้ม = ที่ว่างตอนนี้ · ส่วนลายส้ม = ผลิตเกินที่ว่าง (ไม่มีที่วาง)' },
+    { key:'stack', label:'📊 ตัน เทียบความจุ',     hint:'แท่งทึบ = สต็อกล่าสุดแยกประเภท (เท่ากันทุกเดือน) · แท่งลายน้ำเงิน = แผนผลิตที่จะเข้ามา · เส้นเข้ม = ความจุ' },
   ];
-  let viewSel = 'heat';
-  const groupOn = { Flat:true, Pipe:true, Section:true, _net:true };
+  const VIEW_GROUPS = () => [...PLAN_FAMS.map(f => ({ key:f.key, label:f.label, color:f.color })), { key:'_net', label:'ทั้งเครือข่าย', color:'#0c3843', dash:true }];
 
-  // ข้อมูลต่อกลุ่มในรูปแบบเดียวกัน: จุด "ตอนนี้" + 6 เดือน
-  function groupSeries(P){
-    const out = {};
-    PLAN_FAMS.forEach(f => {
-      const F = P.byFam[f.key];
-      out[f.key] = { cap: F.cap, pts: [{ label:'ตอนนี้', m:null, t:F.startT, plan:0, out:0 },
-        ...F.months.map(x => ({ label: monthLabel(x.m), m:x.m, t:x.end, plan:x.plan, out:x.out, assumed: x.assumed }))] };
-    });
-    const netStart = PLAN_FAMS.reduce((a, f) => a + P.byFam[f.key].startT, 0) + otherStockT;
-    out._net = { cap: totalCap, pts: [{ label:'ตอนนี้', m:null, t:netStart, plan:0, out:0 },
-      ...P.months.map((m, i) => ({ label: monthLabel(m), m,
-        t: PLAN_FAMS.reduce((a, f) => a + P.byFam[f.key].months[i].end, 0) + otherStockT,
-        plan: PLAN_FAMS.reduce((a, f) => a + P.byFam[f.key].months[i].plan, 0),
-        out: PLAN_FAMS.reduce((a, f) => a + P.byFam[f.key].months[i].out, 0),
-        assumed: PLAN_FAMS.some(f => P.byFam[f.key].months[i].assumed) }))] };
-    Object.values(out).forEach(g => {
-      g.pts.forEach(p => { p.pct = g.cap > 0 ? p.t / g.cap * 100 : null; p.free = g.cap - p.t; });
-      // ผลิตเพิ่มได้อีก ณ เดือน i = ที่ว่างต่ำสุดตั้งแต่เดือนนั้นเป็นต้นไป (เพิ่มเดือนนี้ = สต็อกทุกเดือนหลังจากนี้สูงขึ้นเท่ากัน)
-      for (let i = 1; i < g.pts.length; i++) g.pts[i].room = Math.min(...g.pts.slice(i).map(p => p.free));
-    });
-    return out;
-  }
-  const TIER_INFO = {
-    normal:   { icon:'✓', word:'ปลอดภัย',  bg:'#eaf3f9', fg:'#0c3843', bar:'#8bbade' },
-    warn:     { icon:'!', word:'ใกล้เต็ม',  bg:'#fff3cf', fg:'#6b4b00', bar:'#fdc440' },
-    critical: { icon:'⛔', word:'เกินความจุ', bg:'#ffe3cf', fg:'#a83f00', bar:'#ff6a05' },
-  };
-  const tipAttr = (html) => `data-tip="${escapeHtml(html)}"`;
-  const assumedWord = () => emptyMode === 'avg' ? 'ใช้ค่าเฉลี่ยรับเข้าจริง (ยังไม่กรอกแผน)' : 'ยังไม่กรอกแผน — นับผลิตเป็น 0';
-  const assumedShort = () => emptyMode === 'avg' ? '≈ ค่าเฉลี่ย' : 'ยังไม่กรอก';
-
-  /* ---------- คำตอบสั้นต่อกลุ่ม ---------- */
-  function renderVerdicts(G, P){
-    const card = (g, label, color) => {
-      const S = G[g];
-      const fut = S.pts.slice(1);
-      const peak = fut.reduce((a, p) => (p.pct ?? -1) > (a.pct ?? -1) ? p : a, fut[0]);
-      const over = fut.find(p => p.pct !== null && p.pct > 100);
-      const warnFrom = fut.find(p => p.pct !== null && p.pct > 80);
-      const tier = over ? 'critical' : warnFrom ? 'warn' : 'normal';
-      const T = TIER_INFO[tier];
-      const room = Math.min(...fut.map(p => p.free));
-      const now = S.pts[0];
-      const sentence = over
-        ? `จะเกินความจุตั้งแต่ <b>${escapeHtml(over.label)}</b> (${over.pct.toFixed(0)}%, เกิน ${fmtNum(-over.free, 0)} ตัน)`
-        : warnFrom
-          ? `ไม่เกิน แต่แตะเกณฑ์ใกล้เต็ม 80% ตั้งแต่ <b>${escapeHtml(warnFrom.label)}</b>`
-          : 'ไม่เกิน 80% ตลอด 6 เดือน';
-      return `<div class="plan-verdict" style="--accent:${color};">
-        <div class="pv-head"><span class="pv-name"><span class="pv-sw" style="background:${color};"></span>${escapeHtml(label)}</span>
-          <span class="pv-badge" style="background:${T.bg};color:${T.fg};">${T.icon} ${T.word}</span></div>
-        <div class="pv-now">ตอนนี้ <b>${now.pct === null ? '—' : now.pct.toFixed(0) + '%'}</b> → สูงสุด <b>${peak && peak.pct !== null ? peak.pct.toFixed(0) + '%' : '—'}</b> <span class="pv-when">${peak ? escapeHtml(peak.label) : ''}</span></div>
-        <div class="pv-meter" aria-hidden="true">${S.pts.map(p => { const t = tierOf(p.pct); return `<span style="background:${TIER_INFO[t].bar};" title="${escapeHtml(p.label)} ${p.pct === null ? '—' : p.pct.toFixed(0) + '%'}"></span>`; }).join('')}</div>
-        <div class="pv-text">${sentence}</div>
-        ${fut.some(p => p.assumed) ? `<div class="pv-assumed" title="${escapeHtml(fut.filter(p => p.assumed).map(p => p.label).join(', '))}">≈ ${fut.filter(p => p.assumed).length} จาก ${fut.length} เดือน${emptyMode === 'avg' ? 'ใช้ค่าเฉลี่ยรับเข้าจริง' : 'นับผลิตเป็น 0'} (ยังไม่กรอกแผนครบ)</div>` : ''}
-        <div class="pv-room">${room >= 0 ? `ผลิตเพิ่มรวมได้อีกไม่เกิน <b>${fmtNum(room, 0)} ตัน</b> ใน 6 เดือนนี้` : `ต้องลดแผน/เร่งจ่ายออก <b>${fmtNum(-room, 0)} ตัน</b> จึงจะไม่เกิน`}</div>
-      </div>`;
-    };
-    // เดือนที่ยังไม่ได้กรอกแผนเลยสักประเภท
-    const emptyMonths = P.months.filter((m, i) => PLAN_FAMS.every(f => P.byFam[f.key].months[i].allAssumed) && monthWindow(m).days > 0);
-    const banner = !emptyMonths.length ? ''
-      : emptyMode === 'avg'
-        ? `<div class="historical-banner" style="grid-column:1/-1;margin:0;">ℹ️ ยังไม่ได้กรอกแผนของ <b>${emptyMonths.map(monthLabel).join(', ')}</b> — ระบบ<b>ใช้ค่าเฉลี่ยรับเข้าจริง</b>แทนไปก่อน (เห็นเป็นตัวจาง ≈ ในช่องกรอก · จุดกลวง/แท่งจางในกราฟ) · กรอกตัวเลขจริงเมื่อมีแผน หรือพิมพ์ 0 ถ้าไม่มีการผลิต</div>`
-        : `<div class="historical-banner" style="grid-column:1/-1;margin:0;">⚠️ ยังไม่ได้กรอกแผนของ <b>${emptyMonths.map(monthLabel).join(', ')}</b> และเลือก "นับเป็น 0" — เดือนเหล่านี้คิดเฉพาะการจ่ายออก สต็อกจึงลดลงต่ำกว่าความเป็นจริง</div>`;
-    el('planKpis').innerHTML = banner
-      + VIEW_GROUPS.map(v => card(v.key, v.label, v.color)).join('');
-  }
-
-  /* ---------- แถบเลือกมุมมอง + กลุ่ม ---------- */
-  function renderViewBar(){
-    el('planViewSeg').innerHTML = VIEWS.map(v => `<button type="button" class="seg-btn${v.key === viewSel ? ' active' : ''}" data-view="${v.key}" aria-pressed="${v.key === viewSel}">${v.label}</button>`).join('');
-    el('planGroupChips').innerHTML = VIEW_GROUPS.map(g => `<button type="button" class="plan-chip${groupOn[g.key] ? ' on' : ''}" data-group="${g.key}" aria-pressed="${groupOn[g.key]}">
-      <span class="pv-sw" style="background:${g.color};${g.dash ? 'background:repeating-linear-gradient(90deg,' + g.color + ' 0 5px,transparent 5px 8px);' : ''}"></span>${escapeHtml(g.label)}</button>`).join('');
-    el('planViewHint').textContent = (VIEWS.find(v => v.key === viewSel) || {}).hint || '';
-  }
-  function bindViewBar(){
-    el('planViewSeg').addEventListener('click', (e) => {
-      const b = e.target.closest('[data-view]'); if (!b) return;
-      viewSel = b.dataset.view; renderViewBar(); renderView();
-    });
-    el('planGroupChips').addEventListener('click', (e) => {
-      const b = e.target.closest('[data-group]'); if (!b) return;
-      const k = b.dataset.group;
-      if (groupOn[k] && Object.values(groupOn).filter(Boolean).length === 1) return; // ต้องเหลืออย่างน้อย 1 กลุ่ม
-      groupOn[k] = !groupOn[k]; renderViewBar(); renderView();
-    });
-    // tooltip ร่วม: ทุกองค์ประกอบที่มี data-tip
-    const tip = el('planTip');
-    const show = (target, x, y) => {
-      tip.innerHTML = target.getAttribute('data-tip');
-      tip.style.display = 'block';
-      const r = tip.getBoundingClientRect();
-      const left = Math.min(window.innerWidth - r.width - 8, Math.max(8, x + 14));
-      const top = y + 16 + r.height > window.innerHeight ? y - r.height - 12 : y + 16;
-      tip.style.left = left + 'px'; tip.style.top = top + 'px';
-    };
-    const view = el('planView');
-    view.addEventListener('mousemove', (e) => { const t = e.target.closest('[data-tip]'); if (t) show(t, e.clientX, e.clientY); else tip.style.display = 'none'; });
-    view.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
-    view.addEventListener('focusin', (e) => { const t = e.target.closest('[data-tip]'); if (t){ const r = t.getBoundingClientRect(); show(t, r.left + r.width / 2, r.bottom); } });
-    view.addEventListener('focusout', () => { tip.style.display = 'none'; });
-  }
-
-  let lastG = null, lastP = null;
   function renderResults(){
     if (!loaded) return;
-    const P = project();
-    const G = groupSeries(P);
-    lastG = G; lastP = P;
-    renderVerdicts(G, P);
+    const C = compute();
+    renderVerdicts(C);
     renderViewBar();
-    renderView();
-    renderTables(P, G);
+    renderView(C);
+    renderTable(C);
   }
-  function renderView(){
-    if (!lastG) return;
-    const groups = VIEW_GROUPS.filter(g => groupOn[g.key]);
-    const html = viewSel === 'pct' ? viewPct(lastG, groups)
-      : viewSel === 'stack' ? viewStack(lastP, lastG, groups)
-      : viewSel === 'flow' ? viewFlow(lastG, groups)
-      : viewSel === 'room' ? viewRoom(lastG, groups)
-      : viewHeat(lastG, groups);
-    el('planView').innerHTML = html;
+  function renderVerdicts(C){
+    const card = (G) => {
+      const planned = G.months.filter(x => x.known);
+      const worst = planned.reduce((a, x) => (x.pct ?? -1) > (a?.pct ?? -1) ? x : a, null);
+      const overs = planned.filter(x => x.remain < 0);
+      const tierNow = tierOf(G.nowPct);
+      const tier = overs.length ? 'critical' : (worst && worst.pct > 80) || tierNow === 'warn' ? 'warn' : tierNow === 'critical' ? 'critical' : 'normal';
+      const T = TIER[tier];
+      const line2 = !planned.length
+        ? '<span class="cell-muted">ยังไม่มีแผนผลิต — กรอกในตารางด้านบนเพื่อเทียบ</span>'
+        : overs.length
+          ? `แผน <b>${overs.map(x => escapeHtml(monthLabel(x.m))).join(', ')}</b> มากกว่าที่ว่าง — สูงสุดขาด <b>${fmtNum(Math.max(...overs.map(x => -x.remain)), 0)} ตัน</b>`
+          : `แผนทุกเดือนที่กรอก (${planned.length} เดือน) วางได้ในที่ว่าง — สูงสุด ${worst.pct.toFixed(0)}% (${escapeHtml(monthLabel(worst.m))})`;
+      return `<div class="plan-verdict" style="--accent:${G.color};">
+        <div class="pv-head"><span class="pv-name"><span class="pv-sw" style="background:${G.color};"></span>${escapeHtml(G.label)}</span>
+          <span class="pv-badge" style="background:${T.bg};color:${T.fg};">${T.icon} ${T.word}</span></div>
+        <div class="pv-now">ตอนนี้ <b>${G.nowPct === null ? '—' : G.nowPct.toFixed(0) + '%'}</b> · ${G.free >= 0 ? `ว่าง <b>${fmtNum(G.free, 0)}</b> ตัน` : `เกินแล้ว <b>${fmtNum(-G.free, 0)}</b> ตัน`}</div>
+        <div class="pv-meter" aria-hidden="true">${[{ pct: G.nowPct, label: 'ตอนนี้' }, ...G.months.map(x => ({ pct: x.pct, label: monthLabel(x.m) }))].map(p => `<span style="background:${TIER[tierOf(p.pct)].bar};" title="${escapeHtml(p.label)} ${p.pct === null ? 'ยังไม่มีแผน' : p.pct.toFixed(0) + '%'}"></span>`).join('')}</div>
+        <div class="pv-text">${line2}</div>
+        <div class="pv-room">รับของผลิตเพิ่มได้อีก <b>${G.free > 0 ? fmtNum(G.free, 0) : 0} ตัน</b> ก่อนเต็ม (นับจากสต็อกล่าสุด)</div>
+      </div>`;
+    };
+    el('planKpis').innerHTML = [...PLAN_FAMS.map(f => C.groups[f.key]), C.groups._net].map(card).join('');
   }
+  function renderViewBar(){
+    el('planViewSeg').innerHTML = VIEWS.map(v => `<button type="button" class="seg-btn${v.key === viewSel ? ' active' : ''}" data-view="${v.key}" aria-pressed="${v.key === viewSel}">${v.label}</button>`).join('');
+    el('planGroupChips').innerHTML = VIEW_GROUPS().map(g => `<button type="button" class="plan-chip${groupOn[g.key] ? ' on' : ''}" data-group="${g.key}" aria-pressed="${groupOn[g.key]}">
+      <span class="pv-sw" style="background:${g.dash ? `repeating-linear-gradient(90deg,${g.color} 0 5px,transparent 5px 8px)` : g.color};"></span>${escapeHtml(g.label)}</button>`).join('');
+    el('planViewHint').textContent = (VIEWS.find(v => v.key === viewSel) || {}).hint || '';
+  }
+  function renderView(C){
+    C = C || compute();
+    const groups = VIEW_GROUPS().filter(g => groupOn[g.key]).map(g => C.groups[g.key]);
+    el('planView').innerHTML = viewSel === 'space' ? viewSpace(C, groups) : viewSel === 'stack' ? viewStack(C, groups) : viewHeat(C, groups);
+  }
+  const cellTip = (G, x) => `<b>${escapeHtml(G.label)} · ${escapeHtml(monthLabel(x.m))}</b><br/>`
+    + (!x.known ? 'ยังไม่มีแผนผลิตเดือนนี้'
+      : `สต็อกล่าสุด ${fmtNum(G.nowT, 0)} + แผนผลิต ${fmtNum(x.plan, 0)} = <b>${fmtNum(x.total, 0)} ตัน</b><br/>ความจุ ${fmtNum(G.cap, 0)} ตัน → ใช้ <b>${x.pct.toFixed(1)}%</b><br/>`
+        + (x.remain >= 0 ? `เหลือที่ว่าง ${fmtNum(x.remain, 0)} ตัน` : `<b>ขาดพื้นที่ ${fmtNum(-x.remain, 0)} ตัน</b>`)
+        + (x.missingTypes && x.missingTypes.length && G.key !== '_net' ? `<br/><i>ไม่ได้กรอก: ${escapeHtml(x.missingTypes.join(', '))} (นับ 0)</i>` : ''));
 
-  const tipFor = (gLabel, p, cap) => `<b>${escapeHtml(gLabel)} · ${escapeHtml(p.label)}</b><br/>`
-    + `สต็อก ${fmtNum(p.t, 0)} ตัน · ความจุ ${fmtNum(cap, 0)} ตัน<br/>`
-    + `${p.pct === null ? '' : `ใช้พื้นที่ <b>${p.pct.toFixed(1)}%</b> · `}${p.free >= 0 ? `ว่าง ${fmtNum(p.free, 0)} ตัน` : `<b>เกิน ${fmtNum(-p.free, 0)} ตัน</b>`}`
-    + (p.m ? `<br/>+ผลิต ${fmtNum(p.plan, 0)} · −จ่ายออก ${fmtNum(p.out, 0)} ตัน` : '')
-    + (p.assumed ? `<br/><i>บางประเภท${escapeHtml(assumedWord())}</i>` : '');
-
-  /* ---------- มุมมอง 1: สัญญาณไฟ ---------- */
-  function viewHeat(G, groups){
-    const cols = G.Flat.pts;
+  function viewHeat(C, groups){
     return `<div class="plan-heat-wrap"><table class="plan-heat">
-      <thead><tr><th>กลุ่ม <span class="cell-muted" style="font-weight:400;">(ความจุ)</span></th>${cols.map(p => `<th>${escapeHtml(p.label)}</th>`).join('')}</tr></thead>
-      <tbody>${groups.map(g => `<tr><th scope="row"><span class="pv-sw" style="background:${g.color};"></span>${escapeHtml(g.label)}<small>${fmtNum(G[g.key].cap, 0)} ตัน</small></th>
-        ${G[g.key].pts.map(p => { const t = tierOf(p.pct), T = TIER_INFO[t];
-          return `<td tabindex="0" class="${p.assumed ? 'ph-assumed' : ''}" style="background:${T.bg};color:${T.fg};" ${tipAttr(tipFor(g.label, p, G[g.key].cap))}>
-            <span class="ph-pct">${T.icon} ${p.assumed ? '≈' : ''}${p.pct === null ? '—' : p.pct.toFixed(0) + '%'}</span>
-            <span class="ph-t">${fmtNum(p.t, 0)} t</span>
-            <span class="ph-free">${p.free >= 0 ? 'ว่าง ' + fmtNum(p.free, 0) : 'เกิน ' + fmtNum(-p.free, 0)}</span></td>`; }).join('')}</tr>`).join('')}
-      </tbody></table></div>
-      <div class="plan-legend">${Object.entries(TIER_INFO).map(([k, T]) => `<span><i style="background:${T.bg};color:${T.fg};">${T.icon}</i>${T.word} ${k === 'normal' ? '(≤ 80%)' : k === 'warn' ? '(81–100%)' : '(> 100%)'}</span>`).join('')}<span><i style="background:#fff;border:2px dashed #9fb3b9;color:#4a6b75;">≈</i>กรอบประ + ≈ = ${escapeHtml(assumedWord())}</span></div>`;
+      <thead><tr><th>กลุ่ม <span class="cell-muted" style="font-weight:400;">(ความจุ)</span></th><th>ตอนนี้</th>${C.months.map(m => `<th>${escapeHtml(monthLabel(m))}<small style="display:block;font-weight:400;">ถ้าผลิตตามแผน</small></th>`).join('')}</tr></thead>
+      <tbody>${groups.map(G => {
+        const Tn = TIER[tierOf(G.nowPct)];
+        const nowCell = `<td tabindex="0" style="background:${Tn.bg};color:${Tn.fg};" ${tipAttr(`<b>${escapeHtml(G.label)} · ตอนนี้</b><br/>สต็อกล่าสุด ${fmtNum(G.nowT, 0)} / ความจุ ${fmtNum(G.cap, 0)} ตัน<br/>${G.free >= 0 ? 'ว่าง ' + fmtNum(G.free, 0) : 'เกิน ' + fmtNum(-G.free, 0)} ตัน`)}>
+          <span class="ph-pct">${Tn.icon} ${G.nowPct === null ? '—' : G.nowPct.toFixed(0) + '%'}</span><span class="ph-t">${fmtNum(G.nowT, 0)} t</span><span class="ph-free">${G.free >= 0 ? 'ว่าง ' + fmtNum(G.free, 0) : 'เกิน ' + fmtNum(-G.free, 0)}</span></td>`;
+        return `<tr><th scope="row"><span class="pv-sw" style="background:${G.color};"></span>${escapeHtml(G.label)}<small>${fmtNum(G.cap, 0)} ตัน</small></th>${nowCell}
+          ${G.months.map(x => {
+            if (!x.known) return `<td tabindex="0" class="ph-none" ${tipAttr(cellTip(G, x))}><span class="ph-pct">—</span><span class="ph-free">ยังไม่มีแผน</span></td>`;
+            const T = TIER[tierOf(x.pct)];
+            return `<td tabindex="0" style="background:${T.bg};color:${T.fg};" ${tipAttr(cellTip(G, x))}>
+              <span class="ph-pct">${T.icon} ${x.pct.toFixed(0)}%</span><span class="ph-t">+${fmtNum(x.plan, 0)} t</span>
+              <span class="ph-free">${x.remain >= 0 ? 'เหลือ ' + fmtNum(x.remain, 0) : 'ขาด ' + fmtNum(-x.remain, 0)}</span></td>`;
+          }).join('')}</tr>`;
+      }).join('')}</tbody></table></div>
+      <div class="plan-legend">${['normal','warn','critical','none'].map(k => `<span><i style="background:${TIER[k].bg};color:${TIER[k].fg};">${TIER[k].icon}</i>${TIER[k].word}${k === 'normal' ? ' (≤ 80%)' : k === 'warn' ? ' (81–100%)' : k === 'critical' ? ' (> 100%)' : ''}</span>`).join('')}</div>`;
   }
 
-  /* ---------- มุมมอง 2: % ใช้พื้นที่ (ทุกกลุ่มบนแกนเดียว) ---------- */
-  function viewPct(G, groups){
-    const W = 960, H = 380, padL = 52, padR = 210, padT = 20, padB = 40;
-    const labels = G.Flat.pts.map(p => p.label);
-    const allPct = groups.flatMap(g => G[g.key].pts.map(p => p.pct ?? 0));
-    const yMax = Math.max(120, Math.ceil((Math.max(...allPct) + 10) / 20) * 20);
-    const innerW = W - padL - padR, innerH = H - padT - padB;
-    const xAt = (i) => padL + innerW * i / (labels.length - 1);
-    const yAt = (v) => padT + innerH - innerH * Math.min(v, yMax) / yMax;
-    let s = `<rect x="${padL}" y="${yAt(yMax)}" width="${innerW}" height="${yAt(100) - yAt(yMax)}" fill="#ffe3cf" opacity=".55"/>`
-      + `<rect x="${padL}" y="${yAt(100)}" width="${innerW}" height="${yAt(80) - yAt(100)}" fill="#fff3cf" opacity=".8"/>`
-      + `<text x="${padL + 6}" y="${yAt(100) - 6}" font-size="11" font-weight="600" fill="#a83f00">⛔ เกินความจุ</text>`
-      + `<text x="${padL + 6}" y="${yAt(80) - 6}" font-size="11" font-weight="600" fill="#6b4b00">! ใกล้เต็ม 80–100%</text>`;
-    for (let v = 0; v <= yMax; v += 20){
-      s += `<line x1="${padL}" x2="${padL + innerW}" y1="${yAt(v)}" y2="${yAt(v)}" stroke="${v === 100 ? '#a83f00' : v === 80 ? '#a87a00' : '#e9ecef'}" stroke-width="${v === 100 || v === 80 ? 1.4 : 1}" ${v === 100 || v === 80 ? 'stroke-dasharray="5 4"' : ''}/>`
-        + `<text x="${padL - 8}" y="${yAt(v) + 4}" text-anchor="end" font-size="11" fill="#6c757d">${v}%</text>`;
-    }
-    labels.forEach((l, i) => { s += `<text x="${xAt(i)}" y="${H - 14}" text-anchor="middle" font-size="11" fill="#6c757d">${escapeHtml(l)}</text>`; });
-    // เส้น + จุด + ป้ายท้ายเส้น (กันป้ายชนกันด้วยการดันลง)
-    const ends = [];
-    groups.forEach(g => {
-      const pts = G[g.key].pts;
-      s += `<polyline points="${pts.map((p, i) => `${xAt(i)},${yAt(p.pct ?? 0)}`).join(' ')}" fill="none" stroke="${g.color}" stroke-width="2.4" stroke-linejoin="round" ${g.dash ? `stroke-dasharray="${g.dash}"` : ''}/>`;
-      pts.forEach((p, i) => { s += p.assumed
-        ? `<circle cx="${xAt(i)}" cy="${yAt(p.pct ?? 0)}" r="4.5" fill="#fff" stroke="${g.color}" stroke-width="2.2"/>`
-        : `<circle cx="${xAt(i)}" cy="${yAt(p.pct ?? 0)}" r="4.5" fill="${g.color}" stroke="#fff" stroke-width="2"/>`; });
-      const last = pts[pts.length - 1];
-      ends.push({ y: yAt(last.pct ?? 0), text: `${g.label} ${last.pct === null ? '—' : last.pct.toFixed(0) + '%'}`, color: g.color });
-    });
-    ends.sort((a, b) => a.y - b.y);
-    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 15) ends[i].y = ends[i - 1].y + 15;
-    ends.forEach(e => { s += `<text x="${padL + innerW + 10}" y="${e.y + 4}" font-size="12" font-weight="600" fill="#0c3843"><tspan fill="${e.color}">●</tspan> ${escapeHtml(e.text)}</text>`; });
-    // แถบโปร่งใสต่อเดือน สำหรับ hover ดูค่าทุกกลุ่มพร้อมกัน
-    labels.forEach((l, i) => {
-      const w = innerW / (labels.length - 1);
-      const tip = `<b>${escapeHtml(l)}</b><br/>` + groups.map(g => { const p = G[g.key].pts[i]; return `<span style="color:${g.color};">●</span> ${escapeHtml(g.label)}: <b>${p.pct === null ? '—' : p.pct.toFixed(1) + '%'}</b> (${fmtNum(p.t, 0)} / ${fmtNum(G[g.key].cap, 0)} t)`; }).join('<br/>');
-      s += `<rect class="hover-col" x="${Math.max(padL, xAt(i) - w / 2)}" y="${padT}" width="${Math.min(w, padL + innerW - Math.max(padL, xAt(i) - w / 2))}" height="${innerH}" fill="transparent" tabindex="0" ${tipAttr(tip)}/>`;
-    });
-    const anyAssumed = groups.some(g => G[g.key].pts.some(p => p.assumed));
-    return `<div class="plan-chart wide"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" role="img" aria-label="กราฟเส้นเปอร์เซ็นต์การใช้พื้นที่ของแต่ละกลุ่ม 6 เดือน">${s}</svg>
-      ${anyAssumed ? `<div class="plan-legend small"><span><i style="background:#fff;border:2px solid #0c3843;border-radius:50%;width:10px;height:10px;"></i>จุดกลวง = ${escapeHtml(assumedWord())}</span></div>` : ''}</div>`;
-  }
-
-  /* ---------- มุมมอง 3: ตันเทียบความจุ (แท่งซ้อนตามประเภท) ---------- */
-  function viewStack(P, G, groups){
-    const fams = groups.filter(g => g.key !== '_net');
-    if (!fams.length) return '<div class="viz-empty">มุมมองนี้แสดงรายกลุ่ม — เลือก Flat / Pipe / Section อย่างน้อย 1 กลุ่ม</div>';
-    return `<div class="plan-charts">${fams.map(g => {
-      const types = PLAN_TYPES.filter(t => t.fam === g.key);
-      const S = G[g.key], cap = S.cap;
-      const cols = S.pts.map((p, i) => ({ p, parts: types.map(t => ({ t, v: i === 0 ? ((baseline[t.code] || {}).stockT || 0) : P.byType[t.code][i - 1].end })) }));
-      const W = 420, H = 260, padL = 48, padR = 8, padT = 20, padB = 34;
-      const maxV = Math.max(cap * 1.12, ...S.pts.map(p => p.t * 1.08), 1);
-      const sc = niceScaleSimple(maxV);
-      const innerW = W - padL - padR, innerH = H - padT - padB;
-      const yAt = (v) => padT + innerH - innerH * v / sc.max;
-      const slot = innerW / cols.length, bw = Math.min(36, slot * 0.62);
-      let s = '<defs><pattern id="ovh-' + g.key + '" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#ffe3cf"/><line x1="0" y1="0" x2="0" y2="6" stroke="#e05a00" stroke-width="2.5"/></pattern></defs>';
-      for (let v = 0; v <= sc.max + 1e-9; v += sc.step) s += `<line x1="${padL}" x2="${W - padR}" y1="${yAt(v)}" y2="${yAt(v)}" stroke="#eef1f3"/><text x="${padL - 6}" y="${yAt(v) + 4}" text-anchor="end" font-size="10" fill="#6c757d">${fmtNum(v, 0)}</text>`;
-      cols.forEach((c, i) => {
-        const cx = padL + slot * (i + 0.5), x = cx - bw / 2;
-        // พื้นที่ว่างที่เหลือ = กรอบประจนถึงเส้นความจุ
-        if (cap > c.p.t) s += `<rect x="${x}" y="${yAt(cap)}" width="${bw}" height="${yAt(c.p.t) - yAt(cap)}" rx="4" fill="#fff" stroke="#9fb3b9" stroke-dasharray="3 3" ${tipAttr(`<b>${escapeHtml(g.label)} · ${escapeHtml(c.p.label)}</b><br/>พื้นที่ว่าง ${fmtNum(cap - c.p.t, 0)} ตัน`)}/>`;
-        let acc = 0;
-        c.parts.forEach((pt, j) => {
-          if (pt.v <= 0) return;
-          const y0 = yAt(acc), y1 = yAt(acc + pt.v);
-          const h = Math.max(0, y0 - y1 - (j > 0 ? 2 : 0)); // ช่องว่าง 2px ระหว่างชั้น
-          s += `<rect x="${x}" y="${y1}" width="${bw}" height="${Math.max(0.5, h)}" fill="${TYPE_STACK_COLORS[pt.t.code]}" ${c.p.assumed ? 'fill-opacity=".55"' : ''} ${j === 0 ? 'rx="2"' : ''} ${tipAttr(`<b>${escapeHtml(pt.t.label)} · ${escapeHtml(c.p.label)}</b><br/>${fmtNum(pt.v, 0)} ตัน (${c.p.t > 0 ? (pt.v / c.p.t * 100).toFixed(0) : 0}% ของกลุ่ม)`)}/>`;
-          acc += pt.v;
-        });
-        if (cap > 0 && c.p.t > cap) s += `<rect x="${x}" y="${yAt(c.p.t)}" width="${bw}" height="${yAt(cap) - yAt(c.p.t)}" fill="url(#ovh-${g.key})" ${tipAttr(`<b>${escapeHtml(g.label)} · ${escapeHtml(c.p.label)}</b><br/>ล้นความจุ ${fmtNum(c.p.t - cap, 0)} ตัน`)}/>`;
-        const pctTxt = c.p.pct === null ? '' : (c.p.assumed ? '≈' : '') + c.p.pct.toFixed(0) + '%';
-        s += `<text x="${cx}" y="${yAt(Math.max(c.p.t, cap)) - 5}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${c.p.pct > 100 ? '#a83f00' : '#0c3843'}">${pctTxt}</text>`
-          + `<text x="${cx}" y="${H - 14}" text-anchor="middle" font-size="10" fill="#6c757d">${escapeHtml(c.p.label)}</text>`;
-      });
-      if (cap > 0) s += `<line x1="${padL}" x2="${W - padR}" y1="${yAt(cap)}" y2="${yAt(cap)}" stroke="#0c3843" stroke-width="1.6"/>`;
-      const legend = types.map(t => `<span><i style="background:${TYPE_STACK_COLORS[t.code]};"></i>${escapeHtml(t.label)}</span>`).join('') + '<span><i style="background:#fff;border:1px dashed #9fb3b9;"></i>ว่าง</span><span><i style="background:repeating-linear-gradient(45deg,#e05a00 0 2px,#ffe3cf 2px 5px);"></i>ล้น</span>'
-        + (S.pts.some(p => p.assumed) ? `<span>แท่งจาง + ≈ = ${escapeHtml(assumedWord())}</span>` : '');
-      return `<div class="plan-chart"><h4><span class="pv-sw" style="background:${g.color};"></span>${escapeHtml(g.label)}</h4>
-        <div class="pc-sub">เส้นทึบเข้ม = ความจุ ${fmtNum(cap, 0)} ตัน · % เหนือแท่ง = ใช้พื้นที่</div>
-        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" role="img" aria-label="สต็อกแยกประเภทของ ${escapeHtml(g.label)} เทียบความจุ">${s}</svg>
-        <div class="plan-legend small">${legend}</div></div>`;
-    }).join('')}</div>`;
-  }
-
-  /* ---------- มุมมอง 4: ผลิต vs จ่ายออก ---------- */
-  function viewFlow(G, groups){
-    return `<div class="plan-charts">${groups.map(g => {
-      const S = G[g.key], pts = S.pts.slice(1);
-      const W = 420, H = 250, padL = 48, padR = 8, padT = 18, padB = 34;
-      const m = Math.max(1, ...pts.map(p => Math.max(p.plan, p.out)));
-      const sc = niceScaleSimple(m);
-      const innerW = W - padL - padR, innerH = H - padT - padB;
-      const yAt = (v) => padT + innerH / 2 - (innerH / 2) * v / sc.max;
-      const slot = innerW / pts.length, bw = Math.min(26, slot * 0.36);
-      let s = '';
-      for (let v = -sc.max; v <= sc.max + 1e-9; v += sc.step) s += `<line x1="${padL}" x2="${W - padR}" y1="${yAt(v)}" y2="${yAt(v)}" stroke="${Math.abs(v) < 1e-9 ? '#9fb3b9' : '#eef1f3'}"/><text x="${padL - 6}" y="${yAt(v) + 4}" text-anchor="end" font-size="10" fill="#6c757d">${fmtNum(Math.abs(v), 0)}</text>`;
-      const netPts = [];
-      pts.forEach((p, i) => {
-        const cx = padL + slot * (i + 0.5), net = p.plan - p.out;
-        const tip = `<b>${escapeHtml(g.label)} · ${escapeHtml(p.label)}</b><br/>+ผลิต/รับเข้า ${fmtNum(p.plan, 0)} ตัน${p.assumed ? ` <i>(${escapeHtml(assumedShort())})</i>` : ''}<br/>−จ่ายออก ${fmtNum(p.out, 0)} ตัน<br/>สุทธิ <b>${net >= 0 ? '+' : '−'}${fmtNum(Math.abs(net), 0)} ตัน</b>`;
-        s += `<rect x="${cx - bw - 1}" y="${yAt(p.plan)}" width="${bw}" height="${Math.max(0.5, yAt(0) - yAt(p.plan))}" rx="3" fill="#2f74a8" ${p.assumed ? 'fill-opacity=".45" stroke="#2f74a8" stroke-dasharray="3 2"' : ''} ${tipAttr(tip)}/>`
-          + `<rect x="${cx + 1}" y="${yAt(0)}" width="${bw}" height="${Math.max(0.5, yAt(-p.out) - yAt(0))}" rx="3" fill="#e05a00" ${tipAttr(tip)}/>`
-          + `<text x="${cx}" y="${H - 14}" text-anchor="middle" font-size="10" fill="#6c757d">${escapeHtml(p.label)}</text>`;
-        netPts.push([cx, yAt(net), net]);
-      });
-      s += `<polyline points="${netPts.map(p => p[0] + ',' + p[1]).join(' ')}" fill="none" stroke="#0c3843" stroke-width="2" stroke-dasharray="4 3"/>`
-        + netPts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="#0c3843" stroke="#fff" stroke-width="2"/>`).join('');
-      const tp = pts.reduce((a, p) => a + p.plan, 0), to = pts.reduce((a, p) => a + p.out, 0);
-      return `<div class="plan-chart"><h4><span class="pv-sw" style="background:${g.color};"></span>${escapeHtml(g.label)}</h4>
-        <div class="pc-sub">รวม 6 เดือน: ผลิต ${fmtNum(tp, 0)} · จ่ายออก ${fmtNum(to, 0)} · <b style="color:${tp - to > 0 ? '#a83f00' : '#0c3843'};">สุทธิ ${tp - to >= 0 ? '+' : '−'}${fmtNum(Math.abs(tp - to), 0)} ตัน</b> ${tp - to > 0 ? '(สต็อกโต)' : '(สต็อกลด)'}</div>
-        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" role="img" aria-label="แผนผลิตเทียบจ่ายออกของ ${escapeHtml(g.label)}">${s}</svg>
-        <div class="plan-legend small"><span><i style="background:#2f74a8;"></i>ผลิต/รับเข้า</span>${pts.some(p => p.assumed) ? `<span><i style="background:rgba(47,116,168,.45);border:1px dashed #2f74a8;"></i>${escapeHtml(assumedShort())}</span>` : ''}<span><i style="background:#e05a00;"></i>จ่ายออก</span><span><i style="background:#0c3843;border-radius:50%;"></i>สุทธิ</span></div></div>`;
-    }).join('')}</div>`;
-  }
-
-  /* ---------- มุมมอง 5: ผลิตเพิ่มได้อีก (headroom) ---------- */
-  function viewRoom(G, groups){
-    const months = G.Flat.pts.slice(1).map(p => p.label);
-    const all = groups.flatMap(g => G[g.key].pts.slice(1).map(p => Math.abs(p.room)));
-    const maxAbs = Math.max(1, ...all);
-    const rows = months.map((ml, i) => `<tr><th scope="row">${escapeHtml(ml)}</th>${groups.map(g => {
-      const p = G[g.key].pts[i + 1], r = p.room, w = Math.min(100, Math.abs(r) / maxAbs * 100);
-      const tip = `<b>${escapeHtml(g.label)} · ${escapeHtml(ml)}</b>${p.assumed ? ` <i>(${escapeHtml(assumedShort())})</i>` : ''}<br/>${r >= 0 ? `เพิ่มแผนผลิตเดือนนี้ได้อีกไม่เกิน <b>${fmtNum(r, 0)} ตัน</b><br/>(เพิ่มเกินนี้ จะเกินความจุในเดือนใดเดือนหนึ่งข้างหน้า)` : `<b>เกินความจุอยู่แล้ว ${fmtNum(-r, 0)} ตัน</b> — ต้องลดแผน/เร่งจ่ายออก`}`;
-      return `<td tabindex="0" ${tipAttr(tip)}><div class="room-cell">
-        <div class="room-track"><div class="room-bar ${r >= 0 ? 'pos' : 'neg'}" style="width:${w}%;${r >= 0 ? `background:${g.color};` : ''}"></div></div>
-        <span class="room-val ${r < 0 ? 'neg' : ''}">${r >= 0 ? '+' + fmtNum(r, 0) : '−' + fmtNum(-r, 0)}</span></div>
-        <div class="room-sub">สิ้นเดือนนี้${p.free >= 0 ? ` ว่าง ${fmtNum(p.free, 0)}` : ` เกิน ${fmtNum(-p.free, 0)}`} ตัน (${p.pct === null ? '—' : p.pct.toFixed(0) + '%'})</div></td>`;
-    }).join('')}</tr>`).join('');
-    return `<div class="plan-heat-wrap"><table class="plan-heat room">
-      <thead><tr><th>ถ้าเพิ่มแผนในเดือน</th>${groups.map(g => `<th><span class="pv-sw" style="background:${g.color};"></span>${escapeHtml(g.label)}</th>`).join('')}</tr></thead>
-      <tbody>${rows}</tbody></table></div>
-      <div class="plan-legend">ตัวเลขใหญ่ = ตันที่ยังเพิ่มแผนผลิตในเดือนนั้นได้ โดยไม่ทำให้เดือนไหนหลังจากนั้นเกินความจุ (ของที่ผลิตเพิ่มจะค้างอยู่ทุกเดือนถัดไป) · ติดลบ (ลายส้ม) = มีเดือนข้างหน้าที่เกินความจุอยู่แล้ว ต้องลดแผน/เร่งจ่ายออกเท่านี้ · บรรทัดเล็ก = ที่ว่าง ณ สิ้นเดือนนั้นเอง</div>`;
-  }
-
-  /* ---------- ตาราง (มุมมองตัวเลข) ---------- */
-  function renderTables(P, G){
-    const head = `<thead><tr><th>กลุ่ม</th><th>ความจุ (ตัน)</th>${G.Flat.pts.map(p => `<th>${escapeHtml(p.label)}</th>`).join('')}</tr></thead>`;
-    const rowFor = (g, cls = '') => `<tr class="${cls}"><td>${escapeHtml(g.label)}</td><td>${fmtNum(G[g.key].cap, 0)}</td>
-      ${G[g.key].pts.map(p => `<td>${fmtNum(p.t, 0)} ${pill(p.pct)}</td>`).join('')}</tr>`;
-    let body = VIEW_GROUPS.filter(g => g.key !== '_net').map(g => rowFor(g)).join('');
-    body += `<tr><td colspan="${2 + G.Flat.pts.length}" style="text-align:left;font-size:12px;color:var(--gray-600);">แผนผลิต/รับเข้ารวม (ตัน): ${G._net.pts.slice(1).map(p => `${p.label} ${fmtNum(p.plan, 0)}`).join(' · ')}
-      &nbsp;|&nbsp; จ่ายออกคาด (ตัน): ${G._net.pts.slice(1).map(p => `${p.label} ${fmtNum(p.out, 0)}`).join(' · ')}</td></tr>`;
-    body += rowFor({ key:'_net', label:'รวมทั้งเครือข่าย (รวม Scrap/ไม่ระบุ)' }, 'total-row');
-    el('planCompareTable').innerHTML = head + `<tbody>${body}</tbody>`;
-
-    const thead2 = `<thead><tr><th>ประเภท</th><th>ตอนนี้</th>${P.months.map(m => `<th>${escapeHtml(monthLabel(m))}<small style="display:block;font-weight:400;font-size:10.5px;opacity:.8;">+ผลิต / −ออก / สิ้นเดือน</small></th>`).join('')}</tr></thead>`;
-    const tbody2 = PLAN_TYPES.map(t => `<tr><td><span class="pt-name"><span class="pt-sw" style="background:${t.color};"></span>${escapeHtml(t.label)}</span></td>
-      <td>${fmtNum((baseline[t.code] || {}).stockT || 0, 0)}</td>
-      ${P.byType[t.code].map(x => `<td><span style="color:var(--blue-600);">+${fmtNum(x.plan, 0)}</span> / <span style="color:var(--danger);">−${fmtNum(x.out, 0)}</span> / <b>${fmtNum(x.end, 0)}</b>${x.floored ? ' <span title="จ่ายออกตามอัตราเดิมมากกว่าสต็อกที่มี — สต็อกหมด">⚠</span>' : ''}</td>`).join('')}</tr>`).join('');
-    el('planTypeTable').innerHTML = thead2 + `<tbody>${tbody2}</tbody>`;
-  }
-
-  function niceScaleSimple(maxVal){
+  function niceScale(maxVal){
     const rough = maxVal / 4;
     const mag = Math.pow(10, Math.floor(Math.log10(rough || 1)));
     const n = rough / mag;
     const step = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
     return { step, max: Math.ceil(maxVal / step) * step };
+  }
+  // มุมมอง: แผนผลิต (แท่ง) เทียบ "ที่ว่างตอนนี้" (เส้นประ) — ส่วนเกินที่ว่างเป็นลายส้ม
+  function viewSpace(C, groups){
+    return `<div class="plan-charts">${groups.map(G => {
+      const W = 420, H = 250, padL = 50, padR = 10, padT = 22, padB = 34;
+      const free = Math.max(0, G.free);
+      const maxV = Math.max(free * 1.2, ...G.months.map(x => x.known ? x.plan * 1.1 : 0), 1);
+      const sc = niceScale(maxV);
+      const innerW = W - padL - padR, innerH = H - padT - padB;
+      const yAt = (v) => padT + innerH - innerH * Math.min(v, sc.max) / sc.max;
+      const slot = innerW / G.months.length, bw = Math.min(36, slot * 0.58);
+      let s = `<defs><pattern id="sp-${G.key}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#ffe3cf"/><line x1="0" y1="0" x2="0" y2="6" stroke="#e05a00" stroke-width="2.5"/></pattern></defs>`;
+      for (let v = 0; v <= sc.max + 1e-9; v += sc.step) s += `<line x1="${padL}" x2="${W - padR}" y1="${yAt(v)}" y2="${yAt(v)}" stroke="#eef1f3"/><text x="${padL - 6}" y="${yAt(v) + 4}" text-anchor="end" font-size="10" fill="#6c757d">${fmtNum(v, 0)}</text>`;
+      G.months.forEach((x, i) => {
+        const cx = padL + slot * (i + 0.5), bx = cx - bw / 2;
+        s += `<text x="${cx}" y="${H - 14}" text-anchor="middle" font-size="10" fill="#6c757d">${escapeHtml(monthLabel(x.m))}</text>`;
+        if (!x.known){ s += `<text x="${cx}" y="${yAt(0) - 6}" text-anchor="middle" font-size="9.5" fill="#9fb3b9">ยังไม่มีแผน</text>`; return; }
+        const inPart = Math.min(x.plan, free), overPart = Math.max(0, x.plan - free);
+        s += `<rect x="${bx}" y="${yAt(inPart)}" width="${bw}" height="${Math.max(0.5, yAt(0) - yAt(inPart))}" rx="3" fill="#2f74a8" ${tipAttr(cellTip(G, x))}/>`;
+        if (overPart > 0) s += `<rect x="${bx}" y="${yAt(x.plan)}" width="${bw}" height="${Math.max(0.5, yAt(inPart) - yAt(x.plan) - 2)}" rx="3" fill="url(#sp-${G.key})" stroke="#e05a00" ${tipAttr(cellTip(G, x))}/>`;
+        s += `<text x="${cx}" y="${yAt(x.plan) - 5}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${overPart > 0 ? '#a83f00' : '#0c3843'}">${fmtNum(x.plan, 0)}</text>`;
+      });
+      s += `<line x1="${padL}" x2="${W - padR}" y1="${yAt(free)}" y2="${yAt(free)}" stroke="#0c3843" stroke-width="1.8" stroke-dasharray="6 4"/>`;
+      return `<div class="plan-chart"><h4><span class="pv-sw" style="background:${G.color};"></span>${escapeHtml(G.label)}</h4>
+        <div class="pc-sub">ที่ว่างตอนนี้ <b>${G.free >= 0 ? fmtNum(G.free, 0) + ' ตัน' : 'ไม่มี (เกินแล้ว ' + fmtNum(-G.free, 0) + ' ตัน)'}</b> (เส้นประ)</div>
+        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" role="img" aria-label="แผนผลิตของ ${escapeHtml(G.label)} เทียบที่ว่างตอนนี้">${s}</svg>
+        <div class="plan-legend small"><span><i style="background:#2f74a8;"></i>แผนผลิต (วางได้)</span><span><i style="background:repeating-linear-gradient(45deg,#e05a00 0 2px,#ffe3cf 2px 5px);"></i>เกินที่ว่าง</span><span><i style="background:transparent;border-top:2px dashed #0c3843;border-radius:0;height:0;"></i>ที่ว่างตอนนี้</span></div></div>`;
+    }).join('')}</div>`;
+  }
+  // มุมมอง: สต็อกล่าสุด (ซ้อนตามประเภท) + แผนผลิตที่จะเข้ามา เทียบเส้นความจุ
+  function viewStack(C, groups){
+    return `<div class="plan-charts">${groups.map(G => {
+      const types = G.key === '_net' ? [] : PLAN_TYPES.filter(t => t.fam === G.key);
+      const cols = [{ label:'ตอนนี้', known:true, plan:0, total:G.nowT, pct:G.nowPct, now:true }, ...G.months.map(x => ({ ...x, label: monthLabel(x.m) }))];
+      const W = 420, H = 260, padL = 50, padR = 10, padT = 22, padB = 34;
+      const maxV = Math.max(G.cap * 1.12, ...cols.map(c => c.known ? c.total * 1.08 : 0), 1);
+      const sc = niceScale(maxV);
+      const innerW = W - padL - padR, innerH = H - padT - padB;
+      const yAt = (v) => padT + innerH - innerH * Math.min(v, sc.max) / sc.max;
+      const slot = innerW / cols.length, bw = Math.min(34, slot * 0.6);
+      let s = `<defs><pattern id="pl-${G.key}" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#d6e6f3"/><line x1="0" y1="0" x2="0" y2="6" stroke="#2f74a8" stroke-width="2.5"/></pattern></defs>`;
+      for (let v = 0; v <= sc.max + 1e-9; v += sc.step) s += `<line x1="${padL}" x2="${W - padR}" y1="${yAt(v)}" y2="${yAt(v)}" stroke="#eef1f3"/><text x="${padL - 6}" y="${yAt(v) + 4}" text-anchor="end" font-size="10" fill="#6c757d">${fmtNum(v, 0)}</text>`;
+      cols.forEach((c, i) => {
+        const cx = padL + slot * (i + 0.5), x = cx - bw / 2;
+        s += `<text x="${cx}" y="${H - 14}" text-anchor="middle" font-size="10" fill="#6c757d">${escapeHtml(c.label)}</text>`;
+        if (!c.known){ s += `<text x="${cx}" y="${yAt(0) - 6}" text-anchor="middle" font-size="9.5" fill="#9fb3b9">ยังไม่มีแผน</text>`; return; }
+        let acc = 0;
+        const parts = types.length ? types.map(t => ({ label: t.label, color: t.color, v: stockByType[t.code] || 0 })) : [{ label:'สต็อกล่าสุด', color:'#9fb3b9', v: G.nowT }];
+        parts.forEach((p, j) => {
+          if (p.v <= 0) return;
+          const y0 = yAt(acc), y1 = yAt(acc + p.v);
+          s += `<rect x="${x}" y="${y1}" width="${bw}" height="${Math.max(0.5, y0 - y1 - (j ? 2 : 0))}" fill="${p.color}" ${tipAttr(`<b>${escapeHtml(p.label)}</b><br/>สต็อกล่าสุด ${fmtNum(p.v, 0)} ตัน`)}/>`;
+          acc += p.v;
+        });
+        if (!c.now && c.plan > 0) s += `<rect x="${x}" y="${yAt(acc + c.plan)}" width="${bw}" height="${Math.max(0.5, yAt(acc) - yAt(acc + c.plan) - 2)}" fill="url(#pl-${G.key})" stroke="#2f74a8" ${tipAttr(cellTip(G, c))}/>`;
+        s += `<text x="${cx}" y="${yAt(Math.max(c.total, 0)) - 5}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${c.pct > 100 ? '#a83f00' : '#0c3843'}">${c.pct === null ? '' : c.pct.toFixed(0) + '%'}</text>`;
+      });
+      if (G.cap > 0) s += `<line x1="${padL}" x2="${W - padR}" y1="${yAt(G.cap)}" y2="${yAt(G.cap)}" stroke="#0c3843" stroke-width="1.8"/>`;
+      const legend = (types.length ? types.map(t => `<span><i style="background:${t.color};"></i>${escapeHtml(t.short)}</span>`).join('') : '<span><i style="background:#9fb3b9;"></i>สต็อกล่าสุด</span>')
+        + '<span><i style="background:repeating-linear-gradient(45deg,#2f74a8 0 2px,#d6e6f3 2px 5px);"></i>แผนผลิต</span>';
+      return `<div class="plan-chart"><h4><span class="pv-sw" style="background:${G.color};"></span>${escapeHtml(G.label)}</h4>
+        <div class="pc-sub">เส้นทึบเข้ม = ความจุ ${fmtNum(G.cap, 0)} ตัน · % = ใช้พื้นที่</div>
+        <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" role="img" aria-label="สต็อกล่าสุดบวกแผนผลิตของ ${escapeHtml(G.label)} เทียบความจุ">${s}</svg>
+        <div class="plan-legend small">${legend}</div></div>`;
+    }).join('')}</div>`;
+  }
+  function renderTable(C){
+    const head = `<thead><tr><th>กลุ่ม</th><th>ความจุ</th><th>สต็อกล่าสุด</th><th>ที่ว่างตอนนี้</th>${C.months.map(m => `<th>${escapeHtml(monthLabel(m))}<small style="display:block;font-weight:400;font-size:10.5px;opacity:.8;">แผน → รวม (%)</small></th>`).join('')}</tr></thead>`;
+    const row = (G, cls = '') => `<tr class="${cls}"><td>${escapeHtml(G.label)}</td><td>${fmtNum(G.cap, 0)}</td><td>${fmtNum(G.nowT, 0)} ${pill(G.nowPct)}</td>
+      <td>${G.free >= 0 ? fmtNum(G.free, 0) : '−' + fmtNum(-G.free, 0)}</td>
+      ${G.months.map(x => x.known ? `<td>+${fmtNum(x.plan, 0)} → ${fmtNum(x.total, 0)} ${pill(x.pct)}</td>` : '<td><span class="cell-muted">ยังไม่มีแผน</span></td>').join('')}</tr>`;
+    el('planCompareTable').innerHTML = head + `<tbody>${PLAN_FAMS.map(f => row(C.groups[f.key])).join('')}${row({ ...C.groups._net, label:'ทั้งเครือข่าย (รวม Scrap/ไม่ระบุ)' }, 'total-row')}</tbody>`;
+  }
+
+  function bindViewBar(){
+    el('planViewSeg').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (!b) return; viewSel = b.dataset.view; renderViewBar(); renderView(); });
+    el('planGroupChips').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-group]'); if (!b) return;
+      const k = b.dataset.group;
+      if (groupOn[k] && Object.values(groupOn).filter(Boolean).length === 1) return;
+      groupOn[k] = !groupOn[k]; renderViewBar(); renderView();
+    });
+    const tip = el('planTip'), view = el('planView');
+    const show = (t, x, y) => {
+      tip.innerHTML = t.getAttribute('data-tip'); tip.style.display = 'block';
+      const r = tip.getBoundingClientRect();
+      tip.style.left = Math.min(window.innerWidth - r.width - 8, Math.max(8, x + 14)) + 'px';
+      tip.style.top = (y + 16 + r.height > window.innerHeight ? y - r.height - 12 : y + 16) + 'px';
+    };
+    view.addEventListener('mousemove', (e) => { const t = e.target.closest('[data-tip]'); if (t) show(t, e.clientX, e.clientY); else tip.style.display = 'none'; });
+    view.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    view.addEventListener('focusin', (e) => { const t = e.target.closest('[data-tip]'); if (t){ const r = t.getBoundingClientRect(); show(t, r.left + r.width / 2, r.bottom); } });
+    view.addEventListener('focusout', () => { tip.style.display = 'none'; });
   }
 
   /* ---------- การกระทำ ---------- */
@@ -5286,8 +5057,7 @@ const PlanningPage = (() => {
     const rows = d.map(k => {
       const [plan_month, type_code] = k.split('|');
       const v = parseTons(edits[k]);
-      // ล้างช่อง (ว่าง) = is_set false → กลับไปใช้ค่าเฉลี่ย · ไม่ลบแถว (เก็บประวัติไว้)
-      return { plan_month, type_code, planned_tons: v === null ? 0 : +v.toFixed(2), is_set: v !== null };
+      return { plan_month, type_code, planned_tons: v === null ? 0 : +v.toFixed(2), is_set: v !== null }; // ล้างช่อง = is_set false (ไม่ลบแถว)
     });
     const btn = el('btnPlanSave');
     btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
@@ -5305,32 +5075,16 @@ const PlanningPage = (() => {
       refreshAuthUI();
     }
   }
-  function fillAvg(){
-    let n = 0;
-    planMonths().forEach(m => PLAN_TYPES.forEach(t => {
-      const k = keyOf(m, t.code);
-      if (planValue(m, t.code) !== null) return; // เติมเฉพาะช่องที่ยังไม่กรอก (0 ที่กรอกเองไม่ถูกทับ)
-      const avg = avgInMonth(m, t.code);
-      const v = Math.round(avg / 10) * 10;
-      if (v <= 0) return;
-      edits[k] = String(v); n++;
-    }));
-    renderInputTable(); renderResults();
-    toast(n ? `เติม ${n} ช่องด้วยค่าเฉลี่ยรับเข้าจริง (ยังไม่บันทึก)` : 'ไม่มีช่องว่างให้เติม', n ? 'success' : 'info');
-  }
-  function resetEdits(){
-    edits = {};
-    renderInputTable(); renderResults();
-  }
+  function resetEdits(){ edits = {}; renderInputTable(); renderResults(); }
   function exportCsv(){
     if (!loaded) return;
-    const P = project();
-    const lines = [['Month','Group','Type','Plan (Ton)','Out est. (Ton)','End stock (Ton)','Group capacity (Ton)','Group end stock (Ton)','Group utilization %'].join(',')];
-    P.months.forEach((m, i) => PLAN_TYPES.forEach(t => {
-      const x = P.byType[t.code][i], F = P.byFam[t.fam];
-      lines.push([m, PLAN_FAMS.find(f => f.key === t.fam).label, t.label, x.plan.toFixed(2), x.out.toFixed(2), x.end.toFixed(2),
-        F.cap.toFixed(2), F.months[i].end.toFixed(2), F.months[i].pct === null ? '' : F.months[i].pct.toFixed(2)]
-        .map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+    const C = compute();
+    const q = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const lines = [['Month','Group','Type','Plan (Ton)','Latest stock of type (Ton)','Group latest stock (Ton)','Group capacity (Ton)','Group free now (Ton)','Group total if plan (Ton)','Group utilization %'].map(q).join(',')];
+    C.months.forEach((m, i) => PLAN_TYPES.forEach(t => {
+      const G = C.groups[t.fam], x = G.months[i], v = planValue(m, t.code);
+      lines.push([m, G.label, t.label, v === null || Number.isNaN(v) ? '' : v.toFixed(2), (stockByType[t.code] || 0).toFixed(2), G.nowT.toFixed(2),
+        G.cap.toFixed(2), G.free.toFixed(2), x.known ? x.total.toFixed(2) : '', x.known && x.pct !== null ? x.pct.toFixed(2) : ''].map(q).join(','));
     }));
     const blob = new Blob(['﻿' + lines.join('\n')], { type:'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -5352,7 +5106,7 @@ const PlanningPage = (() => {
       saveBtn.title = !signedIn ? 'ต้องใส่รหัสพนักงานก่อน' : !nDirty ? 'ยังไม่มีการแก้ไข' : '';
     }
     const want = signedIn ? 'in' : 'out';
-    if (box.dataset.state === want) return; // ไม่สร้างฟอร์มใหม่ทุกครั้ง (กันช่องรหัสที่กำลังพิมพ์หาย)
+    if (box.dataset.state === want) return;
     box.dataset.state = want;
     box.className = 'auth-box' + (signedIn ? ' signed-in' : '');
     box.innerHTML = signedIn
@@ -5386,27 +5140,13 @@ const PlanningPage = (() => {
     if (mounted) return;
     mounted = true;
     el('btnPlanSave').addEventListener('click', save);
-    el('btnPlanFillAvg').addEventListener('click', fillAvg);
     el('btnPlanReset').addEventListener('click', resetEdits);
     el('btnPlanExport').addEventListener('click', exportCsv);
     bindViewBar();
-    el('planEmptySeg').querySelectorAll('.seg-btn').forEach(b => b.addEventListener('click', () => {
-      el('planEmptySeg').querySelectorAll('.seg-btn').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-      emptyMode = b.dataset.mode;
-      renderInputTable(); renderResults();
-    }));
-    el('planLookbackSeg').querySelectorAll('.seg-btn').forEach(b => b.addEventListener('click', () => {
-      el('planLookbackSeg').querySelectorAll('.seg-btn').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-      lookback = Number(b.dataset.pairs) || 6;
-      loadData(); // แก้ไขที่ยังไม่บันทึกยังอยู่
-    }));
-    // เตือนก่อนปิดหน้าถ้ายังมีแผนที่ไม่ได้บันทึก
     window.addEventListener('beforeunload', (e) => { if (dirtyCells().length){ e.preventDefault(); e.returnValue = ''; } });
   }
   function activate(){ mount(); refreshAuthUI(); loadData(); }
-  return { activate, mount, refreshAuthUI, _state: () => ({ baseline, famCap, saved, edits, meta, project: loaded ? project() : null }) };
+  return { activate, mount, refreshAuthUI, _state: () => ({ famCap, stockByType, saved, edits, meta, C: loaded ? compute() : null }) };
 })();
 
 /* ============================================================
