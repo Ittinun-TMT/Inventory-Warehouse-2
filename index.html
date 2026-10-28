@@ -702,6 +702,44 @@
   .trend-up{color:var(--navy-800);font-weight:600;}
   .trend-down{color:var(--orange-500);font-weight:600;}
   .trend-flat{color:var(--gray-400);}
+  /* ===== Planning & Capacity ===== */
+  .plan-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .plan-toolbar .btn-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .plan-meta{font-size:12.5px;color:var(--gray-600);line-height:1.7;margin:-4px 0 14px;}
+  .plan-meta b{color:var(--navy-900);}
+  .plan-step{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--navy-900);color:#fff;font-size:13px;font-weight:700;flex:none;}
+  .plan-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+  @media (max-width:1100px){ .plan-kpis{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .plan-kpis{grid-template-columns:1fr;} }
+  .plan-kpi{background:var(--white);border-radius:14px;padding:14px 16px;border-top:4px solid var(--accent,var(--navy-900));box-shadow:var(--shadow);display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .plan-kpi .pk-name{font-size:14px;font-weight:700;color:var(--navy-900);}
+  .plan-kpi .pk-big{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;color:var(--navy-900);line-height:1.25;}
+  .plan-kpi .pk-line{font-size:12.5px;color:var(--gray-600);}
+  .plan-kpi .pk-alert{font-size:13px;font-weight:600;}
+  .plan-kpi .pk-alert.critical{color:var(--danger);} .plan-kpi .pk-alert.warn{color:var(--gold-500);} .plan-kpi .pk-alert.normal{color:var(--blue-600);}
+  .plan-charts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px;}
+  @media (max-width:1100px){ .plan-charts{grid-template-columns:1fr;} }
+  .plan-chart{background:var(--white);border:1px solid var(--gray-200);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);min-width:0;}
+  .plan-chart h4{margin:0 0 4px;font-size:14px;color:var(--navy-900);}
+  .plan-chart .pc-sub{font-size:11.5px;color:var(--gray-600);margin-bottom:6px;}
+  table.plan-table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px;font-variant-numeric:tabular-nums;}
+  table.plan-table th{background:var(--navy-900);color:#fff;font-weight:600;padding:9px 10px;text-align:right;white-space:nowrap;position:sticky;top:0;}
+  table.plan-table th:first-child,table.plan-table td:first-child{text-align:left;}
+  table.plan-table td{padding:7px 10px;border-bottom:1px solid var(--gray-100);text-align:right;white-space:nowrap;color:var(--navy-900);}
+  table.plan-table tr.fam-row td{background:var(--navy-100);font-weight:700;}
+  table.plan-table tr.total-row td{background:var(--gray-50);font-weight:700;border-top:2px solid var(--navy-900);}
+  table.plan-table .pt-name{display:flex;align-items:center;gap:7px;font-weight:600;}
+  table.plan-table .pt-sw{width:10px;height:10px;border-radius:3px;flex:none;}
+  table.plan-table .pt-desc{font-weight:400;font-size:11px;color:var(--gray-600);}
+  table.plan-table .ref{color:var(--gray-600);font-size:12px;}
+  .plan-input{width:92px;font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;padding:6px 8px;border:1px solid var(--gray-200);border-radius:7px;background:#fff;color:var(--navy-900);}
+  .plan-input:focus{outline:2px solid var(--blue-300);border-color:var(--blue-600);}
+  .plan-input.dirty{background:var(--gold-100);border-color:var(--gold-400);}
+  .plan-input.invalid{background:var(--orange-100);border-color:var(--danger);color:var(--danger);}
+  .plan-cell-pct{display:block;margin-top:2px;}
+  .plan-note{font-size:12px;color:var(--gray-600);line-height:1.75;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:12px 16px;margin-top:14px;}
+  .plan-dirty-badge{font-size:12px;font-weight:600;color:#7a5a00;background:var(--gold-100);border:1px solid var(--gold-400);border-radius:999px;padding:4px 12px;}
+  .plan-month-head small{display:block;font-weight:400;font-size:10.5px;opacity:.8;}
 </style>
 </head>
 <body>
@@ -716,6 +754,7 @@
     <a href="#/trends" class="nav-link" data-route="trends">📈 แนวโน้ม</a>
     <a href="#/lookup" class="nav-link" data-route="lookup">ค้นหา Material</a>
     <a href="#/unmatched" class="nav-link" data-route="unmatched">⚠️ Code ไม่พบข้อมูล</a>
+    <a href="#/planning" class="nav-link" data-route="planning">📐 Planning &amp; Capacity</a>
     <a href="#/import" class="nav-link" data-route="import">นำเข้าข้อมูล</a>
   </div>
 </div>
@@ -1108,6 +1147,46 @@
     </div>
   </div>
 
+  <!-- ============ PLANNING & CAPACITY VIEW ============ -->
+  <div id="view-planning" class="route-view">
+    <div class="section-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:9px;">📐 Planning &amp; Capacity <span class="tag">แผนผลิต/รับเข้า (กรอกเอง) เทียบกับพื้นที่คลังจริง · ล่วงหน้า 6 เดือน</span></span>
+    </div>
+    <div class="auth-box" id="planAuthBox"></div>
+    <div class="plan-meta" id="planMeta">กำลังโหลด...</div>
+
+    <div class="section-title" style="margin-top:6px;"><span class="plan-step">1</span> กรอกแผนผลิต / รับเข้า (ตันต่อเดือน) <span class="tag">ตัวเลขด้านล่างคำนวณใหม่ทันทีที่พิมพ์ · กดบันทึกเพื่อให้ทุกคนเห็น</span></div>
+    <div class="plan-toolbar">
+      <div class="btn-row">
+        <span style="font-size:12.5px;color:var(--gray-600);">อัตราจ่ายออกจริงจาก</span>
+        <div class="seg-group" id="planLookbackSeg" role="group" aria-label="จำนวนรอบย้อนหลังที่ใช้คิดอัตรา">
+          <button type="button" class="seg-btn" data-pairs="3">3 รอบ</button>
+          <button type="button" class="seg-btn active" data-pairs="6">6 รอบ</button>
+          <button type="button" class="seg-btn" data-pairs="12">12 รอบ</button>
+        </div>
+      </div>
+      <div class="btn-row">
+        <span class="plan-dirty-badge" id="planDirtyBadge" style="display:none;"></span>
+        <button type="button" class="btn btn-outline btn-sm" id="btnPlanFillAvg" title="เติมเฉพาะช่องที่ยังว่าง ด้วยค่าเฉลี่ยรับเข้าจริงต่อเดือนของแต่ละประเภท">✨ เติมช่องว่างด้วยค่าเฉลี่ยรับเข้าจริง</button>
+        <button type="button" class="btn btn-outline btn-sm" id="btnPlanReset">↺ ยกเลิกที่ยังไม่บันทึก</button>
+        <button type="button" class="btn btn-outline btn-sm" id="btnPlanExport">⬇ Export CSV</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btnPlanSave">💾 บันทึกแผน</button>
+      </div>
+    </div>
+    <div class="history-table-wrap" style="margin-top:0;"><table class="plan-table" id="planInputTable"><tbody><tr><td><div class="empty-state">กำลังโหลด...</div></td></tr></tbody></table></div>
+
+    <div class="section-title" style="margin-top:28px;"><span class="plan-step">2</span> เทียบกับพื้นที่คลัง <span class="tag">สต็อกคาดการณ์ ณ สิ้นเดือน = สต็อกต้นเดือน + แผนผลิต − จ่ายออก (อัตราจริง)</span></div>
+    <div class="plan-kpis" id="planKpis"></div>
+    <div class="plan-charts" id="planCharts"></div>
+    <div class="history-table-wrap" style="margin-top:0;"><table class="plan-table" id="planCompareTable"><tbody></tbody></table></div>
+
+    <details style="margin-top:16px;">
+      <summary style="cursor:pointer;font-weight:600;color:var(--navy-900);font-size:14px;">ดูสต็อกคาดการณ์แยกตามประเภทสินค้า</summary>
+      <div class="history-table-wrap"><table class="plan-table" id="planTypeTable"><tbody></tbody></table></div>
+    </details>
+    <div class="plan-note" id="planNote"></div>
+  </div>
+
 </main>
 
 <footer>Inventory Warehouse 2 · Powered by Supabase · TMT Steel</footer>
@@ -1255,7 +1334,7 @@ const Router = {
   go(route){ window.location.hash = '#/' + route; },
   current(){
     const h = (window.location.hash || '').replace('#/', '').split('?')[0];
-    return ['dashboard','trends','lookup','unmatched','import'].includes(h) ? h : 'dashboard';
+    return ['dashboard','trends','lookup','unmatched','planning','import'].includes(h) ? h : 'dashboard';
   }
 };
 let activatedRoute = null;
@@ -1277,6 +1356,7 @@ function handleRoute(){
   if (route === 'lookup') LookupPage.activate();
   if (route === 'unmatched') UnmatchedPage.activate();
   if (route === 'import') ImportPage.activate();
+  if (route === 'planning') PlanningPage.activate();
 }
 window.addEventListener('hashchange', handleRoute);
 
@@ -4473,12 +4553,525 @@ const TrendsPage = (() => {
 })();
 
 /* ============================================================
+   PLANNING & CAPACITY PAGE
+   แผนผลิต/รับเข้า (กรอกเอง, รายเดือน, แยกประเภทสินค้า) เทียบกับพื้นที่คลังจริง
+   - สต็อกตั้งต้น + อัตรารับเข้า/จ่ายออกจริงต่อประเภท มาจาก RPC plan_type_baseline(p_pairs)
+     (คิดที่ระดับ Material × Batch เหมือนหน้าแนวโน้ม — ยอดรวมทุกประเภทตรงกับ v_stock_daily / v_movement_daily)
+   - ความจุต่อกลุ่ม (Flat / Pipe + C Channel / Section) = ความจุของโรงที่เก็บกลุ่มนั้นจริง
+     ถ้าโรงหนึ่งเก็บหลายกลุ่ม จะแบ่งความจุตามสัดส่วนน้ำหนักที่เก็บอยู่จริง (ไม่นับซ้ำ)
+   - แผนเก็บในตาราง production_plan (อ่านได้ทุกคน · บันทึกได้เฉพาะผู้ล็อกอินด้วยรหัส 8 หลัก)
+============================================================ */
+const PLAN_TYPES = [
+  { code:'HRS',      label:'Hot Rolled Sheet',     short:'HRS',      fam:'Flat',    desc:'แผ่น (HS + Plate)',        color:'#0c3843' },
+  { code:'FLAT_BAR', label:'Flat Bar',             short:'Flat Bar', fam:'Flat',    desc:'แบน (Flat Bars)',          color:'#5f8f9c' },
+  { code:'PIPE',     label:'Pipe',                 short:'Pipe',     fam:'Pipe',    desc:'ท่อ (ไม่ชุบ + ท่อประปา)',  color:'#2f74a8' },
+  { code:'PIPE_GI',  label:'Pipe Galvanized',      short:'Pipe GI',  fam:'Pipe',    desc:'ท่อชุบ GI',               color:'#8bbade' },
+  { code:'CH',       label:'C Channel',            short:'CH',       fam:'Pipe',    desc:'ตัวซี (ไม่ชุบ)',           color:'#d9a21a' },
+  { code:'CH_GI',    label:'C Channel Galvanized', short:'CH GI',    fam:'Pipe',    desc:'ตัวซีชุบ GI',              color:'#fdc440' },
+  { code:'SECTION',  label:'Section',              short:'Section',  fam:'Section', desc:'Beam ทั้งหมด',             color:'#ff6a05' },
+];
+const PLAN_FAMS = [
+  { key:'Flat',    label:'Flat',             color:'#0c3843' },
+  { key:'Pipe',    label:'Pipe + C Channel', color:'#2f74a8' },
+  { key:'Section', label:'Section',          color:'#ff6a05' },
+];
+const PLAN_MONTHS = 6;
+const PLAN_DAYS_PER_MONTH = 30.4375; // ใช้แปลงอัตราต่อวันเป็น "เฉลี่ยต่อเดือน" เพื่ออ้างอิงเท่านั้น
+
+const PlanningPage = (() => {
+  let mounted = false;
+  let lookback = 6;
+  let baseline = {};      // code -> { stockT, inPerDay, outPerDay }
+  let otherStockT = 0;    // สต็อกที่ไม่อยู่ใน 7 ประเภท (Scrap / ไม่ระบุ) — ไม่อยู่ในการเทียบรายกลุ่ม
+  let meta = null;        // { baseDate, days, pairs, firstDate }
+  let saved = {};         // 'YYYY-MM-01|CODE' -> tons (ที่บันทึกในฐานข้อมูล)
+  let edits = {};         // 'YYYY-MM-01|CODE' -> string ที่ผู้ใช้พิมพ์ (ยังไม่บันทึก)
+  let lastUpdate = null;  // { by, at }
+  let famCap = {};        // fam -> ตัน (ความจุที่แบ่งให้กลุ่มนั้น)
+  let famCapDetail = {};  // fam -> [{ loc, cap, share }]
+  let totalCap = 0;
+  let loaded = false;
+
+  const keyOf = (m, code) => `${m}|${code}`;
+  const parseTons = (str) => {
+    const t = String(str ?? '').replace(/[,\s]/g, '');
+    if (t === '') return 0;
+    if (!/^\d+(\.\d+)?$/.test(t)) return NaN;
+    const v = Number(t);
+    return v > 1000000 ? NaN : v;
+  };
+  const dateFromKey = (k) => { const [y, m, d] = k.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+  const keyFromDate = (d) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+  const monthLabel = (k) => dateFromKey(k).toLocaleDateString('th-TH', { month:'short', year:'2-digit', timeZone:'UTC' });
+
+  // เดือนที่วางแผน: เดือนของวันที่ข้อมูลล่าสุด + อีก 5 เดือน
+  function planMonths(){
+    if (!meta) return [];
+    const b = dateFromKey(meta.baseDate);
+    return Array.from({ length: PLAN_MONTHS }, (_, i) => keyFromDate(new Date(Date.UTC(b.getUTCFullYear(), b.getUTCMonth() + i, 1))));
+  }
+  // จำนวนวันที่ยังเหลือให้คำนวณในเดือนนั้น (เดือนแรกนับจากวันที่ข้อมูลล่าสุดถึงสิ้นเดือน)
+  function monthWindow(mKey){
+    const start = dateFromKey(mKey);
+    const next = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1));
+    const daysInMonth = Math.round((next - start) / 86400000);
+    const base = dateFromKey(meta.baseDate);
+    const from = base > start ? base : start;
+    const days = Math.max(0, Math.round((next - from) / 86400000));
+    return { days, daysInMonth, frac: daysInMonth ? days / daysInMonth : 0 };
+  }
+  function planValue(mKey, code){
+    const k = keyOf(mKey, code);
+    if (Object.prototype.hasOwnProperty.call(edits, k)) return parseTons(edits[k]);
+    return saved[k] || 0;
+  }
+  function dirtyCells(){
+    return Object.keys(edits).filter(k => {
+      const v = parseTons(edits[k]);
+      return Number.isNaN(v) || Math.abs(v - (saved[k] || 0)) > 0.004;
+    });
+  }
+
+  /* ---------- คำนวณ ---------- */
+  function project(){
+    const months = planMonths();
+    const byType = {};
+    PLAN_TYPES.forEach(t => {
+      const b = baseline[t.code] || { stockT:0, inPerDay:0, outPerDay:0 };
+      let s = b.stockT;
+      byType[t.code] = months.map(m => {
+        const w = monthWindow(m);
+        const raw = planValue(m, t.code);
+        const plan = (Number.isNaN(raw) ? 0 : raw) * w.frac;
+        const out = b.outPerDay * w.days;
+        const next = s + plan - out;
+        const floored = next < 0;           // จ่ายออกมากกว่าที่มี → สต็อกหมด (ไม่ติดลบ)
+        s = Math.max(0, next);
+        return { m, plan, out, end: s, floored, invalid: Number.isNaN(raw) };
+      });
+    });
+    const byFam = {};
+    PLAN_FAMS.forEach(f => {
+      const types = PLAN_TYPES.filter(t => t.fam === f.key);
+      const startT = types.reduce((a, t) => a + ((baseline[t.code] || {}).stockT || 0), 0);
+      const cap = famCap[f.key] || 0;
+      byFam[f.key] = {
+        startT, cap, startPct: cap > 0 ? startT / cap * 100 : null,
+        months: months.map((m, i) => {
+          const end = types.reduce((a, t) => a + byType[t.code][i].end, 0);
+          const plan = types.reduce((a, t) => a + byType[t.code][i].plan, 0);
+          const out = types.reduce((a, t) => a + byType[t.code][i].out, 0);
+          return { m, end, plan, out, pct: cap > 0 ? end / cap * 100 : null };
+        }),
+      };
+    });
+    return { months, byType, byFam };
+  }
+  const tierOf = (pct) => pct === null ? 'normal' : pct > 100 ? 'critical' : pct > 80 ? 'warn' : 'normal';
+  const tierColor = (t) => t === 'critical' ? '#ff6a05' : t === 'warn' ? '#fdc440' : '#8bbade';
+  const pill = (pct) => pct === null ? '<span class="cell-muted">—</span>'
+    : `<span class="mgr-status-pill ${tierOf(pct)} plan-cell-pct">${pct.toFixed(0)}%</span>`;
+
+  /* ---------- โหลดข้อมูล ---------- */
+  async function loadData(){
+    el('planMeta').textContent = 'กำลังโหลด...';
+    try {
+      const [baseRes, capRes] = await Promise.all([
+        sb.rpc('plan_type_baseline', { p_pairs: lookback }),
+        sb.from('v_location_capacity').select('location_code,actual_capacity_tons'),
+      ]);
+      if (baseRes.error) throw baseRes.error;
+      if (capRes.error) throw capRes.error;
+      const rows = baseRes.data || [];
+      if (!rows.length) throw new Error('ยังไม่มีข้อมูลสต็อก — นำเข้าไฟล์สต็อกก่อน');
+
+      baseline = {}; otherStockT = 0;
+      const r0 = rows[0];
+      meta = { baseDate: r0.base_date, days: +r0.days || 0, pairs: +r0.pairs || 0, firstDate: r0.first_date };
+      rows.forEach(r => {
+        const stockT = (+r.stock_kg || 0) / 1000;
+        if (!PLAN_TYPES.some(t => t.code === r.type_code)){ otherStockT += stockT; return; }
+        baseline[r.type_code] = {
+          stockT,
+          inPerDay:  meta.days > 0 ? (+r.in_kg  || 0) / 1000 / meta.days : 0,
+          outPerDay: meta.days > 0 ? (+r.out_kg || 0) / 1000 / meta.days : 0,
+        };
+      });
+
+      const months = planMonths();
+      const [planRes, lgRes] = await Promise.all([
+        sb.from('production_plan').select('plan_month,type_code,planned_tons,updated_by,updated_at')
+          .gte('plan_month', months[0]).lte('plan_month', months[months.length - 1]),
+        sb.from('v_location_group_daily').select('location_code,dim_value,weight_kg')
+          .eq('date_key', meta.baseDate).eq('dim_type', 'group_product'),
+      ]);
+      if (planRes.error) throw planRes.error;
+      if (lgRes.error) throw lgRes.error;
+
+      saved = {}; lastUpdate = null;
+      (planRes.data || []).forEach(p => {
+        saved[keyOf(p.plan_month, p.type_code)] = +p.planned_tons || 0;
+        if (!lastUpdate || p.updated_at > lastUpdate.at) lastUpdate = { by: p.updated_by, at: p.updated_at };
+      });
+      // แก้ไขที่ค้างอยู่แต่ตรงกับค่าที่บันทึกแล้ว → ล้างออก
+      Object.keys(edits).forEach(k => { if (!dirtyCells().includes(k)) delete edits[k]; });
+
+      computeCapacity(capRes.data || [], lgRes.data || []);
+      loaded = true;
+      renderAll();
+    } catch (e){
+      console.error(e);
+      el('planMeta').innerHTML = `<span style="color:var(--danger);">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(friendlyDbError(e))}</span>`;
+      toast('โหลดข้อมูล Planning ไม่สำเร็จ: ' + friendlyDbError(e), 'error');
+    }
+  }
+
+  // ความจุต่อกลุ่ม: ความจุของแต่ละโรง × สัดส่วนน้ำหนักของกลุ่มนั้นในโรง (ณ วันที่ข้อมูลล่าสุด)
+  function computeCapacity(capRows, lgRows){
+    const capByLoc = {};
+    mergeLocationRows(capRows).forEach(r => { capByLoc[r.location_code] = +r.actual_capacity_tons || 0; });
+    totalCap = Object.values(capByLoc).reduce((a, b) => a + b, 0);
+    const byLoc = {};
+    lgRows.forEach(r => {
+      const loc = locationDisplayCode(r.location_code); if (!loc) return;
+      const fam = familyLabelOf(r.dim_value === 'ไม่ระบุ' ? null : r.dim_value);
+      const t = (+r.weight_kg || 0) / 1000;
+      byLoc[loc] = byLoc[loc] || { total: 0, fam: {} };
+      byLoc[loc].total += t;
+      byLoc[loc].fam[fam] = (byLoc[loc].fam[fam] || 0) + t;
+    });
+    famCap = {}; famCapDetail = {};
+    PLAN_FAMS.forEach(f => { famCap[f.key] = 0; famCapDetail[f.key] = []; });
+    Object.entries(byLoc).forEach(([loc, v]) => {
+      const cap = capByLoc[loc] || 0;
+      if (!(cap > 0) || !(v.total > 0)) return;
+      PLAN_FAMS.forEach(f => {
+        const t = v.fam[f.key] || 0;
+        if (t < 0.5) return; // เศษเล็กน้อย (< 0.5 ตัน) ไม่ถือว่าโรงนี้เก็บกลุ่มนั้น
+        const share = t / v.total;
+        famCap[f.key] += cap * share;
+        famCapDetail[f.key].push({ loc, cap, share });
+      });
+    });
+  }
+
+  /* ---------- แสดงผล ---------- */
+  function renderAll(){
+    renderMeta();
+    renderInputTable();
+    renderResults();
+    refreshAuthUI();
+  }
+
+  function renderMeta(){
+    const famTxt = PLAN_FAMS.map(f => `${f.label} ${fmtNum(famCap[f.key] || 0, 0)} ตัน (${(famCapDetail[f.key] || []).map(d => d.share < 0.995 ? `${d.loc} ${Math.round(d.share * 100)}%` : d.loc).join(', ') || '—'})`).join(' · ');
+    el('planMeta').innerHTML =
+      `สต็อกตั้งต้น ณ <b>${escapeHtml(fmtDateKey(meta.baseDate))}</b> (ข้อมูลล่าสุด) · อัตรารับเข้า/จ่ายออกจริงจาก <b>${meta.pairs} คู่รอบ</b> `
+      + `(${escapeHtml(fmtDateKey(meta.firstDate || meta.baseDate))} – ${escapeHtml(fmtDateKey(meta.baseDate))}, ${meta.days} วัน)<br/>`
+      + `ความจุต่อกลุ่ม: ${escapeHtml(famTxt)}`
+      + (lastUpdate ? `<br/>แผนแก้ไขล่าสุดโดย <b>${escapeHtml(lastUpdate.by || '—')}</b> เมื่อ ${escapeHtml(fmtDateTime(lastUpdate.at))}` : '<br/>ยังไม่มีแผนที่บันทึกไว้สำหรับช่วงนี้');
+    el('planNote').innerHTML =
+      '<b>วิธีคำนวณ</b><br/>'
+      + '• สต็อกสิ้นเดือน = สต็อกต้นเดือน + แผนผลิต/รับเข้า − จ่ายออก (อัตราจ่ายออกเฉลี่ยต่อวันจริงของประเภทนั้น × จำนวนวัน) · ถ้าจ่ายออกมากกว่าที่มี สต็อกจะหยุดที่ 0 (มีเครื่องหมาย ⚠)<br/>'
+      + `• เดือนแรกคิดเฉพาะวันที่เหลือหลังวันที่ข้อมูลล่าสุด — แผนของเดือนนั้นถูกเฉลี่ยตามสัดส่วนวันที่เหลือ (เช่น เหลือ ${monthWindow(planMonths()[0]).days} จาก ${monthWindow(planMonths()[0]).daysInMonth} วัน)<br/>`
+      + '• ความจุของกลุ่ม = ความจุโรงที่เก็บกลุ่มนั้นจริง ถ้าโรงเดียวเก็บหลายกลุ่ม แบ่งความจุตามสัดส่วนน้ำหนักที่เก็บอยู่ (ไม่นับซ้ำ)<br/>'
+      + `• สต็อกนอก 7 ประเภท (Scrap / ไม่ระบุ ${fmtNum(otherStockT, 0)} ตัน) ไม่อยู่ในการเทียบรายกลุ่ม · เป็นการประมาณเชิงเส้น ไม่รวมฤดูกาลหรือคำสั่งซื้อพิเศษ`;
+  }
+
+  function renderInputTable(){
+    const months = planMonths();
+    const head = `<thead><tr>
+      <th>ประเภทสินค้า</th><th>สต็อกล่าสุด</th><th title="ค่าเฉลี่ยจริงต่อเดือนจากช่วงที่เลือก">รับเข้าจริง<br/>เฉลี่ย/เดือน</th><th title="ค่าเฉลี่ยจริงต่อเดือนจากช่วงที่เลือก — ใช้คำนวณจ่ายออกในอนาคต">จ่ายออกจริง<br/>เฉลี่ย/เดือน</th>
+      ${months.map((m, i) => `<th class="plan-month-head">${escapeHtml(monthLabel(m))}${i === 0 ? `<small>เหลือ ${monthWindow(m).days} วัน</small>` : '<small>ทั้งเดือน</small>'}</th>`).join('')}
+    </tr></thead>`;
+    let body = '';
+    PLAN_FAMS.forEach(f => {
+      const types = PLAN_TYPES.filter(t => t.fam === f.key);
+      body += `<tr class="fam-row" data-fam="${f.key}"><td>${escapeHtml(f.label)}</td>
+        <td>${fmtNum(types.reduce((a, t) => a + ((baseline[t.code] || {}).stockT || 0), 0), 1)}</td>
+        <td class="ref">${fmtNum(types.reduce((a, t) => a + ((baseline[t.code] || {}).inPerDay || 0), 0) * PLAN_DAYS_PER_MONTH, 0)}</td>
+        <td class="ref">${fmtNum(types.reduce((a, t) => a + ((baseline[t.code] || {}).outPerDay || 0), 0) * PLAN_DAYS_PER_MONTH, 0)}</td>
+        ${months.map(m => `<td data-fam-sum="${m}">${fmtNum(types.reduce((a, t) => { const v = planValue(m, t.code); return a + (Number.isNaN(v) ? 0 : v); }, 0), 0)}</td>`).join('')}</tr>`;
+      types.forEach(t => {
+        const b = baseline[t.code] || { stockT:0, inPerDay:0, outPerDay:0 };
+        body += `<tr><td><span class="pt-name"><span class="pt-sw" style="background:${t.color};"></span>${escapeHtml(t.label)} <span class="pt-desc">${escapeHtml(t.desc)}</span></span></td>
+          <td>${fmtNum(b.stockT, 1)}</td>
+          <td class="ref">${fmtNum(b.inPerDay * PLAN_DAYS_PER_MONTH, 0)}</td>
+          <td class="ref">${fmtNum(b.outPerDay * PLAN_DAYS_PER_MONTH, 0)}</td>
+          ${months.map(m => {
+            const k = keyOf(m, t.code);
+            const has = Object.prototype.hasOwnProperty.call(edits, k);
+            const val = has ? edits[k] : (saved[k] ? String(saved[k]) : '');
+            return `<td><input class="plan-input" type="text" inputmode="decimal" data-key="${k}" value="${escapeHtml(val)}"
+                     aria-label="แผน ${escapeHtml(t.label)} ${escapeHtml(monthLabel(m))} (ตัน)" placeholder="0" /></td>`;
+          }).join('')}</tr>`;
+      });
+    });
+    el('planInputTable').innerHTML = head + `<tbody>${body}</tbody>`;
+    el('planInputTable').querySelectorAll('.plan-input').forEach(inp => {
+      markInput(inp);
+      inp.addEventListener('input', () => {
+        edits[inp.dataset.key] = inp.value;
+        markInput(inp);
+        scheduleResults();
+      });
+      inp.addEventListener('blur', () => { // จัดรูปแบบตัวเลขเมื่อออกจากช่อง (ไม่ยุ่งตอนกำลังพิมพ์)
+        const v = parseTons(inp.value);
+        if (!Number.isNaN(v) && inp.value.trim() !== ''){ inp.value = String(+v.toFixed(2)); edits[inp.dataset.key] = inp.value; }
+      });
+    });
+    updateDirtyUI();
+  }
+  function markInput(inp){
+    const k = inp.dataset.key;
+    const v = parseTons(inp.value);
+    inp.classList.toggle('invalid', Number.isNaN(v));
+    inp.classList.toggle('dirty', !Number.isNaN(v) && Math.abs(v - (saved[k] || 0)) > 0.004);
+    inp.title = Number.isNaN(v) ? 'ใส่ตัวเลขตันที่ไม่ติดลบ (ไม่เกิน 1,000,000)' : '';
+  }
+  let resTimer = null;
+  function scheduleResults(){
+    clearTimeout(resTimer);
+    resTimer = setTimeout(() => { renderFamSums(); renderResults(); updateDirtyUI(); }, 150);
+  }
+  function renderFamSums(){
+    PLAN_FAMS.forEach(f => {
+      const types = PLAN_TYPES.filter(t => t.fam === f.key);
+      el('planInputTable').querySelectorAll(`tr[data-fam="${f.key}"] td[data-fam-sum]`).forEach(td => {
+        const m = td.dataset.famSum;
+        td.textContent = fmtNum(types.reduce((a, t) => { const v = planValue(m, t.code); return a + (Number.isNaN(v) ? 0 : v); }, 0), 0);
+      });
+    });
+  }
+  function updateDirtyUI(){
+    const d = dirtyCells();
+    const badge = el('planDirtyBadge');
+    const invalid = d.filter(k => Number.isNaN(parseTons(edits[k]))).length;
+    badge.style.display = d.length ? '' : 'none';
+    badge.textContent = invalid ? `มี ${invalid} ช่องที่ตัวเลขไม่ถูกต้อง` : `แก้ไข ${d.length} ช่อง — ยังไม่บันทึก`;
+    refreshAuthUI();
+  }
+
+  function renderResults(){
+    if (!loaded) return;
+    const P = project();
+    const firstOver = (fam) => P.byFam[fam].months.find(x => x.pct !== null && x.pct > 100);
+    const peak = (fam) => P.byFam[fam].months.reduce((a, x) => (x.pct ?? -1) > (a.pct ?? -1) ? x : a, P.byFam[fam].months[0]);
+
+    // KPI: ทุกกลุ่ม + รวมทั้งเครือข่าย
+    const netStart = PLAN_FAMS.reduce((a, f) => a + P.byFam[f.key].startT, 0) + otherStockT;
+    const netMonths = P.months.map((m, i) => PLAN_FAMS.reduce((a, f) => a + P.byFam[f.key].months[i].end, 0) + otherStockT);
+    const netPeakIdx = netMonths.reduce((bi, v, i) => v > netMonths[bi] ? i : bi, 0);
+    const netOverIdx = netMonths.findIndex(v => totalCap > 0 && v > totalCap);
+    const kpiCard = (label, color, cap, startPct, pk, over) => `
+      <div class="plan-kpi" style="--accent:${color};">
+        <span class="pk-name">${escapeHtml(label)}</span>
+        <span class="pk-big">${startPct === null ? '—' : startPct.toFixed(0) + '%'} <span style="font-size:13px;color:var(--gray-600);font-family:'IBM Plex Sans Thai',sans-serif;">ตอนนี้</span></span>
+        <span class="pk-line">ความจุ ${fmtNum(cap, 0)} ตัน · สูงสุด ${pk}</span>
+        <span class="pk-alert ${over ? 'critical' : 'normal'}">${over ? `⛔ เกินความจุตั้งแต่ ${escapeHtml(over)}` : '✓ ไม่เกินความจุใน 6 เดือนนี้'}</span>
+      </div>`;
+    el('planKpis').innerHTML = PLAN_FAMS.map(f => {
+      const F = P.byFam[f.key], pk = peak(f.key), fo = firstOver(f.key);
+      return kpiCard(f.label, f.color, F.cap, F.startPct,
+        pk && pk.pct !== null ? `${pk.pct.toFixed(0)}% (${monthLabel(pk.m)})` : '—', fo ? monthLabel(fo.m) : null);
+    }).join('') + kpiCard('รวมทั้งเครือข่าย', '#8bbade', totalCap, totalCap > 0 ? netStart / totalCap * 100 : null,
+      totalCap > 0 ? `${(netMonths[netPeakIdx] / totalCap * 100).toFixed(0)}% (${monthLabel(P.months[netPeakIdx])})` : '—',
+      netOverIdx >= 0 ? monthLabel(P.months[netOverIdx]) : null);
+
+    el('planCharts').innerHTML = PLAN_FAMS.map(f => buildFamChart(f, P.byFam[f.key])).join('');
+    // เตือนเดือนที่ยังไม่มีแผนเลย — สต็อกในเดือนนั้นจะลดลงตามอัตราจ่ายออกเพียงอย่างเดียว (ดูต่ำกว่าความจริง)
+    const emptyMonths = P.months.filter((m, i) => PLAN_FAMS.every(f => P.byFam[f.key].months[i].plan === 0) && monthWindow(m).days > 0);
+    el('planKpis').insertAdjacentHTML('afterbegin', emptyMonths.length
+      ? `<div class="historical-banner" style="grid-column:1/-1;margin:0;">ℹ️ ยังไม่ได้กรอกแผนผลิตของ <b>${emptyMonths.map(monthLabel).join(', ')}</b> — เดือนเหล่านี้คิดเฉพาะการจ่ายออก สต็อกจึงลดลงต่ำกว่าความจริง · กด "✨ เติมช่องว่างด้วยค่าเฉลี่ยรับเข้าจริง" เพื่อใช้ค่าเฉลี่ยเป็นจุดตั้งต้นได้</div>`
+      : '');
+
+    // ตารางเทียบรายเดือน
+    const head = `<thead><tr><th>กลุ่ม</th><th>ความจุ (ตัน)</th><th>ตอนนี้</th>${P.months.map(m => `<th>${escapeHtml(monthLabel(m))}</th>`).join('')}</tr></thead>`;
+    const rowFor = (label, cap, start, ends, cls = '') => `<tr class="${cls}"><td>${escapeHtml(label)}</td><td>${fmtNum(cap, 0)}</td>
+      <td>${fmtNum(start, 0)} ${pill(cap > 0 ? start / cap * 100 : null)}</td>
+      ${ends.map(e => `<td>${fmtNum(e, 0)} ${pill(cap > 0 ? e / cap * 100 : null)}</td>`).join('')}</tr>`;
+    let body = PLAN_FAMS.map(f => rowFor(f.label, P.byFam[f.key].cap, P.byFam[f.key].startT, P.byFam[f.key].months.map(x => x.end))).join('');
+    body += `<tr><td colspan="${3 + P.months.length}" style="text-align:left;font-size:12px;color:var(--gray-600);">แผนผลิต/รับเข้ารวม (ตัน): ${P.months.map((m, i) => `${monthLabel(m)} ${fmtNum(PLAN_FAMS.reduce((a, f) => a + P.byFam[f.key].months[i].plan, 0), 0)}`).join(' · ')}
+      &nbsp;|&nbsp; จ่ายออกคาด (ตัน): ${P.months.map((m, i) => `${monthLabel(m)} ${fmtNum(PLAN_FAMS.reduce((a, f) => a + P.byFam[f.key].months[i].out, 0), 0)}`).join(' · ')}</td></tr>`;
+    body += rowFor('รวมทั้งเครือข่าย (รวม Scrap/ไม่ระบุ)', totalCap, netStart, netMonths, 'total-row');
+    el('planCompareTable').innerHTML = head + `<tbody>${body}</tbody>`;
+
+    // ตารางรายประเภท
+    const thead2 = `<thead><tr><th>ประเภท</th><th>ตอนนี้</th>${P.months.map(m => `<th>${escapeHtml(monthLabel(m))}<small style="display:block;font-weight:400;font-size:10.5px;opacity:.8;">+ผลิต / −ออก / สิ้นเดือน</small></th>`).join('')}</tr></thead>`;
+    const tbody2 = PLAN_TYPES.map(t => `<tr><td><span class="pt-name"><span class="pt-sw" style="background:${t.color};"></span>${escapeHtml(t.label)}</span></td>
+      <td>${fmtNum((baseline[t.code] || {}).stockT || 0, 0)}</td>
+      ${P.byType[t.code].map(x => `<td><span style="color:var(--blue-600);">+${fmtNum(x.plan, 0)}</span> / <span style="color:var(--danger);">−${fmtNum(x.out, 0)}</span> / <b>${fmtNum(x.end, 0)}</b>${x.floored ? ' <span title="จ่ายออกตามอัตราเดิมมากกว่าสต็อกที่มี — สต็อกหมด">⚠</span>' : ''}</td>`).join('')}</tr>`).join('');
+    el('planTypeTable').innerHTML = thead2 + `<tbody>${tbody2}</tbody>`;
+  }
+
+  // กราฟแท่งต่อกลุ่ม: สต็อกตอนนี้ + สิ้นเดือน 6 เดือน เทียบเส้นความจุ (100%) และเส้น 80%
+  function buildFamChart(f, F){
+    const W = 400, H = 230, padL = 46, padR = 10, padT = 18, padB = 36;
+    const vals = [{ label:'ตอนนี้', v:F.startT }, ...F.months.map(x => ({ label: monthLabel(x.m), v: x.end }))];
+    const cap = F.cap;
+    const maxV = Math.max(cap * 1.15, ...vals.map(x => x.v * 1.08), 1);
+    const sc = niceScaleSimple(maxV);
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+    const yAt = (v) => padT + innerH - innerH * v / sc.max;
+    const slot = innerW / vals.length, bw = Math.min(34, slot * 0.6);
+    let g = '';
+    for (let v = 0; v <= sc.max + 1e-9; v += sc.step){
+      g += `<line x1="${padL}" x2="${W - padR}" y1="${yAt(v)}" y2="${yAt(v)}" stroke="#e9ecef"/>`
+        + `<text x="${padL - 6}" y="${yAt(v) + 4}" text-anchor="end" font-size="10" fill="#6c757d">${fmtNum(v, 0)}</text>`;
+    }
+    const bars = vals.map((x, i) => {
+      const cx = padL + slot * (i + 0.5);
+      const pct = cap > 0 ? x.v / cap * 100 : null;
+      const col = i === 0 ? '#9fb3b9' : tierColor(tierOf(pct));
+      return `<rect x="${cx - bw / 2}" y="${yAt(x.v)}" width="${bw}" height="${Math.max(1, yAt(0) - yAt(x.v))}" rx="3" fill="${col}"><title>${escapeHtml(x.label)} · ${fmtNum(x.v, 0)} ตัน${pct !== null ? ` · ${pct.toFixed(0)}% ของความจุ` : ''}</title></rect>`
+        + (pct !== null ? `<text x="${cx}" y="${yAt(x.v) - 4}" text-anchor="middle" font-size="10" font-weight="600" fill="${pct > 100 ? '#c24e00' : '#0c3843'}">${pct.toFixed(0)}%</text>` : '')
+        + `<text x="${cx}" y="${H - 18}" text-anchor="middle" font-size="10" fill="#6c757d">${escapeHtml(x.label)}</text>`;
+    }).join('');
+    const lines = cap > 0
+      ? `<line x1="${padL}" x2="${W - padR}" y1="${yAt(cap)}" y2="${yAt(cap)}" stroke="#0c3843" stroke-width="1.6" stroke-dasharray="6 4"/>`
+        + `<text x="${W - padR}" y="${yAt(cap) - 5}" text-anchor="end" font-size="10" font-weight="600" fill="#0c3843">ความจุ ${fmtNum(cap, 0)}</text>`
+        + `<line x1="${padL}" x2="${W - padR}" y1="${yAt(cap * 0.8)}" y2="${yAt(cap * 0.8)}" stroke="#a87a00" stroke-width="1" stroke-dasharray="3 3"/>`
+      : '';
+    return `<div class="plan-chart"><h4>${escapeHtml(f.label)}</h4>
+      <div class="pc-sub">สต็อกสิ้นเดือน (ตัน) · เส้นประเข้ม = ความจุ · เส้นประทอง = 80%</div>
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" role="img" aria-label="สต็อกคาดการณ์ของ ${escapeHtml(f.label)} เทียบความจุ">${g}${lines}${bars}</svg></div>`;
+  }
+  function niceScaleSimple(maxVal){
+    const rough = maxVal / 4;
+    const mag = Math.pow(10, Math.floor(Math.log10(rough || 1)));
+    const n = rough / mag;
+    const step = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
+    return { step, max: Math.ceil(maxVal / step) * step };
+  }
+
+  /* ---------- การกระทำ ---------- */
+  async function save(){
+    if (!Auth.isSignedIn()){ toast('ต้องใส่รหัสพนักงาน 8 หลักก่อนบันทึกแผน', 'error'); return; }
+    const d = dirtyCells();
+    if (!d.length){ toast('ไม่มีการแก้ไขที่ต้องบันทึก', 'info'); return; }
+    if (d.some(k => Number.isNaN(parseTons(edits[k])))){ toast('มีช่องที่ตัวเลขไม่ถูกต้อง (สีส้ม) — แก้ก่อนบันทึก', 'error'); return; }
+    const rows = d.map(k => { const [plan_month, type_code] = k.split('|'); return { plan_month, type_code, planned_tons: +parseTons(edits[k]).toFixed(2) }; });
+    const btn = el('btnPlanSave');
+    btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+    try {
+      const { error } = await sb.from('production_plan').upsert(rows, { onConflict: 'plan_month,type_code' });
+      if (error) throw error;
+      edits = {};
+      toast(`บันทึกแผนแล้ว ${rows.length} ช่อง`, 'success');
+      await loadData();
+    } catch (e){
+      console.error(e);
+      toast('บันทึกแผนไม่สำเร็จ: ' + friendlyDbError(e), 'error');
+    } finally {
+      btn.textContent = '💾 บันทึกแผน';
+      refreshAuthUI();
+    }
+  }
+  function fillAvg(){
+    let n = 0;
+    planMonths().forEach(m => PLAN_TYPES.forEach(t => {
+      const k = keyOf(m, t.code);
+      const cur = Object.prototype.hasOwnProperty.call(edits, k) ? edits[k] : (saved[k] ? String(saved[k]) : '');
+      if (String(cur).trim() !== '' && parseTons(cur) !== 0) return; // เติมเฉพาะช่องว่าง/0
+      const avg = ((baseline[t.code] || {}).inPerDay || 0) * PLAN_DAYS_PER_MONTH;
+      const v = Math.round(avg / 10) * 10;
+      if (v <= 0) return;
+      edits[k] = String(v); n++;
+    }));
+    renderInputTable(); renderResults();
+    toast(n ? `เติม ${n} ช่องด้วยค่าเฉลี่ยรับเข้าจริง (ยังไม่บันทึก)` : 'ไม่มีช่องว่างให้เติม', n ? 'success' : 'info');
+  }
+  function resetEdits(){
+    edits = {};
+    renderInputTable(); renderResults();
+  }
+  function exportCsv(){
+    if (!loaded) return;
+    const P = project();
+    const lines = [['Month','Group','Type','Plan (Ton)','Out est. (Ton)','End stock (Ton)','Group capacity (Ton)','Group end stock (Ton)','Group utilization %'].join(',')];
+    P.months.forEach((m, i) => PLAN_TYPES.forEach(t => {
+      const x = P.byType[t.code][i], F = P.byFam[t.fam];
+      lines.push([m, PLAN_FAMS.find(f => f.key === t.fam).label, t.label, x.plan.toFixed(2), x.out.toFixed(2), x.end.toFixed(2),
+        F.cap.toFixed(2), F.months[i].end.toFixed(2), F.months[i].pct === null ? '' : F.months[i].pct.toFixed(2)]
+        .map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+    }));
+    const blob = new Blob(['﻿' + lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `wh2_planning_capacity_${meta.baseDate}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Export Planning & Capacity สำเร็จ', 'success');
+  }
+
+  /* ---------- ล็อกอิน (เฉพาะการบันทึก) ---------- */
+  function refreshAuthUI(){
+    const box = el('planAuthBox');
+    if (!box) return;
+    const signedIn = Auth.isSignedIn();
+    const nDirty = dirtyCells().length;
+    const saveBtn = el('btnPlanSave');
+    if (saveBtn){
+      saveBtn.disabled = !signedIn || !nDirty;
+      saveBtn.title = !signedIn ? 'ต้องใส่รหัสพนักงานก่อน' : !nDirty ? 'ยังไม่มีการแก้ไข' : '';
+    }
+    const want = signedIn ? 'in' : 'out';
+    if (box.dataset.state === want) return; // ไม่สร้างฟอร์มใหม่ทุกครั้ง (กันช่องรหัสที่กำลังพิมพ์หาย)
+    box.dataset.state = want;
+    box.className = 'auth-box' + (signedIn ? ' signed-in' : '');
+    box.innerHTML = signedIn
+      ? `<div class="auth-status">🔓 รหัสพนักงาน <b>${escapeHtml(Auth.staffCode() || '')}</b> — แก้ไขและบันทึกแผนได้</div>
+         <button class="btn btn-outline btn-sm" id="btnPlanSignOut">ออกจากระบบ</button>`
+      : `<div class="auth-status">🔒 <b>ทุกคนลองพิมพ์ตัวเลขเพื่อดูผลได้</b> — การบันทึกแผนให้ทุกคนเห็นต้องใส่รหัสพนักงาน 8 หลัก</div>
+         <form class="auth-form" id="planAuthForm" autocomplete="off">
+           <input type="text" id="planAuthCode" class="auth-code" placeholder="รหัส 8 หลัก" inputmode="numeric" autocomplete="off" required aria-label="รหัสพนักงาน 8 หลัก" />
+           <button type="submit" class="btn btn-primary btn-sm" id="btnPlanSignIn">เข้าสู่ระบบ</button>
+         </form>`;
+    const out = el('btnPlanSignOut');
+    if (out) out.addEventListener('click', async () => { await Auth.signOut(); toast('ออกจากระบบแล้ว', 'success'); });
+    const ci = el('planAuthCode');
+    if (ci) ci.addEventListener('input', () => { const c = ci.value.replace(/\D/g, '').slice(0, 8); if (c !== ci.value) ci.value = c; });
+    const form = el('planAuthForm');
+    if (form) form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = el('planAuthCode').value.trim();
+      if (!Auth.isValidCodeFormat(code)){ toast('รหัสพนักงานต้องเป็นตัวเลข 8 หลัก', 'error'); return; }
+      const b = el('btnPlanSignIn'); b.disabled = true; b.textContent = '⏳ กำลังตรวจสอบรหัส...';
+      try { await Auth.signInWithCode(code); toast('เข้าสู่ระบบสำเร็จ', 'success'); }
+      catch (err){
+        const msg = /invalid login|invalid_credentials/i.test(err.message || '') ? 'รหัสนี้ไม่มีสิทธิ์เข้าใช้งาน' : (err.message || err);
+        toast('เข้าสู่ระบบไม่สำเร็จ: ' + msg, 'error');
+        b.disabled = false; b.textContent = 'เข้าสู่ระบบ';
+      }
+    });
+  }
+
+  function mount(){
+    if (mounted) return;
+    mounted = true;
+    el('btnPlanSave').addEventListener('click', save);
+    el('btnPlanFillAvg').addEventListener('click', fillAvg);
+    el('btnPlanReset').addEventListener('click', resetEdits);
+    el('btnPlanExport').addEventListener('click', exportCsv);
+    el('planLookbackSeg').querySelectorAll('.seg-btn').forEach(b => b.addEventListener('click', () => {
+      el('planLookbackSeg').querySelectorAll('.seg-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      lookback = Number(b.dataset.pairs) || 6;
+      loadData(); // แก้ไขที่ยังไม่บันทึกยังอยู่
+    }));
+    // เตือนก่อนปิดหน้าถ้ายังมีแผนที่ไม่ได้บันทึก
+    window.addEventListener('beforeunload', (e) => { if (dirtyCells().length){ e.preventDefault(); e.returnValue = ''; } });
+  }
+  function activate(){ mount(); refreshAuthUI(); loadData(); }
+  return { activate, mount, refreshAuthUI, _state: () => ({ baseline, famCap, saved, edits, meta, project: loaded ? project() : null }) };
+})();
+
+/* ============================================================
    BOOT
 ============================================================ */
 async function boot(){
   if (!window.location.hash) window.location.hash = '#/dashboard';
   await Auth.init();           // ต้องรู้สถานะล็อกอินก่อน เพื่อให้หน้านำเข้าข้อมูลแสดงสถานะถูกต้องตั้งแต่ครั้งแรก
-  Auth.onChange(() => ImportPage.refreshAuthUI());
+  Auth.onChange(() => { ImportPage.refreshAuthUI(); PlanningPage.refreshAuthUI(); });
   handleRoute();
 }
 boot();
