@@ -954,6 +954,40 @@
 .rec-cfg .rc-line em{font-style:normal;font-weight:700;color:var(--navy-900);margin:0 4px;}
 .rec-cfg .rc-line input{margin:0 4px;}
 @media (max-width:560px){ .rec-cfg .rc-title small{display:block;margin:2px 0 0;} .rec-cfg .rc-line{grid-template-columns:1fr;gap:4px;} .rec-cfg .rc-line .rc{justify-self:start;} }
+.cb-svg{max-width:760px;margin:0 auto;}
+.cb-miss{font-size:12.5px;color:#8a9ba1;text-align:center;margin:-2px 0 6px;}
+.cb-empty{background:#f6f9fa;border:1px dashed #c9d6da;border-radius:12px;padding:28px 16px;text-align:center;color:#5b6b70;font-size:15px;font-weight:600;margin:8px 0;}
+.cb-empty small{font-weight:400;font-size:12.5px;}
+.cb-empty.small{padding:16px 10px;font-size:13px;}
+.cb-type{padding:10px 12px;}
+.cb-type-head{font-size:14.5px;}
+.cb-type-head .fp-desc{font-size:12px;}
+.cb-type-sub{font-size:12px;}
+.cb-type-why{font-size:12.5px;color:var(--ink-2);margin-top:4px;}
+.cb-type-why .neg{color:#a83f00;font-weight:700;} .cb-type-why .pos{color:#1f5f8b;font-weight:700;}
+.cb-side-title{font-size:15px;}
+.cb-side-title small{font-size:12px;}
+.rec-table{font-size:13.5px;}
+.rec-table td.num{font-size:14px;}
+.rec-why{font-size:12.5px;}
+.rec-badge{font-size:13px;padding:3px 10px;}
+.sv-kpis b{font-size:24px;}
+.sv-kpis small{font-size:12.5px;}
+.cb-card h4{font-size:16px;}
+.cb-head-rec{font-size:13px;padding:4px 12px;}
+@media (max-width:620px){
+  .sv-kpis{grid-template-columns:1fr 1fr;}
+  .sv-kpis div.rec{grid-column:1 / -1;}
+  .sv-kpis b{font-size:20px;}
+  .rec-table thead{display:none;}
+  .rec-table tr{display:grid;grid-template-columns:auto 1fr 1fr 1fr;column-gap:8px;border-top:1px solid var(--gray-200);padding:8px 0;}
+  .rec-table th,.rec-table td{border-top:0;padding:2px 0;}
+  .rec-table td:last-child{grid-column:1 / -1;}
+  .rec-table td.num::before{display:block;font-family:inherit;font-size:10.5px;font-weight:400;color:var(--gray-600);}
+  .rec-table td.num:nth-of-type(1)::before{content:'Stock';}
+  .rec-table td.num:nth-of-type(2)::before{content:'แผน';}
+  .rec-table td.num:nth-of-type(3)::before{content:'Stock − แผน';}
+}
 </style>
 </head>
 <body>
@@ -5254,55 +5288,57 @@ const PlanningPage = (() => {
     const step = (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
     return { step, max: Math.ceil(v / step) * step };
   }
-  /* กราฟกลุ่ม: แต่ละเดือนมี 2 แท่งแยกกันชัดเจน
-       แท่งน้ำเงินเข้ม = Stock ปัจจุบัน · แท่งเหลือง = แผนผลิต (+ เส้นเหลืองเข้มเชื่อมยอดแผน)
-       ส่วนของแผนที่สูงเกิน "เส้นที่ว่าง" = สีส้ม (ไม่มีที่วาง)
-     เส้นอ้างอิง: ความจุ (เส้นประเข้ม) · ที่ว่างตอนนี้ = ความจุ − Stock (เส้นประฟ้า) */
+  /* กราฟกลุ่ม: แสดงเฉพาะเดือนที่มีแผน (แท่งใหญ่ เต็มพื้นที่) — เดือนที่ยังไม่มีแผนบอกเป็นข้อความใต้กราฟ
+       แท่งน้ำเงินเข้ม = Stock ปัจจุบัน · แท่งเหลือง = แผนผลิต (วางข้างกัน ไม่บวกรวม) · เส้นประ = ความจุ (อ้างอิงของ Stock) */
   const C_STOCK = '#0c3843', C_PLAN = '#fdc440', C_PLAN_EDGE = '#8a6200', C_OVER = '#ff6a05', C_FREE = '#1f5f8b';
+  function noPlanNote(G, idx){
+    const miss = G.months.filter((x, i) => !idx.includes(i)).map(x => monthLabel(x.m));
+    return miss.length ? `<div class="cb-miss">ยังไม่มีแผน: ${escapeHtml(miss.join(' · '))}</div>` : '';
+  }
   function comboChart(G){
-    const W = 600, H = 330, padL = 56, padR = 86, padT = 22, padB = 64;
-    const stock = G.nowT;   // เทียบกับแผน (7 ประเภท) — ความจุเป็นเส้นอ้างอิงเท่านั้น
-    const plans = G.months.map(x => x.known ? x.plan : null);
-    const sc = axisMax(Math.max(G.cap, stock, ...plans.filter(v => v !== null), 1) * 1.08);
+    const idx = G.months.map((x, i) => x.known ? i : -1).filter(i => i >= 0);
+    if (!idx.length) return `<div class="cb-empty">ยังไม่มีแผนผลิตของกลุ่มนี้<br/><small>Stock ปัจจุบัน ${fmtNum(G.nowT, 0)} ตัน — กรอกแผนในตารางด้านบนเพื่อเทียบ</small></div>`;
+    // จอแคบ (มือถือ) ใช้ viewBox แคบลง ตัวหนังสือจึงไม่เล็กเกินไปเมื่อย่อ
+    const narrow = (el('planView').clientWidth || 1000) < 620;
+    const W = narrow ? 380 : 640, H = narrow ? 400 : 380, padL = narrow ? 52 : 64, padR = narrow ? 62 : 92, padT = 34, padB = 92;
+    const stock = G.nowT;
+    const ms = idx.map(i => G.months[i]);
+    const sc = axisMax(Math.max(G.cap, stock, ...ms.map(x => x.plan), 1) * 1.08);
     const iw = W - padL - padR, ih = H - padT - padB;
     const y = (v) => padT + ih - ih * Math.max(0, v) / sc.max;
-    const slot = iw / G.months.length, bw = Math.min(28, slot * 0.36), gap = 3;
-    const cx = (i) => padL + slot * (i + 0.5);
-    const xs = (i) => cx(i) - gap / 2 - bw, xp = (i) => cx(i) + gap / 2;
-    let s = '';
-    for (let v = 0; v <= sc.max + 1e-9; v += sc.step) s += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="#eef1f3"/><text x="${padL - 6}" y="${y(v) + 4}" text-anchor="end" font-size="10.5" fill="#6c757d">${fmtNum(v, 0)}</text>`;
-    G.months.forEach((x, i) => {
-      const k = x.known;
-      // แท่ง Stock
-      s += `<rect x="${xs(i)}" y="${y(stock)}" width="${bw}" height="${Math.max(0.5, y(0) - y(stock))}" rx="3" fill="${C_STOCK}" opacity="${k ? 1 : 0.35}" ${tipAttr(`<b>${escapeHtml(G.label)} · Stock ปัจจุบัน</b><br/>${fmtNum(stock, 0)} ตัน`)}/>`;
-      if (k) s += `<text x="${xs(i) + bw / 2}" y="${y(stock) - 5}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${C_STOCK}">${fmtNum(stock / 1000, 1)}k</text>`;
-      // แท่งแผน (เหลือง) — เทียบกับแท่ง Stock ข้างกันโดยตรง
-      if (k){
-        const tip = cmpTip(G.label, monthLabel(x.m), x);
-        s += `<rect x="${xp(i)}" y="${y(x.plan)}" width="${bw}" height="${Math.max(0.5, y(0) - y(x.plan))}" rx="3" fill="${C_PLAN}" stroke="${C_PLAN_EDGE}" stroke-width="1.2" ${tipAttr(tip)}/>`;
-        s += `<text x="${xp(i) + bw / 2}" y="${y(x.plan) - 5}" text-anchor="middle" font-size="9.5" font-weight="800" fill="${C_PLAN_EDGE}">${fmtNum(x.plan / 1000, 1)}k</text>`;
-      }
-      // ป้ายใต้แท่ง: S / P
-      s += `<text x="${xs(i) + bw / 2}" y="${H - padB + 12}" text-anchor="middle" font-size="9" fill="#5b6b70">Stock</text>`;
-      s += `<text x="${xp(i) + bw / 2}" y="${H - padB + 12}" text-anchor="middle" font-size="9" fill="${k ? C_PLAN_EDGE : '#b8c4c8'}">แผน</text>`;
+    const slot = iw / ms.length, bw = Math.min(78, slot * 0.38), gap = 5;
+    const cx = (j) => padL + slot * (j + 0.5);
+    const xs = (j) => cx(j) - gap / 2 - bw, xp = (j) => cx(j) + gap / 2;
+    let s = '', lbl = '';
+    for (let v = 0; v <= sc.max + 1e-9; v += sc.step) s += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="#eef1f3"/><text x="${padL - 8}" y="${y(v) + 4.5}" text-anchor="end" font-size="13" fill="#6c757d">${fmtNum(v, 0)}</text>`;
+    if (G.cap > 0) s += `<line x1="${padL}" x2="${W - padR}" y1="${y(G.cap)}" y2="${y(G.cap)}" stroke="#0c3843" stroke-width="1.8" stroke-dasharray="7 5"/><text x="${W - padR + 8}" y="${y(G.cap) + 4}" font-size="13" font-weight="700" fill="#0c3843">ความจุ</text><text x="${W - padR + 8}" y="${y(G.cap) + 20}" font-size="12.5" fill="#5b6b70">${fmtNum(G.cap, 0)}</text>`;
+    ms.forEach((x, j) => {
       const r = recOf(G, x), R = REC[r.key];
-      s += `<text x="${cx(i)}" y="${H - padB + 27}" text-anchor="middle" font-size="11" font-weight="700" fill="#0c3843">${escapeHtml(monthLabel(x.m))}</text>`;
-      s += `<text x="${cx(i)}" y="${H - padB + 41}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${!k ? '#9fb3b9' : r.gap < 0 ? '#a83f00' : '#1f5f8b'}">${!k ? 'ยังไม่มีแผน' : 'S−P ' + (r.gap < 0 ? '−' : '+') + fmtNum(Math.abs(r.gap), 0)}</text>`;
-      if (r.key !== 'none') s += `<g ${tipAttr(`<b>${escapeHtml(G.label)} · ${escapeHtml(monthLabel(x.m))}: ${R.icon} ${R.word}</b><br/>` + r.reasons.map(escapeHtml).join('<br/>'))}><rect x="${cx(i) - 30}" y="${H - padB + 47}" width="60" height="15" rx="7.5" fill="${R.bg}"/><text x="${cx(i)}" y="${H - padB + 58}" text-anchor="middle" font-size="10" font-weight="700" fill="${R.fg}">${R.icon} ${R.short}</text></g>`;
+      const tip = cmpTip(G.label, monthLabel(x.m), x);
+      // Stock
+      s += `<rect x="${xs(j)}" y="${y(stock)}" width="${bw}" height="${Math.max(0.5, y(0) - y(stock))}" rx="4" fill="${C_STOCK}" ${tipAttr(`<b>${escapeHtml(G.label)} · Stock ปัจจุบัน</b><br/>${fmtNum(stock, 0)} ตัน`)}/>`;
+      // แผน
+      s += `<rect x="${xp(j)}" y="${y(x.plan)}" width="${bw}" height="${Math.max(0.5, y(0) - y(x.plan))}" rx="4" fill="${C_PLAN}" stroke="${C_PLAN_EDGE}" stroke-width="1.4" tabindex="0" ${tipAttr(tip)}/>`;
+      // ค่าเหนือแท่ง (ถ้าสองค่าใกล้กันมาก ยกป้ายแผนขึ้นไม่ให้ทับ)
+      const ys = y(stock) - 8; let yp = y(x.plan) - 8;
+      if (Math.abs(ys - yp) < 4 && bw < 70) yp = Math.min(ys, yp) - 16;
+      lbl += `<text x="${xs(j) + bw / 2}" y="${ys}" text-anchor="middle" font-size="14" font-weight="800" fill="${C_STOCK}" stroke="#fff" stroke-width="4" paint-order="stroke">${fmtNum(stock, 0)}</text>`;
+      lbl += `<text x="${xp(j) + bw / 2}" y="${yp}" text-anchor="middle" font-size="14" font-weight="800" fill="${C_PLAN_EDGE}" stroke="#fff" stroke-width="4" paint-order="stroke">${fmtNum(x.plan, 0)}</text>`;
+      // ป้ายใต้แท่ง
+      s += `<text x="${xs(j) + bw / 2}" y="${H - padB + 17}" text-anchor="middle" font-size="12.5" font-weight="600" fill="${C_STOCK}">Stock</text>`;
+      s += `<text x="${xp(j) + bw / 2}" y="${H - padB + 17}" text-anchor="middle" font-size="12.5" font-weight="600" fill="${C_PLAN_EDGE}">แผน</text>`;
+      s += `<text x="${cx(j)}" y="${H - padB + 39}" text-anchor="middle" font-size="15" font-weight="800" fill="#0c3843">${escapeHtml(monthLabel(x.m))}</text>`;
+      s += `<text x="${cx(j)}" y="${H - padB + 58}" text-anchor="middle" font-size="13" font-weight="700" fill="${r.gap < 0 ? '#a83f00' : '#1f5f8b'}">${slot < 150 ? (r.gap < 0 ? '−' : '+') + fmtNum(Math.abs(r.gap), 0) : 'Stock ' + (r.gap < 0 ? 'น้อยกว่า' : 'มากกว่า') + 'แผน ' + fmtNum(Math.abs(r.gap), 0)}</text>`;
+      s += `<g ${tipAttr(`<b>${escapeHtml(G.label)} · ${escapeHtml(monthLabel(x.m))}: ${R.icon} ${R.word}</b><br/>` + r.reasons.map(escapeHtml).join('<br/>'))}><rect x="${cx(j) - 46}" y="${H - padB + 66}" width="92" height="22" rx="11" fill="${R.bg}"/><text x="${cx(j)}" y="${H - padB + 81.5}" text-anchor="middle" font-size="13" font-weight="800" fill="${R.fg}">${R.icon} ${R.short}</text></g>`;
     });
-    // เส้นอ้างอิง: ความจุ + ที่ว่างตอนนี้ (ป้ายด้านขวา ไม่ให้ทับกัน)
-    const lab = []; const addLab = (yy, t1, t2, col) => lab.push({ yy, t1, t2, col });
-    if (G.cap > 0){ s += `<line x1="${padL}" x2="${W - padR}" y1="${y(G.cap)}" y2="${y(G.cap)}" stroke="#0c3843" stroke-width="1.6" stroke-dasharray="6 4"/>`; addLab(y(G.cap), 'ความจุ', fmtNum(G.cap, 0), '#0c3843'); }
-    lab.sort((a, b) => a.yy - b.yy).forEach((l, j, arr) => { if (j && l.yy - arr[j - 1].yy < 28) l.yy = arr[j - 1].yy + 28;
-      s += `<text x="${W - padR + 6}" y="${l.yy + 4}" font-size="10.5" font-weight="700" fill="${l.col}">${l.t1}</text><text x="${W - padR + 6}" y="${l.yy + 17}" font-size="10" fill="${l.col}">${l.t2}</text>`; });
-    // เส้นแผนผลิต เชื่อมยอดแท่งแผน (ขาดช่วงเมื่อไม่มีแผน)
-    const runs = []; let cur = [];
-    plans.forEach((v, i) => { if (v === null){ if (cur.length) runs.push(cur); cur = []; } else cur.push([xp(i) + bw / 2, y(v)]); });
-    if (cur.length) runs.push(cur);
-    runs.forEach(run => { if (run.length < 2) return; const d = run.map(p => p.join(',')).join(' ');
-      s += `<polyline points="${d}" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/><polyline points="${d}" fill="none" stroke="${C_PLAN_EDGE}" stroke-width="2.4" stroke-linejoin="round"/>`; });
-    plans.forEach((v, i) => { if (v !== null) s += `<circle cx="${xp(i) + bw / 2}" cy="${y(v)}" r="3.6" fill="#fff" stroke="${C_PLAN_EDGE}" stroke-width="2"/>`; });
-    return `<svg viewBox="0 0 ${W} ${H}" class="cb-svg" role="img" aria-label="${escapeHtml(G.label)}: แท่งน้ำเงิน = Stock ${fmtNum(stock, 0)} ตัน, แท่งเหลือง = แผนผลิตรายเดือน, ความจุ ${fmtNum(G.cap, 0)} ตัน">${s}</svg>`;
+    // เส้นแผนผลิต เชื่อมยอดแท่งแผน (เมื่อมีหลายเดือน)
+    if (ms.length > 1){
+      const d = ms.map((x, j) => `${xp(j) + bw / 2},${y(x.plan)}`).join(' ');
+      s += `<polyline points="${d}" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/><polyline points="${d}" fill="none" stroke="${C_PLAN_EDGE}" stroke-width="2.6" stroke-linejoin="round"/>`;
+      ms.forEach((x, j) => { s += `<circle cx="${xp(j) + bw / 2}" cy="${y(x.plan)}" r="4.5" fill="#fff" stroke="${C_PLAN_EDGE}" stroke-width="2.2"/>`; });
+    }
+    s += lbl;   // ตัวเลขอยู่บนสุด ไม่ให้เส้นทับ
+    return `<svg viewBox="0 0 ${W} ${H}" class="cb-svg" role="img" aria-label="${escapeHtml(G.label)}: แท่งน้ำเงิน = Stock ${fmtNum(stock, 0)} ตัน, แท่งเหลือง = แผนผลิต ${ms.map(x => monthLabel(x.m) + ' ' + fmtNum(x.plan, 0)).join(', ')} ตัน, ความจุ ${fmtNum(G.cap, 0)} ตัน">${s}</svg>${noPlanNote(G, idx)}`;
   }
   function viewCombo(C, groups){
     const inp = (k, step, label) => `<input type="number" min="${REC_RANGE[k][0]}" max="${REC_RANGE[k][1]}" step="${step}" data-rec="${k}" value="${recCfg[k]}" aria-label="${label}"/>`;
@@ -5337,34 +5373,35 @@ const PlanningPage = (() => {
       + `<div class="cb-list">${cards.join('')}</div>`;
   }
 
-  // กราฟเล็กต่อประเภท: แท่งน้ำเงินเข้ม = Stock ของประเภท · แท่งเหลือง = แผนของประเภท (แยกคู่กันทุกเดือน, สเกลของตัวเอง)
+  // กราฟเล็กต่อประเภท: เฉพาะเดือนที่มีแผนของประเภทนั้น · แท่งน้ำเงินเข้ม = Stock · แท่งเหลือง = แผน (สเกลของตัวเอง)
   function miniChart(G, t){
-    const W = 300, H = 160, padL = 40, padR = 8, padT = 16, padB = 42;
     const stock = stockByType[t.code] || 0;
-    const ps = G.months.map(x => { const p = x.parts.find(pp => pp.t.code === t.code); return p && p.known ? p : null; });
-    const sc = axisMax(Math.max(stock, ...ps.map(p => p ? p.plan : 0), 1) * 1.12);
+    const ms = G.months.map(x => ({ x, p: x.parts.find(pp => pp.t.code === t.code) })).filter(o => o.p && o.p.known);
+    if (!ms.length) return `<div class="cb-empty small">ยังไม่มีแผนของประเภทนี้</div>`;
+    const W = 320, H = 210, padL = 48, padR = 10, padT = 26, padB = 58;
+    const sc = axisMax(Math.max(stock, ...ms.map(o => o.p.plan), 1) * 1.12);
     const iw = W - padL - padR, ih = H - padT - padB, y = (v) => padT + ih - ih * v / sc.max;
-    const slot = iw / G.months.length, bw = Math.min(14, slot * 0.34), gap = 2, cx = (i) => padL + slot * (i + 0.5);
-    const xs = (i) => cx(i) - gap / 2 - bw, xp = (i) => cx(i) + gap / 2;
-    let s = '';
-    for (let v = 0; v <= sc.max + 1e-9; v += sc.step) s += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="#eef1f3"/><text x="${padL - 4}" y="${y(v) + 3.5}" text-anchor="end" font-size="9" fill="#6c757d">${fmtNum(v, 0)}</text>`;
-    G.months.forEach((x, i) => {
-      const p = ps[i];
-      s += `<rect x="${xs(i)}" y="${y(stock)}" width="${bw}" height="${Math.max(0.5, y(0) - y(stock))}" rx="2" fill="${C_STOCK}" opacity="${p ? 1 : 0.35}" ${tipAttr(`<b>${escapeHtml(t.label)} · Stock</b><br/>${fmtNum(stock, 0)} ตัน`)}/>`;
-      if (p && p.plan > 0){
-        s += `<rect x="${xp(i)}" y="${y(p.plan)}" width="${bw}" height="${Math.max(0.5, y(0) - y(p.plan))}" rx="2" fill="${C_PLAN}" stroke="${C_PLAN_EDGE}" ${tipAttr(cmpTip(t.label, monthLabel(x.m), p))}/>`;
-        s += `<text x="${xp(i) + bw / 2}" y="${y(p.plan) - 4}" text-anchor="middle" font-size="8.5" font-weight="800" fill="${C_PLAN_EDGE}">${fmtNum(p.plan / 1000, 1)}k</text>`;
-      }
-      s += `<text x="${cx(i)}" y="${H - padB + 12}" text-anchor="middle" font-size="9.5" fill="#0c3843">${escapeHtml(monthLabel(x.m).replace(/ \d+$/, ''))}</text>`;
+    const slot = iw / ms.length, bw = Math.min(46, slot * 0.36), gap = 4, cx = (j) => padL + slot * (j + 0.5);
+    const xs = (j) => cx(j) - gap / 2 - bw, xp = (j) => cx(j) + gap / 2;
+    let s = '', lbl = '';
+    for (let v = 0; v <= sc.max + 1e-9; v += sc.step) s += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="#eef1f3"/><text x="${padL - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#6c757d">${fmtNum(v, 0)}</text>`;
+    ms.forEach(({ x, p }, j) => {
       const r = typeRecOf(G, x, p), R = REC[r.key];
-      if (r.key !== 'none') s += `<text x="${cx(i)}" y="${H - padB + 26}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${R.fg}" ${tipAttr(`<b>${escapeHtml(t.label)} · ${escapeHtml(monthLabel(x.m))}: ${R.icon} ${R.word}</b><br/>` + r.reasons.map(escapeHtml).join('<br/>'))}>${R.icon} ${R.short}</text>`;
+      s += `<rect x="${xs(j)}" y="${y(stock)}" width="${bw}" height="${Math.max(0.5, y(0) - y(stock))}" rx="3" fill="${C_STOCK}" ${tipAttr(`<b>${escapeHtml(t.label)} · Stock</b><br/>${fmtNum(stock, 0)} ตัน`)}/>`;
+      s += `<rect x="${xp(j)}" y="${y(p.plan)}" width="${bw}" height="${Math.max(0.5, y(0) - y(p.plan))}" rx="3" fill="${C_PLAN}" stroke="${C_PLAN_EDGE}" stroke-width="1.2" ${tipAttr(cmpTip(t.label, monthLabel(x.m), p))}/>`;
+      const ys = y(stock) - 6; let yp = y(p.plan) - 6;
+      if (Math.abs(ys - yp) < 13) yp = Math.min(ys, yp) - 14;
+      lbl += `<text x="${xs(j) + bw / 2}" y="${ys}" text-anchor="middle" font-size="12" font-weight="800" fill="${C_STOCK}" stroke="#fff" stroke-width="3.5" paint-order="stroke">${fmtNum(stock, 0)}</text>`;
+      lbl += `<text x="${xp(j) + bw / 2}" y="${yp}" text-anchor="middle" font-size="12" font-weight="800" fill="${C_PLAN_EDGE}" stroke="#fff" stroke-width="3.5" paint-order="stroke">${fmtNum(p.plan, 0)}</text>`;
+      s += `<text x="${xs(j) + bw / 2}" y="${H - padB + 14}" text-anchor="middle" font-size="10.5" fill="${C_STOCK}">Stock</text><text x="${xp(j) + bw / 2}" y="${H - padB + 14}" text-anchor="middle" font-size="10.5" fill="${C_PLAN_EDGE}">แผน</text>`;
+      s += `<text x="${cx(j)}" y="${H - padB + 31}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#0c3843">${escapeHtml(monthLabel(x.m))}</text>`;
+      s += `<g ${tipAttr(`<b>${escapeHtml(t.label)} · ${escapeHtml(monthLabel(x.m))}: ${R.icon} ${R.word}</b><br/>` + r.reasons.map(escapeHtml).join('<br/>'))}><rect x="${cx(j) - 38}" y="${H - padB + 37}" width="76" height="19" rx="9.5" fill="${R.bg}"/><text x="${cx(j)}" y="${H - padB + 50.5}" text-anchor="middle" font-size="11.5" font-weight="800" fill="${R.fg}">${R.icon} ${R.short}</text></g>`;
     });
-    const runs = []; let cur = [];
-    ps.forEach((p, i) => { if (!p){ if (cur.length) runs.push(cur); cur = []; } else cur.push([xp(i) + bw / 2, y(p.plan)]); });
-    if (cur.length) runs.push(cur);
-    runs.forEach(run => { if (run.length < 2) return; const d = run.map(q => q.join(',')).join(' ');
-      s += `<polyline points="${d}" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><polyline points="${d}" fill="none" stroke="${C_PLAN_EDGE}" stroke-width="2" stroke-linejoin="round"/>`; });
-    s += `<text x="${padL}" y="${H - 3}" font-size="9" fill="#5b6b70">แต่ละเดือน: ซ้าย = Stock · ขวา = แผน</text>`;
+    if (ms.length > 1){
+      const d = ms.map(({ p }, j) => `${xp(j) + bw / 2},${y(p.plan)}`).join(' ');
+      s += `<polyline points="${d}" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><polyline points="${d}" fill="none" stroke="${C_PLAN_EDGE}" stroke-width="2.2" stroke-linejoin="round"/>`;
+    }
+    s += lbl;
     return `<svg viewBox="0 0 ${W} ${H}" class="cb-mini-svg" role="img" aria-label="${escapeHtml(t.label)}: แท่งน้ำเงิน Stock ${fmtNum(stock, 0)} ตัน, แท่งเหลือง แผนผลิต">${s}</svg>`;
   }
   function typeMinis(G){
@@ -5376,7 +5413,7 @@ const PlanningPage = (() => {
       const recs = known.map(o => ({ o, r: typeRecOf(G, o.x, o.p) }));
       const worst = recs.length ? recs.reduce((a, b) => REC_RANK[b.r.key] > REC_RANK[a.r.key] ? b : a).r.key : 'none';
       const R = REC[worst];
-      const lines = recs.filter(o => o.r.key === 'slow' || o.r.key === 'watch').map(o => `<div><b>${escapeHtml(monthLabel(o.o.x.m))}</b> แผน ${fmtNum(o.o.p.plan, 0)} t · ${escapeHtml(o.r.reasons.join(' · '))}</div>`).join('');
+      const lines = recs.map(o => `<div><b>${escapeHtml(monthLabel(o.o.x.m))}</b> Stock ${fmtNum(o.o.p.stock, 0)} vs แผน ${fmtNum(o.o.p.plan, 0)} → <span class="${o.r.gap < 0 ? 'neg' : 'pos'}">${o.r.gap < 0 ? 'น้อยกว่า' : 'มากกว่า'}แผน ${fmtNum(Math.abs(o.r.gap), 0)} t (${o.r.cover.toFixed(1)} เท่า)</span></div>`).join('');
       return `<div class="cb-type">
         <div class="cb-type-head"><span class="fp-sw" style="background:${t.color};"></span><b>${escapeHtml(t.label)}</b><span class="fp-desc">${escapeHtml(t.desc)}</span>
           <span class="rec-badge" style="background:${R.bg};color:${R.fg};margin-left:auto;">${R.icon} ${worst === 'none' ? 'ยังไม่มีแผน' : R.short}</span></div>
@@ -5431,6 +5468,12 @@ const PlanningPage = (() => {
       groupOn[k] = !groupOn[k]; renderViewBar(); renderView();
     });
     const tip = el('planTip'), view = el('planView');
+    // กราฟเลือกขนาดตามความกว้างตอนวาด → วาดใหม่เมื่อข้ามเกณฑ์จอแคบ/กว้าง
+    let lastNarrow = null, rzT = null;
+    window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(() => {
+      if (!loaded || !view.offsetParent) return;
+      const n = view.clientWidth < 620; if (n !== lastNarrow){ lastNarrow = n; renderView(); }
+    }, 200); });
     view.addEventListener('change', (e) => {
       const inp = e.target.closest('[data-rec]'); if (!inp) return;
       const v = +inp.value, k = inp.dataset.rec;
