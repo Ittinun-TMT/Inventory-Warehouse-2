@@ -892,6 +892,24 @@
 .rec-cfg{font-size:12.5px;color:var(--ink-2);background:#f6f9fa;border:1px solid var(--gray-200);border-radius:10px;padding:8px 12px;margin-bottom:10px;line-height:2;}
 .rec-cfg input{width:62px;font:inherit;font-weight:700;padding:2px 6px;border:1px solid var(--gray-200);border-radius:6px;text-align:center;}
 .pv-rec{font-size:12.5px;font-weight:700;border-radius:8px;padding:5px 10px;margin:6px 0 2px;}
+.cb-list{display:flex;flex-direction:column;gap:14px;margin-bottom:16px;}
+.cb-body{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;}
+.cb-card.has-types .cb-body{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);}
+@media (max-width:1100px){ .cb-card.has-types .cb-body{grid-template-columns:minmax(0,1fr);} }
+.cb-card:not(.has-types) .cb-main{max-width:760px;}
+.cb-side-title{font-size:13px;font-weight:700;color:var(--navy-900);margin:2px 0 8px;}
+.cb-side-title small{display:block;font-weight:400;font-size:11px;color:var(--gray-600);}
+.cb-types{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+@media (max-width:640px){ .cb-types{grid-template-columns:minmax(0,1fr);} }
+.cb-type{border:1px solid var(--gray-200);border-radius:12px;padding:8px 10px;background:#fbfcfd;min-width:0;}
+.cb-type-head{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--navy-900);flex-wrap:wrap;}
+.cb-type-head .fp-sw{width:11px;height:11px;border-radius:3px;flex:none;}
+.cb-type-head .fp-desc{font-size:11px;color:var(--gray-600);}
+.cb-type-sub{font-size:11px;color:var(--gray-600);margin:2px 0 2px;}
+.cb-type-sub b{color:var(--navy-900);font-family:'IBM Plex Mono',monospace;}
+.cb-mini-svg{width:100%;height:auto;display:block;}
+.cb-type-why{font-size:11px;color:#a83f00;line-height:1.45;margin-top:2px;}
+.cb-type-why b{color:var(--navy-900);}
 </style>
 </head>
 <body>
@@ -5221,6 +5239,77 @@ const PlanningPage = (() => {
     });
     return `<svg viewBox="0 0 ${W} ${H}" class="cb-svg" role="img" aria-label="${escapeHtml(G.label)}: แท่ง = สต็อกปัจจุบัน ${fmtNum(stock, 0)} ตัน, เส้น = แผนผลิตรายเดือน, ความจุ ${fmtNum(G.cap, 0)} ตัน">${s}</svg>`;
   }
+  /* ---------- คำแนะนำรายประเภท (ในกลุ่ม) ----------
+     ความจุมีแค่ระดับกลุ่ม จึงไม่สร้าง "ความจุของประเภท" ขึ้นเอง:
+     - ถ้ากลุ่มขาดที่ → ประเภทที่มีแผนควรลดตามสัดส่วนแผน: ลด ≈ ส่วนที่ขาดของกลุ่ม × (แผนประเภท ÷ แผนกลุ่ม)
+     - สต็อกของประเภท ≥ N เท่าของแผนประเภท → ชะลอ (ของในคลังยังมาก)
+     - กลุ่มเข้าเกณฑ์เฝ้าระวังพื้นที่ → เฝ้าระวัง
+     - "ใช้ที่ว่างของกลุ่ม" = แผนประเภท ÷ ที่ว่างตอนนี้ของกลุ่ม */
+  function typeRecOf(G, x, p){
+    if (!p || !p.known) return { key:'none', reasons:[] };
+    if (!(p.plan > 0)) return { key:'zero', reasons:['แผน 0 ตัน'] };
+    const g = recOf(G, x);
+    const free = G.cap - spaceStockOf(G);
+    const reasons = []; let key = 'ok', cut = 0;
+    if (g.remain < 0 && x.plan > 0){
+      key = 'slow'; cut = -g.remain * p.plan / x.plan;
+      reasons.push(`กลุ่มขาดที่ ${fmtNum(-g.remain, 0)} t — ประเภทนี้เป็น ${(p.plan / x.plan * 100).toFixed(0)}% ของแผนกลุ่ม ควรลดราว ${fmtNum(cut, 0)} t (เหลือ ≈ ${fmtNum(p.plan - cut, 0)} t)`);
+    }
+    const cover = p.stock / p.plan;
+    if (cover >= recCfg.coverN){ key = 'slow'; reasons.push(`สต็อก ${fmtNum(p.stock, 0)} t = ${cover.toFixed(1)} เท่าของแผน (เกณฑ์ ≥ ${recCfg.coverN})`); }
+    if (key === 'ok' && g.key === 'watch'){ key = 'watch'; reasons.push(`กลุ่มหลังผลิตใช้พื้นที่ ${g.after.toFixed(0)}%`); }
+    if (key === 'ok') reasons.push(`สต็อก ${cover.toFixed(1)} เท่าของแผน · ใช้ที่ว่างของกลุ่ม ${free > 0 ? (p.plan / free * 100).toFixed(0) + '%' : '—'}`);
+    return { key, reasons, cut, cover, useFree: free > 0 ? p.plan / free * 100 : null };
+  }
+  // กราฟเล็กต่อประเภท: แท่ง = สต็อกของประเภท · เส้น = แผนของประเภท (สเกลของตัวเอง)
+  function miniChart(G, t){
+    const W = 300, H = 150, padL = 40, padR = 8, padT = 16, padB = 34;
+    const stock = stockByType[t.code] || 0;
+    const ps = G.months.map(x => { const p = x.parts.find(pp => pp.t.code === t.code); return p && p.known ? p : null; });
+    const sc = axisMax(Math.max(stock, ...ps.map(p => p ? p.plan : 0), 1) * 1.12);
+    const iw = W - padL - padR, ih = H - padT - padB, y = (v) => padT + ih - ih * v / sc.max;
+    const slot = iw / G.months.length, bw = Math.min(26, slot * 0.55), cx = (i) => padL + slot * (i + 0.5);
+    let s = '';
+    for (let v = 0; v <= sc.max + 1e-9; v += sc.step) s += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="#eef1f3"/><text x="${padL - 4}" y="${y(v) + 3.5}" text-anchor="end" font-size="9" fill="#6c757d">${fmtNum(v, 0)}</text>`;
+    G.months.forEach((x, i) => {
+      const p = ps[i];
+      s += `<rect x="${cx(i) - bw / 2}" y="${y(stock)}" width="${bw}" height="${Math.max(0.5, y(0) - y(stock))}" rx="2" fill="${t.color}" opacity="${p ? 1 : 0.4}" ${tipAttr(`<b>${escapeHtml(t.label)}</b><br/>สต็อกปัจจุบัน ${fmtNum(stock, 0)} ตัน`)}/>`;
+      s += `<text x="${cx(i)}" y="${H - padB + 13}" text-anchor="middle" font-size="9.5" fill="#0c3843">${escapeHtml(monthLabel(x.m).replace(/ \d+$/, ''))}</text>`;
+      const r = typeRecOf(G, x, p), R = REC[r.key];
+      if (r.key !== 'none') s += `<text x="${cx(i)}" y="${H - padB + 27}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${R.fg}" ${tipAttr(`<b>${escapeHtml(t.label)} · ${escapeHtml(monthLabel(x.m))}: ${R.icon} ${R.word}</b><br/>` + r.reasons.map(escapeHtml).join('<br/>'))}>${R.icon} ${R.short}</text>`;
+    });
+    const runs = []; let cur = [];
+    ps.forEach((p, i) => { if (!p){ if (cur.length) runs.push(cur); cur = []; } else cur.push([cx(i), y(p.plan)]); });
+    if (cur.length) runs.push(cur);
+    runs.forEach(run => { if (run.length < 2) return; const d = run.map(q => q.join(',')).join(' ');
+      s += `<polyline points="${d}" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/><polyline points="${d}" fill="none" stroke="#0c3843" stroke-width="2.2" stroke-linejoin="round"/>`; });
+    ps.forEach((p, i) => {
+      if (!p) return;
+      s += `<circle cx="${cx(i)}" cy="${y(p.plan)}" r="4.5" fill="#fdc440" stroke="#0c3843" stroke-width="1.8" ${tipAttr(cmpTip(t.label, monthLabel(G.months[i].m), p))}/>`;
+      const ly = y(p.plan) - 8 < padT + 4 ? y(p.plan) + 15 : y(p.plan) - 8;
+      s += `<text x="${cx(i)}" y="${ly}" text-anchor="middle" font-size="9.5" font-weight="800" fill="#0c3843" stroke="#fff" stroke-width="3" paint-order="stroke">${fmtNum(p.plan, 0)}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" class="cb-mini-svg" role="img" aria-label="${escapeHtml(t.label)}: แท่ง สต็อก ${fmtNum(stock, 0)} ตัน, เส้น แผนผลิต">${s}</svg>`;
+  }
+  function typeMinis(G){
+    const types = PLAN_TYPES.filter(t => t.fam === G.key);
+    if (types.length < 2) return '';
+    return `<div class="cb-types" aria-label="แยกตามประเภท">${types.map(t => {
+      const d = typeDetail[t.code];
+      const known = G.months.map(x => ({ x, p: x.parts.find(pp => pp.t.code === t.code) })).filter(o => o.p && o.p.known);
+      const recs = known.map(o => ({ o, r: typeRecOf(G, o.x, o.p) }));
+      const worst = recs.length ? recs.reduce((a, b) => REC_RANK[b.r.key] > REC_RANK[a.r.key] ? b : a).r.key : 'none';
+      const R = REC[worst];
+      const lines = recs.filter(o => o.r.key === 'slow' || o.r.key === 'watch').map(o => `<div><b>${escapeHtml(monthLabel(o.o.x.m))}</b> แผน ${fmtNum(o.o.p.plan, 0)} t · ${escapeHtml(o.r.reasons.join(' · '))}</div>`).join('');
+      return `<div class="cb-type">
+        <div class="cb-type-head"><span class="fp-sw" style="background:${t.color};"></span><b>${escapeHtml(t.label)}</b><span class="fp-desc">${escapeHtml(t.desc)}</span>
+          <span class="rec-badge" style="background:${R.bg};color:${R.fg};margin-left:auto;">${R.icon} ${worst === 'none' ? 'ยังไม่มีแผน' : R.short}</span></div>
+        <div class="cb-type-sub">สต็อก <b>${fmtNum(stockByType[t.code] || 0, 2)} ตัน</b>${d ? ` · ${fmtNum(d.sku)} SKU · ${escapeHtml(d.locs.join(', ') || '—')}` : ''}</div>
+        ${miniChart(G, t)}
+        ${lines ? `<div class="cb-type-why">${lines}</div>` : ''}
+      </div>`;
+    }).join('')}</div>`;
+  }
   function viewCombo(C, groups){
     const cfg = `<div class="rec-cfg">เกณฑ์คำแนะนำ: <b>ชะลอ</b> ถ้าที่ว่างไม่พอรับแผน หรือสต็อก ≥ <input type="number" min="1" max="20" step="0.5" data-rec="coverN" value="${recCfg.coverN}" aria-label="จำนวนเท่าของแผน"/> เท่าของแผน · <b>เฝ้าระวัง</b> ถ้าหลังผลิตใช้พื้นที่ &gt; <input type="number" min="50" max="100" step="1" data-rec="watchPct" value="${recCfg.watchPct}" aria-label="เปอร์เซ็นต์พื้นที่"/>%</div>`;
     const cards = groups.map(G => {
@@ -5231,16 +5320,19 @@ const PlanningPage = (() => {
           <td class="num ${r.remain < 0 ? 'neg' : ''}">${r.remain < 0 ? '−' : ''}${fmtNum(Math.abs(r.remain), 0)}</td>
           <td>${recBadge(r, true)}<div class="rec-why">${r.reasons.map(escapeHtml).join('<br/>')}${r.hiTypes && r.hiTypes.length && G.key !== '_net' ? `<br/><span class="rec-types">สต็อกสูงกว่าแผนมาก: ${escapeHtml(r.hiTypes.join(' · '))}</span>` : ''}</div></td></tr>`;
       }).join('');
-      return `<div class="plan-chart cb-card"><h4><span class="pv-sw" style="background:${G.color};"></span>${escapeHtml(G.label)}<span class="cb-head-rec" style="background:${R.bg};color:${R.fg};">${R.icon} ${sum.key === 'none' ? 'ยังไม่มีแผน' : R.word + (sum.months.length ? ' · ' + sum.months.join(', ') : '')}</span></h4>
+      const minis = G.key === '_net' ? '' : typeMinis(G);
+      return `<div class="plan-chart cb-card${minis ? ' has-types' : ''}"><h4><span class="pv-sw" style="background:${G.color};"></span>${escapeHtml(G.label)}<span class="cb-head-rec" style="background:${R.bg};color:${R.fg};">${R.icon} ${sum.key === 'none' ? 'ยังไม่มีแผน' : R.word + (sum.months.length ? ' · ' + sum.months.join(', ') : '')}</span></h4>
         <div class="pc-sub">สต็อกปัจจุบัน ${fmtNum(spaceStockOf(G), 0)} ตัน${G.key === '_net' ? ' (รวม Scrap/ไม่ระบุ)' : ''} · ความจุ ${fmtNum(G.cap, 0)} ตัน · ที่ว่างตอนนี้ ${fmtNum(G.cap - spaceStockOf(G), 0)} ตัน</div>
+        <div class="cb-body"><div class="cb-main">
         ${comboChart(G)}
         ${rows ? `<table class="rec-table"><thead><tr><th>เดือน</th><th>แผนผลิต (t)</th><th>คงเหลือที่ว่าง (t)</th><th>คำแนะนำ</th></tr></thead><tbody>${rows}</tbody></table>`
                : '<div class="tk-ans none">— ยังไม่มีแผนผลิต กรอกในตารางด้านบนเพื่อดูคำแนะนำ</div>'}
+        </div>${minis ? `<div class="cb-side"><div class="cb-side-title">แยกตามประเภท <small>แท่ง = สต็อกของประเภท · เส้น = แผนของประเภท (สเกลแต่ละกราฟแยกกัน)</small></div>${minis}</div>` : ''}</div>
       </div>`;
     });
     return cfg
       + `<div class="plan-legend" style="margin:0 2px 10px;"><span><i style="background:linear-gradient(90deg,#0c3843 0 33%,#2f74a8 33% 66%,#b07c00 66%);"></i>แท่ง = สต็อกปัจจุบัน (สีตามประเภท · จางเมื่อเดือนนั้นยังไม่มีแผน)</span><span><i style="background:#fdc440;border:2px solid #0c3843;border-radius:50%;width:12px;height:12px;"></i>เส้น = แผนผลิต</span><span><i style="background:transparent;border-top:2px dashed #0c3843;border-radius:0;height:0;"></i>ความจุ</span><span>ใต้แกน: คงเหลือที่ว่าง = ความจุ − สต็อก − แผน</span></div>`
-      + `<div class="plan-charts pr-grid">${cards.join('')}</div>`;
+      + `<div class="cb-list">${cards.join('')}</div>`;
   }
 
   /* ---------- มุมมอง 📅 ตาราง 6 เดือน ---------- */
