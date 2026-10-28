@@ -946,6 +946,14 @@
 .rec-types.lo{color:#1f5f8b;}
 .rc{display:inline-block;border-radius:999px;padding:0 8px;font-weight:700;}
 .rc.slow{background:#ffe3cf;color:#a83f00;} .rc.speed{background:#0c3843;color:#fff;} .rc.watch{background:#fff3cf;color:#6b4b00;} .rc.ok{background:#eaf3f9;color:#0c3843;}
+.rec-cfg{line-height:1.4;padding:10px 14px;}
+.rec-cfg .rc-title{font-weight:700;color:var(--navy-900);margin-bottom:6px;}
+.rec-cfg .rc-title small{font-weight:400;color:var(--gray-600);margin-left:6px;}
+.rec-cfg .rc-line{display:grid;grid-template-columns:104px 1fr;align-items:center;gap:10px;padding:5px 0;border-top:1px dashed var(--gray-200);}
+.rec-cfg .rc-line .rc{text-align:center;padding:3px 8px;}
+.rec-cfg .rc-line em{font-style:normal;font-weight:700;color:var(--navy-900);margin:0 4px;}
+.rec-cfg .rc-line input{margin:0 4px;}
+@media (max-width:560px){ .rec-cfg .rc-title small{display:block;margin:2px 0 0;} .rec-cfg .rc-line{grid-template-columns:1fr;gap:4px;} .rec-cfg .rc-line .rc{justify-self:start;} }
 </style>
 </head>
 <body>
@@ -5298,7 +5306,13 @@ const PlanningPage = (() => {
   }
   function viewCombo(C, groups){
     const inp = (k, step, label) => `<input type="number" min="${REC_RANGE[k][0]}" max="${REC_RANGE[k][1]}" step="${step}" data-rec="${k}" value="${recCfg[k]}" aria-label="${label}"/>`;
-    const cfg = `<div class="rec-cfg"><b>เกณฑ์คำแนะนำ</b> (เทียบ Stock กับแผน + ดูพื้นที่คลังตอนนี้) · <span class="rc slow">⬇ ชะลอ</span> ถ้า Stock ≥ ${inp('coverN', 0.5, 'เท่าของแผน (ชะลอ)')} เท่าของแผน หรือคลังใช้พื้นที่ &gt; ${inp('watchPct', 1, 'เปอร์เซ็นต์พื้นที่ (ชะลอ)')}% · <span class="rc speed">⬆ เร่งได้</span> ถ้า Stock &lt; ${inp('speedN', 0.1, 'เท่าของแผน (เร่ง)')} เท่าของแผน และคลังใช้พื้นที่ &lt; ${inp('speedPct', 1, 'เปอร์เซ็นต์พื้นที่ (เร่ง)')}% · <span class="rc watch">! เฝ้าระวัง</span> ของน้อยกว่าแผนแต่พื้นที่เหลือไม่มาก · <span class="rc ok">✓ ตามแผน</span> นอกนั้น</div>`;
+    const cfg = `<div class="rec-cfg" role="group" aria-label="เกณฑ์คำแนะนำ">
+      <div class="rc-title">เกณฑ์คำแนะนำ <small>เทียบ Stock กับแผนผลิต + ดูพื้นที่คลังตอนนี้ประกอบ · แก้ตัวเลขในช่องได้</small></div>
+      <div class="rc-line"><span class="rc slow">⬇ ชะลอ</span><span>Stock ≥ ${inp('coverN', 0.5, 'เท่าของแผน (ชะลอ)')} เท่าของแผน <em>หรือ</em> คลังใช้พื้นที่ &gt; ${inp('watchPct', 1, 'เปอร์เซ็นต์พื้นที่ (ชะลอ)')} %</span></div>
+      <div class="rc-line"><span class="rc speed">⬆ เร่งได้</span><span>Stock &lt; ${inp('speedN', 0.1, 'เท่าของแผน (เร่ง)')} เท่าของแผน <em>และ</em> คลังใช้พื้นที่ &lt; ${inp('speedPct', 1, 'เปอร์เซ็นต์พื้นที่ (เร่ง)')} %</span></div>
+      <div class="rc-line"><span class="rc watch">! เฝ้าระวัง</span><span>Stock น้อยกว่าแผน แต่พื้นที่เหลือไม่มาก → ผลิตตามแผน ไม่ควรเร่งเพิ่ม</span></div>
+      <div class="rc-line"><span class="rc ok">✓ ตามแผน</span><span>ไม่เข้าเงื่อนไขข้างบน</span></div>
+    </div>`;
     const cards = groups.map(G => {
       const sum = recSummary(G), R = REC[sum.key];
       const rows = G.months.filter(x => x.known).map(x => {
