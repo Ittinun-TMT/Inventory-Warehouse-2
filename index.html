@@ -988,6 +988,52 @@
   .rec-table td.num:nth-of-type(2)::before{content:'แผน';}
   .rec-table td.num:nth-of-type(3)::before{content:'Stock − แผน';}
 }
+/* ===== สรุปผู้บริหาร (แบบ A) ===== */
+.ex-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px;}
+.ex-card{background:var(--white);border:1px solid var(--gray-200);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);min-width:0;}
+.ex-kpi{position:relative;overflow:hidden;padding-left:22px;}
+.ex-kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;}
+.ex-kpi.total::before{background:#0c3843}.ex-kpi.used::before{background:#fdc440}.ex-kpi.free::before{background:#8bbade}
+.ex-kpi small{color:var(--gray-600);font-size:13.5px;}
+.ex-kpi b{display:block;font-family:'IBM Plex Mono',monospace;font-size:36px;color:var(--navy-900);margin-top:2px;font-variant-numeric:tabular-nums;}
+.ex-kpi em{font-style:normal;font-size:13px;color:var(--gray-600);}
+.ex-total{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;margin-top:12px;}
+.ex-total h3{margin:0 0 8px;font-size:15px;color:var(--navy-900);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ex-bar{height:12px;background:#eef2f4;border-radius:999px;overflow:hidden;}
+.ex-bar>i{display:block;height:100%;border-radius:999px;}
+.ex-total .ex-bar{height:18px;}
+.ex-row{display:flex;justify-content:space-between;font-size:13px;color:var(--gray-600);margin-top:5px;gap:10px;flex-wrap:wrap;}
+.ex-alert{font-size:13px;margin-top:8px;line-height:1.6;}
+.ex-alert .crit{color:#a83f00;font-weight:600;} .ex-alert .warn{color:#6b4b00;font-weight:600;}
+.ex-sec{font-size:16px;font-weight:700;color:var(--navy-900);margin:24px 0 10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.ex-sec small{font-weight:400;color:var(--gray-600);font-size:12.5px;}
+.ex-fams{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.ex-fam-h{display:flex;align-items:center;gap:9px;font-weight:700;color:var(--navy-900);font-size:15px;}
+.ex-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:15px;}
+.ex-fam-v{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;color:var(--navy-900);margin:8px 0 2px;}
+.ex-fam-v span{font-family:inherit;font-size:14px;}
+.ex-s{font-size:12.5px;color:var(--gray-600);}
+.ex-tl{margin-top:9px;display:flex;flex-direction:column;gap:5px;}
+.ex-tl div{display:grid;grid-template-columns:10px 1fr auto;gap:7px;align-items:center;font-size:13px;}
+.ex-tl i{width:10px;height:10px;border-radius:3px;}
+.ex-tl b{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.ex-tl small{color:var(--gray-600);font-size:11px;margin-left:4px;}
+.ex-facs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;}
+.ex-fac-h{display:flex;justify-content:space-between;align-items:center;gap:6px;}
+.ex-fac-h b{font-size:17px;color:var(--navy-900);}
+.ex-ring{display:block;margin:8px auto 4px;}
+.ex-nums{display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center;font-size:12px;color:var(--gray-600);margin-top:4px;}
+.ex-nums b{display:block;font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--navy-900);}
+.ex-nums b.neg{color:#c24e00;}
+.ex-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px;}
+.ex-chip{font-size:11.5px;border-radius:6px;padding:2px 7px;background:#f3f6f7;color:var(--navy-900);display:inline-flex;align-items:center;gap:4px;}
+.ex-chip i{width:8px;height:8px;border-radius:2px;}
+.ex-chip b{font-family:'IBM Plex Mono',monospace;}
+.ex-pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap;}
+.ex-pill.ok{background:#eaf3f9;color:#0c3843}.ex-pill.warn{background:#fff3cf;color:#6b4b00}.ex-pill.crit{background:#ffe3cf;color:#a83f00}
+@media (max-width:1200px){ .ex-facs{grid-template-columns:repeat(4,minmax(0,1fr));} }
+@media (max-width:1000px){ .ex-facs{grid-template-columns:repeat(3,minmax(0,1fr));} .ex-fams{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:640px){ .ex-kpis{grid-template-columns:1fr;} .ex-kpi b{font-size:30px;} .ex-total{grid-template-columns:1fr;justify-items:center;} .ex-total>div{width:100%;} .ex-fams{grid-template-columns:1fr;} .ex-facs{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;} .ex-nums{font-size:11px;} .ex-nums b{font-size:12.5px;} }
 </style>
 </head>
 <body>
@@ -999,6 +1045,7 @@
   </a>
   <div class="nav-links">
     <a href="#/dashboard" class="nav-link" data-route="dashboard">แดชบอร์ด</a>
+    <a href="#/exec" class="nav-link" data-route="exec">📊 สรุปผู้บริหาร</a>
     <a href="#/trends" class="nav-link" data-route="trends">📈 แนวโน้ม</a>
     <a href="#/lookup" class="nav-link" data-route="lookup">ค้นหา Material</a>
     <a href="#/unmatched" class="nav-link" data-route="unmatched">⚠️ Code ไม่พบข้อมูล</a>
@@ -1431,6 +1478,22 @@
     <div class="plan-note" id="planNote"></div>
   </div>
 
+  <!-- ============ EXECUTIVE SUMMARY VIEW (แบบ A ที่ผู้ใช้เลือก 30 ต.ค. 2569) ============ -->
+  <div id="view-exec" class="route-view">
+    <div class="section-title" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:9px;">📊 สรุปผู้บริหาร <span class="tag">พื้นที่ทั้งหมด · ใช้ไป · คงเหลือ · แยกโรง · แยกกลุ่มสินค้า</span></span>
+      <span style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn btn-primary btn-sm" id="btnExportExec">📸 Export รูป</button><button type="button" class="btn btn-outline btn-sm" id="btnRefreshExec">↻ รีเฟรช</button></span>
+    </div>
+    <div class="plan-meta" id="exMeta">กำลังโหลด...</div>
+    <div class="ex-kpis" id="exKpis"></div>
+    <div class="ex-card ex-total" id="exTotal"></div>
+    <div class="ex-sec">กลุ่มสินค้า <small>Stock · ความจุที่ใช้เก็บกลุ่มนั้น · แยกประเภท</small></div>
+    <div class="ex-fams" id="exFams"></div>
+    <div class="ex-sec">แยกตามโรง <small>วงแหวน = % ใช้พื้นที่ · ฟ้า ปกติ (≤ 80%) / เหลือง ใกล้เต็ม (81–100%) / ส้ม เกินพิกัด (&gt; 100%) · เรียงแน่นสุดก่อน</small></div>
+    <div class="ex-facs" id="exFacs"></div>
+    <div class="plan-note" id="exNote"></div>
+  </div>
+
 </main>
 
 <footer>Inventory Warehouse 2 · Powered by Supabase · TMT Steel</footer>
@@ -1578,7 +1641,7 @@ const Router = {
   go(route){ window.location.hash = '#/' + route; },
   current(){
     const h = (window.location.hash || '').replace('#/', '').split('?')[0];
-    return ['dashboard','trends','lookup','unmatched','planning','import'].includes(h) ? h : 'dashboard';
+    return ['dashboard','exec','trends','lookup','unmatched','planning','import'].includes(h) ? h : 'dashboard';
   }
 };
 let activatedRoute = null;
@@ -1601,6 +1664,7 @@ function handleRoute(){
   if (route === 'unmatched') UnmatchedPage.activate();
   if (route === 'import') ImportPage.activate();
   if (route === 'planning') PlanningPage.activate();
+  if (route === 'exec') ExecPage.activate();
 }
 window.addEventListener('hashchange', handleRoute);
 
@@ -1923,6 +1987,34 @@ function familyChartColor(label){
 /* ============================================================
    DASHBOARD PAGE
 ============================================================ */
+/* ===== แคปภาพ: ย่อเป็น JPG ≤ 4 MB (ใช้ร่วม Dashboard + สรุปผู้บริหาร) ===== */
+const SNAPSHOT_MAX_BYTES = 4 * 1024 * 1024;
+const SNAPSHOT_MAX_SIDE = 14000;      // ต่ำกว่าเพดาน canvas ของ Chrome/Edge (16,384 px) เผื่อไว้
+const SNAPSHOT_MAX_PIXELS = 32e6;     // ~32 ล้านพิกเซล กันหน่วยความจำเต็มบนเครื่องสเปกต่ำ
+
+function canvasToBlob(canvas, type, quality){
+  return new Promise(resolve => canvas.toBlob(resolve, type, quality));
+}
+// ลดคุณภาพ JPG ก่อน ถ้ายังใหญ่เกินค่อยย่อภาพลงทีละ 80% (สูงสุด 6 รอบ)
+async function encodeSnapshotUnder(canvas, maxBytes){
+  let c = canvas;
+  for (let round = 0; round < 6; round++){
+    for (const q of [0.9, 0.8, 0.7]){
+      const blob = await canvasToBlob(c, 'image/jpeg', q);
+      if (blob && blob.size <= maxBytes) return { blob, width: c.width, height: c.height, quality: q };
+    }
+    const n = document.createElement('canvas');
+    n.width = Math.max(1, Math.round(c.width * 0.8));
+    n.height = Math.max(1, Math.round(c.height * 0.8));
+    const ctx = n.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(c, 0, 0, n.width, n.height);
+    c = n;
+  }
+  throw new Error('ภาพใหญ่เกินกว่าจะย่อให้ต่ำกว่า 4 MB ได้');
+}
+
+
 const DashboardPage = (() => {
   let allRows = [];
   let locUtil = [];
@@ -2655,31 +2747,7 @@ const DashboardPage = (() => {
   //    และหน้าที่ยาวมากเกินเพดาน canvas ของเบราว์เซอร์ (~16,384 px) จะได้ภาพว่าง
   // ตอนนี้: เลือก scale ให้ไม่เกินเพดาน → บันทึกเป็น JPG → ลดคุณภาพ/ย่อขนาดอัตโนมัติจนไฟล์ ≤ 4 MB
   //    (แนบอีเมลแล้วโตขึ้น ~33% จาก base64 ≈ 5.4 MB — ต่ำกว่าเพดานที่องค์กรนิยมตั้ง 10 MB)
-  const SNAPSHOT_MAX_BYTES = 4 * 1024 * 1024;
-  const SNAPSHOT_MAX_SIDE = 14000;      // ต่ำกว่าเพดาน canvas ของ Chrome/Edge (16,384 px) เผื่อไว้
-  const SNAPSHOT_MAX_PIXELS = 32e6;     // ~32 ล้านพิกเซล กันหน่วยความจำเต็มบนเครื่องสเปกต่ำ
-
-  function canvasToBlob(canvas, type, quality){
-    return new Promise(resolve => canvas.toBlob(resolve, type, quality));
-  }
-  // ลดคุณภาพ JPG ก่อน ถ้ายังใหญ่เกินค่อยย่อภาพลงทีละ 80% (สูงสุด 6 รอบ)
-  async function encodeSnapshotUnder(canvas, maxBytes){
-    let c = canvas;
-    for (let round = 0; round < 6; round++){
-      for (const q of [0.9, 0.8, 0.7]){
-        const blob = await canvasToBlob(c, 'image/jpeg', q);
-        if (blob && blob.size <= maxBytes) return { blob, width: c.width, height: c.height, quality: q };
-      }
-      const n = document.createElement('canvas');
-      n.width = Math.max(1, Math.round(c.width * 0.8));
-      n.height = Math.max(1, Math.round(c.height * 0.8));
-      const ctx = n.getContext('2d');
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(c, 0, 0, n.width, n.height);
-      c = n;
-    }
-    throw new Error('ภาพใหญ่เกินกว่าจะย่อให้ต่ำกว่า 4 MB ได้');
-  }
+  // ค่าคงที่/ฟังก์ชันย่อไฟล์ภาพ ย้ายไป scope กลาง (ใช้ร่วมกับหน้าสรุปผู้บริหาร)
 
   // mode: 'summary' = เฉพาะส่วนบนจนถึงรายโรงงาน (เหมาะแนบอีเมล) · 'full' = ทั้งหน้า
   async function captureDashboardSnapshot(btn, mode = 'full'){
@@ -5596,6 +5664,172 @@ const PlanningPage = (() => {
   }
   function activate(){ mount(); refreshAuthUI(); loadData(); }
   return { activate, mount, refreshAuthUI, _state: () => ({ famCap, stockByType, saved, edits, meta, C: loaded ? compute() : null }) };
+})();
+
+/* ============================================================
+   EXECUTIVE SUMMARY PAGE (สรุปผู้บริหาร · แบบ A ที่ผู้ใช้เลือก 30 ต.ค. 2569)
+   - พื้นที่ทั้งหมด = Σ ความจุทุกโรง (v_location_capacity, รวม Fac B+E)
+   - พื้นที่ใช้ไป   = Stock ณ วันที่ข้อมูลล่าสุด (v_location_daily)
+   - พื้นที่คงเหลือ = ทั้งหมด − ใช้ไป (โรงที่เกินพิกัดนับเป็นติดลบในยอดรวม — ตรงกับหน้าแดชบอร์ด)
+   - แยกโรง: % ใช้ / ทั้งหมด / ใช้ไป / คงเหลือ + สินค้าที่เก็บ (v_location_group_daily มิติ group_product)
+   - กลุ่มสินค้า: ตันแยก 7 ประเภท + SKU (RPC plan_type_detail) · ความจุของกลุ่ม = Σ ความจุโรง × สัดส่วนน้ำหนักกลุ่มในโรง (ไม่นับซ้ำ)
+============================================================ */
+const ExecPage = (() => {
+  let mounted = false, loading = false;
+  const EX_FAMS = [
+    { key:'Flat',    label:'Flat',            icon:'▭', color:'#b07c00', codes:['HRS','FLAT_BAR'] },
+    { key:'Pipe',    label:'Pipe + C Channel', icon:'◯', color:'#2f74a8', codes:['PIPE','PIPE_GI','CH','CH_GI'] },
+    { key:'Section', label:'Section',          icon:'I', color:'#e05a00', codes:['SECTION'] },
+    { key:'อื่นๆ',    label:'Scrap / อื่นๆ',     icon:'♻', color:'#8a9ba1', codes:['OTHER'] },
+  ];
+  // group_product → ชื่อที่แสดงในชิปของโรง + สี
+  const GP_LABEL = { 'Pipe':'Pipe', 'CH':'C Channel', 'HS':'HRS', 'Plate':'HRS', 'Flat Bars':'Flat Bar', 'Beam':'Section', 'Scrap (KG)':'Scrap' };
+  const GP_COLOR = { 'Pipe':'#2f74a8', 'C Channel':'#b07c00', 'HRS':'#0c3843', 'Flat Bar':'#5f8f9c', 'Section':'#e05a00', 'Scrap':'#8a9ba1', 'อื่นๆ':'#c9d6da' };
+  const TYPE_INFO = { OTHER: { label:'Scrap / ไม่ระบุ', color:'#8a9ba1' } };
+  PLAN_TYPES.forEach(t => { TYPE_INFO[t.code] = { label: t.label, color: t.color }; });
+  const tier = (p) => p > 100 ? 'crit' : p > 80 ? 'warn' : 'ok';
+  const TW = { ok:'✓ ปกติ', warn:'! ใกล้เต็ม', crit:'⛔ เกินพิกัด' }, TC = { ok:'#8bbade', warn:'#fdc440', crit:'#ff6a05' };
+  const pill = (p) => `<span class="ex-pill ${tier(p)}">${TW[tier(p)]}</span>`;
+  function ring(p, size = 100, stroke = 12){
+    const r = (size - stroke) / 2, c = 2 * Math.PI * r, v = Math.max(0, Math.min(p, 100));
+    return `<svg class="ex-ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="ใช้พื้นที่ ${p.toFixed(0)}%">
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#eef2f4" stroke-width="${stroke}"/>
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${TC[tier(p)]}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c * v / 100} ${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/>
+      <text x="50%" y="50%" dy="${size / 13}" text-anchor="middle" font-size="${size / 4.4}" font-weight="700" fill="#0c3843" font-family="IBM Plex Mono, monospace">${p.toFixed(0)}%</text></svg>`;
+  }
+
+  async function loadData(){
+    if (loading) return; loading = true;
+    el('exMeta').textContent = 'กำลังโหลด...';
+    try {
+      const dRes = await sb.from('v_stock_daily').select('date_key').order('date_key', { ascending: false }).limit(1);
+      if (dRes.error) throw dRes.error;
+      const base = (dRes.data || [])[0]?.date_key;
+      if (!base) throw new Error('ยังไม่มีข้อมูลสต็อก — นำเข้าไฟล์สต็อกก่อน');
+      const [capRes, locRes, lgRes, detRes] = await Promise.all([
+        sb.from('v_location_capacity').select('location_code,actual_capacity_tons'),
+        sb.from('v_location_daily').select('location_code,total_weight_kg').eq('date_key', base),
+        sb.from('v_location_group_daily').select('location_code,dim_value,weight_kg').eq('date_key', base).eq('dim_type', 'group_product'),
+        sb.rpc('plan_type_detail'),
+      ]);
+      if (capRes.error) throw capRes.error;
+      if (locRes.error) throw locRes.error;
+      // โรง (รวม Fac B+E)
+      const facs = {};
+      const fac = (loc) => (facs[loc] = facs[loc] || { loc, cap: 0, used: 0, groups: {} });
+      mergeLocationRows(capRes.data || []).forEach(r => { fac(r.location_code).cap += +r.actual_capacity_tons || 0; });
+      (locRes.data || []).forEach(r => { const l = locationDisplayCode(r.location_code); if (l) fac(l).used += (+r.total_weight_kg || 0) / 1000; });
+      if (!lgRes.error) (lgRes.data || []).forEach(r => {
+        const l = locationDisplayCode(r.location_code); if (!l) return;
+        const g = GP_LABEL[r.dim_value] || 'อื่นๆ';
+        const f = fac(l); f.groups[g] = (f.groups[g] || 0) + (+r.weight_kg || 0) / 1000;
+        // ใช้คำนวณความจุของกลุ่มสินค้า
+        const fam = familyLabelOf(r.dim_value === 'ไม่ระบุ' ? null : r.dim_value);
+        f.fam = f.fam || {}; f.fam[fam] = (f.fam[fam] || 0) + (+r.weight_kg || 0) / 1000;
+      });
+      const F = Object.values(facs).filter(f => f.cap > 0 || f.used > 0).map(f => ({ ...f, free: f.cap - f.used, pct: f.cap > 0 ? f.used / f.cap * 100 : 0 }));
+      const det = {};
+      if (!detRes.error) (detRes.data || []).forEach(r => { det[r.type_code] = { t: (+r.stock_kg || 0) / 1000, sku: +r.sku_count || 0, locs: [...new Set((r.location_codes || []).map(locationDisplayCode).filter(Boolean))].sort() }; });
+      render(base, F, det, !detRes.error);
+    } catch (e){
+      console.error(e);
+      el('exMeta').innerHTML = `<span style="color:var(--danger);">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(friendlyDbError(e))}</span>`;
+    } finally { loading = false; }
+  }
+
+  function render(base, F, det, hasDet){
+    baseDate = base;
+    const T = { cap: F.reduce((a, f) => a + f.cap, 0), used: F.reduce((a, f) => a + f.used, 0) };
+    T.free = T.cap - T.used; T.pct = T.cap > 0 ? T.used / T.cap * 100 : 0;
+    el('exMeta').innerHTML = `ข้อมูลสต็อก ณ <b>${escapeHtml(fmtDateKey(base))}</b> · ${F.length} โรง (Fac B + Fac E รวมเป็นพื้นที่เดียว)`;
+    el('exKpis').innerHTML = `
+      <div class="ex-card ex-kpi total"><small>พื้นที่ทั้งหมด (ความจุ)</small><b>${fmtNum(T.cap, 0)}</b><em>ตัน · ${F.length} โรง</em></div>
+      <div class="ex-card ex-kpi used"><small>พื้นที่ใช้ไป (Stock)</small><b>${fmtNum(T.used, 0)}</b><em>ตัน · ${T.pct.toFixed(1)}% ของความจุ</em></div>
+      <div class="ex-card ex-kpi free"><small>พื้นที่คงเหลือ</small><b>${fmtNum(T.free, 0)}</b><em>ตัน · ${(100 - T.pct).toFixed(1)}%</em></div>`;
+    const crit = F.filter(f => f.pct > 100).sort((a, b) => b.pct - a.pct), warn = F.filter(f => f.pct > 80 && f.pct <= 100).sort((a, b) => b.pct - a.pct);
+    const roomy = [...F].filter(f => f.free > 0).sort((a, b) => b.free - a.free).slice(0, 3);
+    el('exTotal').innerHTML = `${ring(T.pct, 124, 15)}<div>
+      <h3>ภาพรวมทั้งเครือข่าย ${pill(T.pct)}</h3>
+      <div class="ex-bar"><i style="width:${Math.min(T.pct, 100)}%;background:#fdc440;"></i></div>
+      <div class="ex-row"><span>ใช้ไป <b>${fmtNum(T.used, 0)}</b> ตัน</span><span>คงเหลือ <b>${fmtNum(T.free, 0)}</b> ตัน</span></div>
+      <div class="ex-alert">${crit.length ? `<span class="crit">⛔ เกินพิกัด: ${escapeHtml(crit.map(f => `${f.loc} (${f.pct.toFixed(0)}%, เกิน ${fmtNum(-f.free, 0)} t)`).join(', '))}</span><br/>` : ''}
+        ${warn.length ? `<span class="warn">! ใกล้เต็ม: ${escapeHtml(warn.map(f => `${f.loc} (${f.pct.toFixed(0)}%)`).join(', '))}</span><br/>` : ''}
+        ${roomy.length ? `<span style="color:#1f5f8b;">ว่างมากสุด: ${escapeHtml(roomy.map(f => `${f.loc} ${fmtNum(f.free, 0)} t`).join(' · '))}</span>` : ''}</div></div>`;
+    // กลุ่มสินค้า
+    const stockAll = Object.values(det).reduce((a, d) => a + d.t, 0) || T.used;
+    el('exFams').innerHTML = EX_FAMS.map(fm => {
+      const types = fm.codes.map(c => ({ c, ...(det[c] || { t: 0, sku: 0, locs: [] }), ...TYPE_INFO[c] }));
+      // ถ้าเรียกรายละเอียดรายประเภทไม่ได้ ใช้น้ำหนักจากข้อมูลรายโรง (มิติ group_product) แทน
+      const tLoc = F.reduce((a, f) => a + ((f.fam || {})[fm.key] || 0), 0);
+      const tDet = types.reduce((a, x) => a + x.t, 0);
+      const t = hasDet && tDet > 0 ? tDet : tLoc, sku = types.reduce((a, x) => a + x.sku, 0);
+      const locs = [...new Set(types.flatMap(x => x.locs))].sort();
+      // ความจุของกลุ่ม: แบ่งความจุโรงตามสัดส่วนน้ำหนักกลุ่มในโรง (ตัดเศษ < 0.5 t)
+      const cap = F.reduce((a, f) => { const w = (f.fam || {})[fm.key] || 0; return a + (w >= 0.5 && f.used > 0 ? f.cap * w / f.used : 0); }, 0);
+      const p = cap > 0 ? t / cap * 100 : 0;
+      return `<div class="ex-card"><div class="ex-fam-h"><span class="ex-ic" style="background:${fm.color}22;color:${fm.color};">${fm.icon}</span>${escapeHtml(fm.label)}</div>
+        <div class="ex-fam-v">${fmtNum(t, 0)} <span>ตัน</span></div>
+        <div class="ex-s">${stockAll > 0 ? (t / stockAll * 100).toFixed(1) : '0'}% ของ Stock${hasDet ? ` · ${fmtNum(sku)} SKU` : ''}</div>
+        ${cap > 0 ? `<div class="ex-bar" style="margin-top:9px;"><i style="width:${Math.min(p, 100)}%;background:${fm.color};"></i></div>
+        <div class="ex-s" style="margin-top:4px;">ใช้ ${p.toFixed(0)}% ของ ${fmtNum(cap, 0)} t ${pill(p)}</div>` : ''}
+        ${locs.length ? `<div class="ex-s" style="margin-top:3px;">เก็บที่: ${escapeHtml(locs.join(', '))}</div>` : ''}
+        <div class="ex-tl">${(hasDet && tDet > 0 ? types : []).map(x => `<div><i style="background:${x.color};"></i><span>${escapeHtml(x.label)}${hasDet ? `<small>${fmtNum(x.sku)} SKU</small>` : ''}</span><b>${fmtNum(x.t, 0)} t</b></div>`).join('')}</div></div>`;
+    }).join('');
+    // แยกโรง
+    el('exFacs').innerHTML = [...F].sort((a, b) => b.pct - a.pct).map(f => `<div class="ex-card ex-fac"><div class="ex-fac-h"><b>${escapeHtml(f.loc)}</b>${pill(f.pct)}</div>${ring(f.pct)}
+      <div class="ex-nums"><div>ทั้งหมด<b>${fmtNum(f.cap, 0)}</b></div><div>ใช้ไป<b>${fmtNum(f.used, 0)}</b></div><div>${f.free < 0 ? 'เกิน' : 'คงเหลือ'}<b class="${f.free < 0 ? 'neg' : ''}">${fmtNum(Math.abs(f.free), 0)}</b></div></div>
+      <div class="ex-chips">${Object.entries(f.groups).filter(([, v]) => v >= 0.5).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="ex-chip"><i style="background:${GP_COLOR[k] || '#c9d6da'};"></i>${escapeHtml(k)} <b>${fmtNum(v, 0)}</b></span>`).join('')}</div></div>`).join('');
+    el('exNote').innerHTML = '<b>ที่มาของตัวเลข</b><br/>• พื้นที่ทั้งหมด = ผลรวมความจุจริงของทุกโรง · พื้นที่ใช้ไป = Stock ณ วันที่ข้อมูลล่าสุด · คงเหลือ = ทั้งหมด − ใช้ไป (โรงที่เกินพิกัดทำให้ยอดรวมคงเหลือลดลงด้วย)<br/>'
+      + '• ความจุของกลุ่มสินค้า = ความจุโรงที่เก็บกลุ่มนั้นจริง ถ้าโรงเดียวเก็บหลายกลุ่ม แบ่งตามสัดส่วนน้ำหนัก (ไม่นับซ้ำ)<br/>'
+      + '• หน่วย: ตัน · ปัดเศษเป็นจำนวนเต็ม';
+  }
+  let baseDate = null;
+  // Export รูปทั้งหน้าสรุปผู้บริหาร เป็น JPG (≤ 4 MB แนบอีเมล/LINE ได้) — ไม่เอาปุ่มติดไปในรูป
+  async function exportImage(){
+    const btn = el('btnExportExec');
+    if (!baseDate){ toast('รอโหลดข้อมูลให้เสร็จก่อน', 'info'); return; }
+    if (typeof html2canvas !== 'function'){ toast('โหลดตัวแคปภาพไม่สำเร็จ — ตรวจอินเทอร์เน็ตแล้วลองใหม่', 'error'); return; }
+    const label = btn.textContent; btn.disabled = true; btn.textContent = '⏳ กำลังสร้างรูป...';
+    const target = el('view-exec');
+    try {
+      const w = target.scrollWidth, h = target.scrollHeight;
+      const scale = Math.max(0.5, Math.min(2, SNAPSHOT_MAX_SIDE / h, SNAPSHOT_MAX_SIDE / w, Math.sqrt(SNAPSHOT_MAX_PIXELS / (w * h))));
+      const canvas = await html2canvas(target, { scale, backgroundColor: '#f3f6f7', useCORS: true,
+        ignoreElements: (node) => node.id === 'btnExportExec' || node.id === 'btnRefreshExec',
+        onclone: (doc) => {
+          const v = doc.getElementById('view-exec');
+          if (v){ v.style.animation = 'none'; v.style.opacity = '1'; }   // ไม่ให้ติดเอฟเฟกต์ fade-in (ภาพซีด)
+          // html2canvas วาดวงแหวน SVG เพี้ยน (ถูกตัดครึ่ง) → วาดใหม่ด้วย <canvas> ในสำเนาที่ใช้แคป (หน้าจริงไม่เปลี่ยน)
+          doc.querySelectorAll('#view-exec svg.ex-ring').forEach(svg => {
+            const size = +svg.getAttribute('width'), circles = svg.querySelectorAll('circle'), txt = svg.querySelector('text');
+            const sw = +circles[0].getAttribute('stroke-width'), r = (size - sw) / 2;
+            const dash = (circles[1].getAttribute('stroke-dasharray') || '0 1').split(' ').map(Number);
+            const frac = dash[1] > 0 ? dash[0] / dash[1] : 0, k = 2;
+            const cv = doc.createElement('canvas'); cv.width = size * k; cv.height = size * k;
+            const g = cv.getContext('2d'); g.scale(k, k);
+            g.lineWidth = sw; g.strokeStyle = '#eef2f4'; g.beginPath(); g.arc(size / 2, size / 2, r, 0, Math.PI * 2); g.stroke();
+            if (frac > 0){ g.strokeStyle = circles[1].getAttribute('stroke'); g.lineCap = 'round'; g.beginPath(); g.arc(size / 2, size / 2, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); g.stroke(); }
+            g.fillStyle = '#0c3843'; g.font = `700 ${size / 4.4}px "IBM Plex Mono", monospace`; g.textAlign = 'center'; g.textBaseline = 'middle';
+            g.fillText(txt ? txt.textContent : '', size / 2, size / 2 + 1);
+            const wrap = doc.createElement('div'); wrap.style.cssText = 'text-align:center;margin:8px 0 4px;line-height:0;';
+            cv.style.cssText = `display:inline-block;width:${size}px;height:${size}px;`;
+            wrap.appendChild(cv); svg.replaceWith(wrap);
+          });
+        } });
+      const out = await encodeSnapshotUnder(canvas, SNAPSHOT_MAX_BYTES);
+      const fileName = `wh2-executive-summary-${baseDate}.jpg`;
+      const url = URL.createObjectURL(out.blob);
+      const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      window.__lastExecSnapshot = { fileName, bytes: out.blob.size, width: out.width, height: out.height };
+      toast(`Export รูปสำเร็จ — ${fileName} · ${(out.blob.size / 1024 / 1024).toFixed(1)} MB`, 'success');
+    } catch (err){
+      console.error(err); toast('Export รูปไม่สำเร็จ: ' + (err && err.message ? err.message : err), 'error');
+    } finally { btn.disabled = false; btn.textContent = label; }
+  }
+  function mount(){ if (mounted) return; mounted = true; el('btnRefreshExec').addEventListener('click', loadData); el('btnExportExec').addEventListener('click', exportImage); }
+  function activate(){ mount(); loadData(); }
+  return { activate };
 })();
 
 /* ============================================================
