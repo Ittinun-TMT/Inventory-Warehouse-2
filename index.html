@@ -1697,8 +1697,10 @@ window.addEventListener('hashchange', handleRoute);
    fac_from_sloc — mirrors the SQL function public.fac_from_sloc
    (used client-side only for quick previews; source of truth is the DB view)
 ============================================================ */
-// ข้อยกเว้นที่ไม่ตรงกฎตัวอักษรทั่วไป ยืนยันจากผู้ใช้ (ตารางจริง): 2A08 อยู่ในพื้นที่ Fac B+E (ไม่ใช่ Fac A)
-const SLOC_EXCEPTIONS = { '2A08': 'Fac E' };
+// ข้อยกเว้นที่ไม่ตรงกฎตัวอักษรทั่วไป ยืนยันจากผู้ใช้ (ตารางจริง):
+//   2A08 อยู่ในพื้นที่ Fac B+E (ไม่ใช่ Fac A) · 2F01 (Sloc ใหม่ 2 พ.ย. 2569) อยู่ในพื้นที่ Fac K (ไม่ใช่ "Fac F")
+// ⚠️ ต้องตรงกับ SQL public.fac_from_sloc เสมอ (migration fac_from_sloc_2f01_fac_k)
+const SLOC_EXCEPTIONS = { '2A08': 'Fac E', '2F01': 'Fac K' };
 function facFromSloc(sloc){
   if (!sloc || sloc.length < 2) return null;
   if (SLOC_EXCEPTIONS[sloc]) return SLOC_EXCEPTIONS[sloc];
