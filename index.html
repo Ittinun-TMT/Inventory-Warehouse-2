@@ -1162,6 +1162,10 @@
 .ex-fam .ex-fam-nums>div{background:none;border-radius:0;padding:4px 2px;display:grid;grid-template-columns:1fr auto 26px;align-items:baseline;gap:6px;border-bottom:1px dashed #e3e8ea;}
 .ex-fam .ex-fam-nums>div:last-child{border-bottom:0;}
 .ex-fam .ex-fam-nums b{font-size:19px;white-space:nowrap;}
+.ex-no{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#0c3843;color:#fdc440;font-size:14px;font-weight:800;margin-right:2px;}
+#exPtypes .ptc-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+@media (max-width:1100px){ #exPtypes .ptc-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:640px){ #exPtypes .ptc-grid{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -1313,11 +1317,6 @@
       <div class="summary-block">
         <div class="section-title" style="margin:22px 0 12px;">🏷️ สรุปตาม Group Sale <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
         <div class="viz-block" id="summaryGroupSaleViz"><div class="viz-empty">กำลังโหลด...</div></div>
-      </div>
-
-      <div class="summary-block wide">
-        <div class="section-title" style="margin:22px 0 12px;">📦 สรุปตาม Product Type <span class="tag">แยกตามกลุ่มสินค้าหลัก · อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
-        <div class="viz-block" id="summaryProductTypeViz"><div class="viz-empty">กำลังโหลด...</div></div>
       </div>
 
       <div class="summary-block wide">
@@ -1609,16 +1608,19 @@
   <!-- ============ EXECUTIVE SUMMARY VIEW (แบบ A ที่ผู้ใช้เลือก 30 ต.ค. 2569) ============ -->
   <div id="view-exec" class="route-view">
     <div class="section-title" style="justify-content:space-between;">
-      <span style="display:flex;align-items:center;gap:9px;">📊 สรุปผล <span class="tag">พื้นที่ทั้งหมด · ใช้ไป · คงเหลือ · แยกโรง · แยกกลุ่มสินค้า</span></span>
+      <span style="display:flex;align-items:center;gap:9px;">📊 สรุปผล <span class="tag">ภาพรวมพื้นที่ · แยกคลังสินค้า · แยกกลุ่มสินค้า · กลุ่มย่อย</span></span>
       <span style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn btn-primary btn-sm" id="btnExportExec">📸 Export รูป</button><button type="button" class="btn btn-outline btn-sm" id="btnRefreshExec">↻ รีเฟรช</button></span>
     </div>
     <div class="plan-meta" id="exMeta">กำลังโหลด...</div>
-    <div class="ex-sec">กลุ่มสินค้า <small>% ใหญ่ = ใช้พื้นที่ของกลุ่ม (Stock ÷ ความจุที่ใช้เก็บกลุ่มนั้น)</small></div>
-    <div class="ex-fams" id="exFams"></div>
-    <div class="ex-sec">ภาพรวมพื้นที่คลังสินค้า</div>
+    <!-- ลำดับหัวข้อตามที่ผู้ใช้กำหนด (5 พ.ย. 2569) -->
+    <div class="ex-sec"><span class="ex-no">1</span>ภาพรวมพื้นที่จัดเก็บสินค้า</div>
     <div class="ex-card ex-ov" id="exTotal"></div>
-    <div class="ex-sec">แยกตามโรง <small>หลอดพลัง = % ใช้พื้นที่ (ขีดเข้ม = 80%) · ฟ้า ปกติ (≤ 80%) / เหลือง ใกล้เต็ม (81–100%) / ส้ม เกินพิกัด (&gt; 100%, เต็มหลอด + ลายส้ม = ส่วนที่เกิน) · เรียงแน่นสุดก่อน</small></div>
+    <div class="ex-sec"><span class="ex-no">2</span>ปริมาณจัดเก็บแบบแยกตามคลังสินค้า <small>หลอดพลัง = % ใช้พื้นที่ (ขีดเข้ม = 80%) · ฟ้า ปกติ (≤ 80%) / เหลือง ใกล้เต็ม (81–100%) / ส้ม เกินพิกัด (&gt; 100%, เต็มหลอด + ลายส้ม = ส่วนที่เกิน) · เรียงแน่นสุดก่อน</small></div>
     <div class="ex-facs" id="exFacs"></div>
+    <div class="ex-sec"><span class="ex-no">3</span>ปริมาณจัดเก็บแบ่งตามกลุ่มสินค้า <small>% ใหญ่ = ใช้พื้นที่ของกลุ่ม (Stock ÷ ความจุที่ใช้เก็บกลุ่มนั้น)</small></div>
+    <div class="ex-fams" id="exFams"></div>
+    <div class="ex-sec"><span class="ex-no">4</span>ข้อมูลปริมาณสินค้ากลุ่มย่อย <small>Product Type ในแต่ละกลุ่มสินค้า · % ตัวใหญ่ = สัดส่วนของ Stock ทั้งหมด · % ในรายการ = สัดส่วนภายในกลุ่ม</small></div>
+    <div id="exPtypes"><div class="viz-empty">กำลังโหลด...</div></div>
     <div class="plan-note" id="exNote"></div>
   </div>
 
@@ -2292,7 +2294,7 @@ const DashboardPage = (() => {
     el('btnAbcExport').addEventListener('click', exportAbcCsv);
   }
 
-  const SUMMARY_VIZ_IDS = ['summaryLocationViz','summaryGroupSaleViz','summaryProductTypeViz','summaryLocGroupViz','topWeightViz','topQtyViz','abcPareto'];
+  const SUMMARY_VIZ_IDS = ['summaryLocationViz','summaryGroupSaleViz','summaryLocGroupViz','topWeightViz','topQtyViz','abcPareto'];
   function setSummaryLoading(){
     SUMMARY_VIZ_IDS.forEach(id => {
       el(id).innerHTML = '<div class="viz-empty">⏳ กำลังโหลดข้อมูล...</div>';
@@ -3039,48 +3041,7 @@ const DashboardPage = (() => {
     }).join('');
   }
 
-  /* สรุปตาม Product Type แยกตามกลุ่มสินค้าหลัก (ผู้ใช้ขอ 5 พ.ย. 2569)
-     กลุ่มหลักใช้กฎเดียวกับ SQL wh2_type_code: HS/Plate = Hot Rolled Sheet · Flat Bars = Flat Bar · Pipe · CH = C Channel
-     (GI รวมอยู่ในกลุ่มเดียวกัน ชื่อ Product Type บอก GI อยู่แล้ว) · Beam = Section · ที่เหลือ = อื่นๆ
-     ในแต่ละกลุ่ม: % ของกลุ่ม (แท่งเทียบกันภายในกลุ่ม) + ตัน · แสดง 5 อันดับแรก ที่เหลือรวมเป็น "อื่นๆ" */
-  const PT_MAIN_GROUPS = [
-    { key:'HRS',     label:'Hot Rolled Sheet', sub:'แผ่น (HS + Plate)', color:'#0c3843', gps:['HS','Plate'] },
-    { key:'FLAT_BAR',label:'Flat Bar',         sub:'แบน (Flat Bars)',   color:'#5f8f9c', gps:['Flat Bars'] },
-    { key:'PIPE',    label:'Pipe',             sub:'ท่อ (รวม GI)',       color:'#2f74a8', gps:['Pipe'] },
-    { key:'CH',      label:'C Channel',        sub:'ตัวซี (รวม GI)',     color:'#b07c00', gps:['CH'] },
-    { key:'SECTION', label:'Section',          sub:'Beam',               color:'#e05a00', gps:['Beam'] },
-    { key:'OTHER',   label:'อื่นๆ',              sub:'Scrap / ไม่ระบุ',     color:'#8a9ba1', gps:null },
-  ];
-  const PT_TOP_PER_GROUP = 5;
-  function renderProductTypeByMainGroup(containerId, rows){
-    const box = el(containerId);
-    if (!rows.length){ box.innerHTML = '<div class="viz-empty">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div>'; return; }
-    const groupOf = (gp) => PT_MAIN_GROUPS.find(g => g.gps && g.gps.includes(gp)) || PT_MAIN_GROUPS[PT_MAIN_GROUPS.length - 1];
-    const totalT = rows.reduce((a, r) => a + (Number(r.total_weight) || 0), 0) / 1000;
-    const byG = {};
-    rows.forEach(r => { const g = groupOf(r.group_product).key; (byG[g] = byG[g] || []).push(r); });
-    // การ์ดต่อกลุ่ม: % ของทั้งหมดตัวใหญ่ + แถบสัดส่วนประเภทในกลุ่ม (เฉดสีเดียวกัน) + รายการประเภทพร้อม % ในกลุ่ม
-    const ALPHA = ['ff', 'c4', '94', '6b', '47', '2b'];
-    const cards = PT_MAIN_GROUPS.filter(g => byG[g.key]).map(g => {
-      const gr = byG[g.key];
-      const ents = groupSummary(gr, 'product_type');          // pct = % ภายในกลุ่ม
-      const gT = ents.reduce((a, e) => a + e.weightTons, 0), gSku = new Set(gr.map(r => r.material)).size;
-      let shown = ents.slice(0, PT_TOP_PER_GROUP);
-      const rest = ents.slice(PT_TOP_PER_GROUP);
-      if (rest.length) shown = shown.concat([{ name: `อื่นๆ ${rest.length} ประเภท`, weightTons: rest.reduce((a, e) => a + e.weightTons, 0), pct: rest.reduce((a, e) => a + e.pct, 0), skuCount: rest.reduce((a, e) => a + e.skuCount, 0), isRest: true }]);
-      const col = (i, isRest) => isRest ? '#c9d6da' : g.color + ALPHA[Math.min(i, ALPHA.length - 1)];
-      const share = totalT > 0 ? gT / totalT * 100 : 0;
-      return { gT, html: `<div class="ptc" style="--g:${g.color};">
-        <div class="ptc-h"><span class="ptc-name">${escapeHtml(g.label)}<small>${escapeHtml(g.sub)}</small></span>
-          <span class="ptc-right"><span class="ptc-pct">${share.toFixed(1)}<small>%</small></span><span class="ptc-ton">${fmtNum(gT, 0)} <small>ตัน</small></span></span></div>
-        <div class="ptc-sub">${fmtNum(gSku)} SKU · ${fmtNum(ents.length)} ประเภท</div>
-        <div class="ptc-stack" role="img" aria-label="สัดส่วน Product Type ใน ${escapeHtml(g.label)}">${shown.map((e, i) => `<i style="width:${e.pct}%;background:${col(i, e.isRest)};" title="${escapeHtml(e.name)} ${e.pct.toFixed(1)}%"></i>`).join('')}</div>
-        <div class="ptc-list">${shown.map((e, i) => `<div class="${e.isRest ? 'rest' : ''}" title="${escapeHtml(e.name)} · ${fmtNum(e.skuCount)} SKU">
-          <i style="background:${col(i, e.isRest)};"></i><span>${e.name === 'ไม่ระบุ' ? '<span class="cell-muted">ไม่ระบุ</span>' : escapeHtml(e.name)}</span><b>${e.pct.toFixed(0)}%</b><em>${fmtNum(e.weightTons, 0)} t</em></div>`).join('')}</div>
-      </div>` };
-    }).sort((a, b) => b.gT - a.gT);
-    box.innerHTML = `<div class="ptc-note">% ตัวใหญ่ = สัดส่วนของน้ำหนักทั้งหมด · % ในรายการ = สัดส่วนภายในกลุ่ม · ${fmtNum(totalT, 0)} ตันรวม</div><div class="ptc-grid">${cards.map(c => c.html).join('')}</div>`;
-  }
+  // (ส่วน "สรุปตาม Product Type" ย้ายไปหน้าสรุปผล ข้อ 4 แล้ว — 5 พ.ย. 2569)
 
   // แท่งสัดส่วนองค์ประกอบต่อโรงงาน (stacked, part-to-whole) — สีของแต่ละ Group Sale ผูกกับชื่อเดิมเสมอทุกแท่ง
   // (จัดอันดับ Group Sale จากภาพรวมทั้งหมดก่อน ไม่ใช่จัดอันดับใหม่ในแต่ละโรงงาน กันสีสลับความหมาย)
@@ -3387,7 +3348,6 @@ const DashboardPage = (() => {
   function renderSummaries(rows){
     renderRankBars('summaryLocationViz', groupSummary(rows, 'location_code'), 213, 66, 'ตัน');
     renderRankBars('summaryGroupSaleViz', groupSummary(rows, 'group_sale'), 20, 80, 'ตัน');
-    renderProductTypeByMainGroup('summaryProductTypeViz', rows);
     renderStackedByLocation('summaryLocGroupViz', rows);
     // Top 5 รายการสินค้า — คนละ metric กัน จึงแยกเป็น 2 กราฟ ไม่ยัดสองสเกลลงแท่งเดียวกัน
     renderTopItems('topWeightViz', rows, 'weight', 213, 66, ' ตัน', 2);
@@ -5890,7 +5850,7 @@ const ExecPage = (() => {
         sb.rpc('plan_type_detail'),
       ]);
       // ยอดราย Sloc (การ์ด HRS / Flat Bar กำหนดตาม Sloc) — ถ้าเรียกไม่ได้ ใช้การนับตามกลุ่มสินค้าแทน
-      const slocRes = await sb.rpc('summary_sloc_detail');
+      const slocRes = await sb.rpc('summary_sloc_ptype');   // ราย Sloc × Product Type (ใช้ทั้งข้อ 3 และ 4)
       if (capRes.error) throw capRes.error;
       if (locRes.error) throw locRes.error;
       // โรง (รวม Fac B+E)
@@ -5927,14 +5887,14 @@ const ExecPage = (() => {
     // ภาพรวม: รวม KPI 3 ค่า + % + แถบ + โรงที่ต้องดูแล ไว้ในการ์ดเดียว
     el('exTotal').innerHTML = `
       <div class="ex-ov-top">
-        <div class="ex-ov-pct"><span class="ex-pow-pct ${tt}">${T.pct.toFixed(1)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่คลังสินค้า</span>${pill(T.pct)}</div>
+        <div class="ex-ov-pct"><span class="ex-pow-pct ${tt}">${T.pct.toFixed(1)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่จัดเก็บสินค้า</span>${pill(T.pct)}</div>
         <div class="ex-ov-nums">
           <div class="total"><small>พื้นที่ทั้งหมด</small><b>${fmtNum(T.cap, 0)}</b><em>ตัน · ${F.length} โรง</em></div>
           <div class="used"><small>ใช้ไป (Stock)</small><b>${fmtNum(T.used, 0)}</b><em>ตัน · ${T.pct.toFixed(1)}%</em></div>
           <div class="free"><small>คงเหลือ</small><b>${fmtNum(T.free, 0)}</b><em>ตัน · ${(100 - T.pct).toFixed(1)}%</em></div>
         </div>
       </div>
-      <div class="ex-pow ${tt} big" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(T.pct)}" aria-label="ใช้พื้นที่คลังสินค้า ${T.pct.toFixed(1)}%">
+      <div class="ex-pow ${tt} big" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(T.pct)}" aria-label="ใช้พื้นที่จัดเก็บสินค้า ${T.pct.toFixed(1)}%">
         <i class="fill" style="width:${Math.min(T.pct, 100)}%;"></i><span class="tick" style="left:25%"></span><span class="tick" style="left:50%"></span><span class="tick" style="left:75%"></span><span class="mark80" style="left:80%"></span>
       </div>
       <div class="ex-ov-alerts">
@@ -5994,6 +5954,7 @@ const ExecPage = (() => {
         </div>
       </div>`;
     }).join('');
+    renderSubgroups(slocRows, T.used);
     // แยกโรง
     // การ์ดโรง: หลอดพลัง (เต็มหลอดเมื่อเกินพิกัด + ส่วนเกินลายส้ม) + ตัวเลข 3 บรรทัดชัดๆ
     el('exFacs').innerHTML = [...F].sort((a, b) => b.pct - a.pct).map(f => {
@@ -6020,6 +5981,49 @@ const ExecPage = (() => {
       + '• หน่วย: ตัน · ปัดเศษเป็นจำนวนเต็ม';
   }
   let baseDate = null;
+  /* ข้อ 4 ข้อมูลปริมาณสินค้ากลุ่มย่อย (ย้ายมาจากหน้าแดชบอร์ด 5 พ.ย. 2569)
+     กลุ่ม = การ์ดเดียวกับข้อ 3 (HRS = Sloc 2E03 + 2A08 · Flat Bar = 2K04 + 2F01 · ที่เหลือตามประเภท) → ยอดตรงกัน
+     ในแต่ละกลุ่ม: Product Type เรียงตามน้ำหนัก 6 อันดับแรก + "อื่นๆ n ประเภท" */
+  const SUB_TOP = 6;
+  const SUB_ALPHA = ['ff', 'd0', 'a6', '80', '5c', '3d', '26'];
+  function cardKeyOf(r){
+    const bySloc = EX_FAMS.find(fm => fm.slocs && fm.slocs.includes(r.storage_location));
+    if (bySloc) return bySloc.key;
+    const byCode = EX_FAMS.find(fm => fm.codes.includes(r.type_code));
+    return byCode ? byCode.key : 'อื่นๆ';
+  }
+  function renderSubgroups(rows, totalUsed){
+    const box = el('exPtypes');
+    if (!rows || !rows.length || !rows.some(r => r.product_type)){ box.innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลกลุ่มย่อย (Product Type)</div>'; return; }
+    const acc = {};
+    rows.forEach(r => {
+      const k = cardKeyOf(r), t = (+r.stock_kg || 0) / 1000;
+      const c = (acc[k] = acc[k] || { t: 0, mats: new Set(), pts: {} });
+      c.t += t; (r.materials || []).forEach(m => c.mats.add(m));
+      const pk = r.product_type || 'ไม่ระบุ';
+      const pt = (c.pts[pk] = c.pts[pk] || { name: pk, t: 0, mats: new Set() });
+      pt.t += t; (r.materials || []).forEach(m => pt.mats.add(m));
+    });
+    const all = Object.values(acc).reduce((a, c) => a + c.t, 0) || totalUsed;
+    const cards = EX_FAMS.filter(fm => acc[fm.key] && acc[fm.key].t > 0).map(fm => {
+      const c = acc[fm.key];
+      const ents = Object.values(c.pts).sort((a, b) => b.t - a.t);
+      let shown = ents.slice(0, SUB_TOP);
+      const rest = ents.slice(SUB_TOP);
+      if (rest.length) shown = shown.concat([{ name: `อื่นๆ ${rest.length} ประเภท`, t: rest.reduce((a, e) => a + e.t, 0), mats: new Set(rest.flatMap(e => [...e.mats])), isRest: true }]);
+      const col = (i, isRest) => isRest ? '#c9d6da' : fm.color + SUB_ALPHA[Math.min(i, SUB_ALPHA.length - 1)];
+      const pctIn = (x) => c.t > 0 ? x / c.t * 100 : 0;
+      return `<div class="ptc" style="--g:${fm.color};">
+        <div class="ptc-h"><span class="ptc-name">${escapeHtml(fm.label)}<small>${escapeHtml(fm.sub || '')}</small></span>
+          <span class="ptc-right"><span class="ptc-pct">${(c.t / all * 100).toFixed(1)}<small>%</small></span><span class="ptc-ton">${fmtNum(c.t, 0)} <small>ตัน</small></span></span></div>
+        <div class="ptc-sub">${fmtNum(c.mats.size)} SKU · ${fmtNum(ents.length)} ประเภท</div>
+        <div class="ptc-stack" role="img" aria-label="สัดส่วน Product Type ใน ${escapeHtml(fm.label)}">${shown.map((e, i) => `<i style="width:${pctIn(e.t)}%;background:${col(i, e.isRest)};" title="${escapeHtml(e.name)} ${pctIn(e.t).toFixed(1)}%"></i>`).join('')}</div>
+        <div class="ptc-list">${shown.map((e, i) => `<div class="${e.isRest ? 'rest' : ''}" title="${escapeHtml(e.name)} · ${fmtNum(e.mats.size)} SKU">
+          <i style="background:${col(i, e.isRest)};"></i><span>${e.name === 'ไม่ระบุ' ? '<span class="cell-muted">ไม่ระบุ</span>' : escapeHtml(e.name)}</span><b>${pctIn(e.t).toFixed(0)}%</b><em>${fmtNum(e.t, 0)} t</em></div>`).join('')}</div>
+      </div>`;
+    });
+    box.innerHTML = `<div class="ptc-grid">${cards.join('')}</div>`;
+  }
   // Export รูปทั้งหน้าสรุปผล เป็น JPG (≤ 4 MB แนบอีเมล/LINE ได้) — ไม่เอาปุ่มติดไปในรูป
   async function exportImage(){
     const btn = el('btnExportExec');
