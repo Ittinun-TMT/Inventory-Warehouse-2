@@ -1007,7 +1007,10 @@
 .ex-alert .crit{color:#a83f00;font-weight:600;} .ex-alert .warn{color:#6b4b00;font-weight:600;}
 .ex-sec{font-size:16px;font-weight:700;color:var(--navy-900);margin:24px 0 10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
 .ex-sec small{font-weight:400;color:var(--gray-600);font-size:12.5px;}
-.ex-fams{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.ex-fams{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;}
+.ex-fam-sub{display:block;font-size:11.5px;font-weight:400;color:var(--gray-600);}
+.ex-fam>.ex-fac-h{min-height:52px;align-items:flex-start;}
+@media (max-width:1300px){ .ex-fams{grid-template-columns:repeat(3,minmax(0,1fr));} }
 .ex-fam-h{display:flex;align-items:center;gap:9px;font-weight:700;color:var(--navy-900);font-size:15px;}
 .ex-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:15px;}
 .ex-fam-v{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;color:var(--navy-900);margin:8px 0 2px;}
@@ -1101,6 +1104,49 @@
 .ex-fam-foot{margin-top:auto;padding-top:10px;}
 @media (max-width:900px){ .ex-ov-top{grid-template-columns:1fr;} }
 @media (max-width:640px){ .ex-ov-nums{grid-template-columns:1fr;} .ex-ov-nums b{font-size:24px;} .ex-ov-pct .ex-pow-pct{font-size:36px;} .ex-ov-alerts b{min-width:0;width:100%;} }
+/* สรุปตาม Product Type แยกกลุ่มสินค้าหลัก */
+.ptg-note{font-size:12px;color:var(--gray-600);margin:-2px 0 8px;}
+.ptg{border:1px solid var(--gray-200);border-left:5px solid var(--g);border-radius:12px;padding:8px 12px 6px;margin-bottom:10px;background:#fff;}
+.ptg-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:6px;border-bottom:1px solid var(--gray-100);}
+.ptg-sw{width:12px;height:12px;border-radius:3px;background:var(--g);flex:none;}
+.ptg-name{font-weight:700;color:var(--navy-900);font-size:14.5px;}
+.ptg-name small{font-weight:400;color:var(--gray-600);font-size:11.5px;margin-left:6px;}
+.ptg-tot{margin-left:auto;font-size:12.5px;color:var(--gray-600);font-variant-numeric:tabular-nums;}
+.ptg-tot b{color:var(--navy-900);font-size:14px;}
+.ptg-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--gray-100);}
+.ptg-row:last-child{border-bottom:0;}
+.ptg-rank{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:700;background:#f3f6f7;color:var(--navy-900);}
+.ptg-row:nth-child(2) .ptg-rank{background:var(--g);color:#fff;}
+.ptg-label{flex:0 0 150px;font-size:13px;color:var(--navy-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ptg-track{flex:1 1 auto;height:13px;background:var(--gray-100);border-radius:7px;overflow:hidden;min-width:40px;}
+.ptg-track i{display:block;height:100%;border-radius:7px;background:var(--g);opacity:.8;}
+.ptg-row.rest .ptg-track i{opacity:.35;}
+.ptg-val{flex:none;width:136px;text-align:right;font-size:11.5px;color:var(--gray-600);font-variant-numeric:tabular-nums;}
+.ptg-val b{color:var(--navy-900);font-size:12.5px;}
+@media (max-width:640px){ .ptg-label{flex-basis:84px;font-size:12px;} .ptg-val{width:100px;font-size:10.5px;} .ptg-tot{margin-left:0;width:100%;} }
+/* สรุป Product Type แบบการ์ดต่อกลุ่มสินค้าหลัก */
+.summary-block.wide{grid-column:1 / -1;}
+.ptc-note{font-size:12px;color:var(--gray-600);margin:-4px 0 10px;}
+.ptc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+@media (max-width:1100px){ .ptc-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:640px){ .ptc-grid{grid-template-columns:1fr;} }
+.ptc{background:#fff;border:1px solid var(--gray-200);border-top:5px solid var(--g);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);min-width:0;}
+.ptc-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.ptc-name{font-weight:700;color:var(--navy-900);font-size:15.5px;}
+.ptc-name small{display:block;font-weight:400;font-size:11.5px;color:var(--gray-600);}
+.ptc-pct{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:700;color:var(--navy-900);line-height:1;}
+.ptc-pct small{font-size:16px;}
+.ptc-sub{font-size:12.5px;color:var(--gray-600);margin-top:4px;}
+.ptc-stack{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:10px 0 8px;background:#eef2f4;gap:2px;}
+.ptc-stack i{display:block;height:100%;min-width:2px;}
+.ptc-list{display:flex;flex-direction:column;}
+.ptc-list>div{display:grid;grid-template-columns:12px 1fr 44px 70px;gap:8px;align-items:center;padding:5px 0;border-bottom:1px dashed #eef2f4;font-size:13px;}
+.ptc-list>div:last-child{border-bottom:0;}
+.ptc-list i{width:12px;height:12px;border-radius:3px;}
+.ptc-list span{color:var(--navy-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ptc-list b{font-family:'IBM Plex Mono',monospace;text-align:right;color:var(--navy-900);font-size:13.5px;}
+.ptc-list em{font-style:normal;font-family:'IBM Plex Mono',monospace;text-align:right;color:var(--gray-600);font-size:12px;}
+.ptc-list .rest span{color:var(--gray-600);font-style:italic;}
 </style>
 </head>
 <body>
@@ -1254,12 +1300,12 @@
         <div class="viz-block" id="summaryGroupSaleViz"><div class="viz-empty">กำลังโหลด...</div></div>
       </div>
 
-      <div class="summary-block">
-        <div class="section-title" style="margin:22px 0 12px;">📦 สรุปตาม Product Type <span class="tag">อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
+      <div class="summary-block wide">
+        <div class="section-title" style="margin:22px 0 12px;">📦 สรุปตาม Product Type <span class="tag">แยกตามกลุ่มสินค้าหลัก · อันดับตามน้ำหนัก · ตามตัวกรองด้านบน</span></div>
         <div class="viz-block" id="summaryProductTypeViz"><div class="viz-empty">กำลังโหลด...</div></div>
       </div>
 
-      <div class="summary-block">
+      <div class="summary-block wide">
         <div class="section-title" style="margin:22px 0 12px;">🧭 สรุปตามโรงงาน + Group Sale <span class="tag">สัดส่วนองค์ประกอบต่อโรงงาน</span></div>
         <div class="viz-block" id="summaryLocGroupViz"><div class="viz-empty">กำลังโหลด...</div></div>
       </div>
@@ -2978,6 +3024,49 @@ const DashboardPage = (() => {
     }).join('');
   }
 
+  /* สรุปตาม Product Type แยกตามกลุ่มสินค้าหลัก (ผู้ใช้ขอ 5 พ.ย. 2569)
+     กลุ่มหลักใช้กฎเดียวกับ SQL wh2_type_code: HS/Plate = Hot Rolled Sheet · Flat Bars = Flat Bar · Pipe · CH = C Channel
+     (GI รวมอยู่ในกลุ่มเดียวกัน ชื่อ Product Type บอก GI อยู่แล้ว) · Beam = Section · ที่เหลือ = อื่นๆ
+     ในแต่ละกลุ่ม: % ของกลุ่ม (แท่งเทียบกันภายในกลุ่ม) + ตัน · แสดง 5 อันดับแรก ที่เหลือรวมเป็น "อื่นๆ" */
+  const PT_MAIN_GROUPS = [
+    { key:'HRS',     label:'Hot Rolled Sheet', sub:'แผ่น (HS + Plate)', color:'#0c3843', gps:['HS','Plate'] },
+    { key:'FLAT_BAR',label:'Flat Bar',         sub:'แบน (Flat Bars)',   color:'#5f8f9c', gps:['Flat Bars'] },
+    { key:'PIPE',    label:'Pipe',             sub:'ท่อ (รวม GI)',       color:'#2f74a8', gps:['Pipe'] },
+    { key:'CH',      label:'C Channel',        sub:'ตัวซี (รวม GI)',     color:'#b07c00', gps:['CH'] },
+    { key:'SECTION', label:'Section',          sub:'Beam',               color:'#e05a00', gps:['Beam'] },
+    { key:'OTHER',   label:'อื่นๆ',              sub:'Scrap / ไม่ระบุ',     color:'#8a9ba1', gps:null },
+  ];
+  const PT_TOP_PER_GROUP = 5;
+  function renderProductTypeByMainGroup(containerId, rows){
+    const box = el(containerId);
+    if (!rows.length){ box.innerHTML = '<div class="viz-empty">ไม่พบข้อมูลตามเงื่อนไขที่กรอง</div>'; return; }
+    const groupOf = (gp) => PT_MAIN_GROUPS.find(g => g.gps && g.gps.includes(gp)) || PT_MAIN_GROUPS[PT_MAIN_GROUPS.length - 1];
+    const totalT = rows.reduce((a, r) => a + (Number(r.total_weight) || 0), 0) / 1000;
+    const byG = {};
+    rows.forEach(r => { const g = groupOf(r.group_product).key; (byG[g] = byG[g] || []).push(r); });
+    // การ์ดต่อกลุ่ม: % ของทั้งหมดตัวใหญ่ + แถบสัดส่วนประเภทในกลุ่ม (เฉดสีเดียวกัน) + รายการประเภทพร้อม % ในกลุ่ม
+    const ALPHA = ['ff', 'c4', '94', '6b', '47', '2b'];
+    const cards = PT_MAIN_GROUPS.filter(g => byG[g.key]).map(g => {
+      const gr = byG[g.key];
+      const ents = groupSummary(gr, 'product_type');          // pct = % ภายในกลุ่ม
+      const gT = ents.reduce((a, e) => a + e.weightTons, 0), gSku = new Set(gr.map(r => r.material)).size;
+      let shown = ents.slice(0, PT_TOP_PER_GROUP);
+      const rest = ents.slice(PT_TOP_PER_GROUP);
+      if (rest.length) shown = shown.concat([{ name: `อื่นๆ ${rest.length} ประเภท`, weightTons: rest.reduce((a, e) => a + e.weightTons, 0), pct: rest.reduce((a, e) => a + e.pct, 0), skuCount: rest.reduce((a, e) => a + e.skuCount, 0), isRest: true }]);
+      const col = (i, isRest) => isRest ? '#c9d6da' : g.color + ALPHA[Math.min(i, ALPHA.length - 1)];
+      const share = totalT > 0 ? gT / totalT * 100 : 0;
+      return { gT, html: `<div class="ptc" style="--g:${g.color};">
+        <div class="ptc-h"><span class="ptc-name">${escapeHtml(g.label)}<small>${escapeHtml(g.sub)}</small></span>
+          <span class="ptc-pct">${share.toFixed(1)}<small>%</small></span></div>
+        <div class="ptc-sub">${fmtNum(gT, 0)} ตัน · ${fmtNum(gSku)} SKU · ${fmtNum(ents.length)} ประเภท</div>
+        <div class="ptc-stack" role="img" aria-label="สัดส่วน Product Type ใน ${escapeHtml(g.label)}">${shown.map((e, i) => `<i style="width:${e.pct}%;background:${col(i, e.isRest)};" title="${escapeHtml(e.name)} ${e.pct.toFixed(1)}%"></i>`).join('')}</div>
+        <div class="ptc-list">${shown.map((e, i) => `<div class="${e.isRest ? 'rest' : ''}" title="${escapeHtml(e.name)} · ${fmtNum(e.skuCount)} SKU">
+          <i style="background:${col(i, e.isRest)};"></i><span>${e.name === 'ไม่ระบุ' ? '<span class="cell-muted">ไม่ระบุ</span>' : escapeHtml(e.name)}</span><b>${e.pct.toFixed(0)}%</b><em>${fmtNum(e.weightTons, 0)} t</em></div>`).join('')}</div>
+      </div>` };
+    }).sort((a, b) => b.gT - a.gT);
+    box.innerHTML = `<div class="ptc-note">% ตัวใหญ่ = สัดส่วนของน้ำหนักทั้งหมด · % ในรายการ = สัดส่วนภายในกลุ่ม · ${fmtNum(totalT, 0)} ตันรวม</div><div class="ptc-grid">${cards.map(c => c.html).join('')}</div>`;
+  }
+
   // แท่งสัดส่วนองค์ประกอบต่อโรงงาน (stacked, part-to-whole) — สีของแต่ละ Group Sale ผูกกับชื่อเดิมเสมอทุกแท่ง
   // (จัดอันดับ Group Sale จากภาพรวมทั้งหมดก่อน ไม่ใช่จัดอันดับใหม่ในแต่ละโรงงาน กันสีสลับความหมาย)
   function renderStackedByLocation(containerId, rows){
@@ -3283,7 +3372,7 @@ const DashboardPage = (() => {
   function renderSummaries(rows){
     renderRankBars('summaryLocationViz', groupSummary(rows, 'location_code'), 213, 66, 'ตัน');
     renderRankBars('summaryGroupSaleViz', groupSummary(rows, 'group_sale'), 20, 80, 'ตัน');
-    renderRankBars('summaryProductTypeViz', groupSummary(rows, 'product_type'), 165, 55, 'ตัน');
+    renderProductTypeByMainGroup('summaryProductTypeViz', rows);
     renderStackedByLocation('summaryLocGroupViz', rows);
     // Top 5 รายการสินค้า — คนละ metric กัน จึงแยกเป็น 2 กราฟ ไม่ยัดสองสเกลลงแท่งเดียวกัน
     renderTopItems('topWeightViz', rows, 'weight', 213, 66, ' ตัน', 2);
@@ -5746,10 +5835,13 @@ const PlanningPage = (() => {
 const ExecPage = (() => {
   let mounted = false, loading = false;
   const EX_FAMS = [
-    { key:'Flat',    label:'Flat',            icon:'▭', color:'#b07c00', codes:['HRS','FLAT_BAR'] },
-    { key:'Pipe',    label:'Pipe + C Channel', icon:'◯', color:'#2f74a8', codes:['PIPE','PIPE_GI','CH','CH_GI'] },
-    { key:'Section', label:'Section',          icon:'I', color:'#e05a00', codes:['SECTION'] },
-    { key:'อื่นๆ',    label:'Scrap / อื่นๆ',     icon:'♻', color:'#8a9ba1', codes:['OTHER'] },
+    // แยก Hot Rolled Sheet กับ Flat Bar เป็นคนละการ์ด (ผู้ใช้ขอ 5 พ.ย. 2569)
+    // gps = ชื่อกลุ่มในชิปของโรง (GP_LABEL) ที่ใช้แบ่งความจุโรงให้การ์ดนี้ตามสัดส่วนน้ำหนัก
+    { key:'HRS',     label:'Hot Rolled Sheet', sub:'แผ่น (HS + Plate)', icon:'▬', color:'#0c3843', codes:['HRS'],      gps:['HRS'] },
+    { key:'FlatBar', label:'Flat Bar',         sub:'แบน (Flat Bars)',   icon:'▭', color:'#5f8f9c', codes:['FLAT_BAR'], gps:['Flat Bar'] },
+    { key:'Pipe',    label:'Pipe + C Channel', sub:'ท่อ + ตัวซี',        icon:'◯', color:'#2f74a8', codes:['PIPE','PIPE_GI','CH','CH_GI'], gps:['Pipe','C Channel'] },
+    { key:'Section', label:'Section',          sub:'Beam',               icon:'I', color:'#e05a00', codes:['SECTION'],  gps:['Section'] },
+    { key:'อื่นๆ',    label:'Scrap / อื่นๆ',     sub:'Scrap / ไม่ระบุ',     icon:'♻', color:'#8a9ba1', codes:['OTHER'],    gps:['Scrap','อื่นๆ'] },
   ];
   // group_product → ชื่อที่แสดงในชิปของโรง + สี
   const GP_LABEL = { 'Pipe':'Pipe', 'CH':'C Channel', 'HS':'HRS', 'Plate':'HRS', 'Flat Bars':'Flat Bar', 'Beam':'Section', 'Scrap (KG)':'Scrap' };
@@ -5837,16 +5929,17 @@ const ExecPage = (() => {
     el('exFams').innerHTML = EX_FAMS.map(fm => {
       const types = fm.codes.map(c => ({ c, ...(det[c] || { t: 0, sku: 0, locs: [] }), ...TYPE_INFO[c] }));
       // ถ้าเรียกรายละเอียดรายประเภทไม่ได้ ใช้น้ำหนักจากข้อมูลรายโรง (มิติ group_product) แทน
-      const tLoc = F.reduce((a, f) => a + ((f.fam || {})[fm.key] || 0), 0);
+      const gw = (f) => fm.gps.reduce((a, g) => a + ((f.groups || {})[g] || 0), 0);   // น้ำหนักของการ์ดนี้ในโรง f
+      const tLoc = F.reduce((a, f) => a + gw(f), 0);
       const tDet = types.reduce((a, x) => a + x.t, 0);
       const t = hasDet && tDet > 0 ? tDet : tLoc, sku = types.reduce((a, x) => a + x.sku, 0);
       const locs = [...new Set(types.flatMap(x => x.locs))].sort();
       // ความจุของกลุ่ม: แบ่งความจุโรงตามสัดส่วนน้ำหนักกลุ่มในโรง (ตัดเศษ < 0.5 t) — ไม่นับซ้ำ
-      const cap = F.reduce((a, f) => { const w = (f.fam || {})[fm.key] || 0; return a + (w >= 0.5 && f.used > 0 ? f.cap * w / f.used : 0); }, 0);
+      const cap = F.reduce((a, f) => { const w = gw(f); return a + (w >= 0.5 && f.used > 0 ? f.cap * w / f.used : 0); }, 0);
       const p = cap > 0 ? t / cap * 100 : 0, ft = tier(p), share = stockAll > 0 ? t / stockAll * 100 : 0;
       const showTypes = hasDet && tDet > 0 && types.length > 1;
       return `<div class="ex-card ex-fam ${ft}" style="--fam:${fm.color};">
-        <div class="ex-fac-h"><span class="ex-fam-h"><span class="ex-ic" style="background:${fm.color}22;color:${fm.color};">${fm.icon}</span>${escapeHtml(fm.label)}</span>${cap > 0 ? pill(p) : ''}</div>
+        <div class="ex-fac-h"><span class="ex-fam-h"><span class="ex-ic" style="background:${fm.color}22;color:${fm.color};">${fm.icon}</span><span>${escapeHtml(fm.label)}${fm.sub ? `<small class="ex-fam-sub">${escapeHtml(fm.sub)}</small>` : ''}</span></span>${cap > 0 ? pill(p) : ''}</div>
         ${cap > 0 ? `<div class="ex-pow-top"><span class="ex-pow-pct ${ft}">${p.toFixed(0)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่ของกลุ่ม</span></div>
         <div class="ex-pow ${ft}"><i class="fill" style="width:${Math.min(p, 100)}%;"></i><span class="tick" style="left:25%"></span><span class="tick" style="left:50%"></span><span class="tick" style="left:75%"></span><span class="mark80" style="left:80%"></span></div>` : ''}
         <div class="ex-fam-nums">
