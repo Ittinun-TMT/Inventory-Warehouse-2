@@ -1009,7 +1009,7 @@
 .ex-sec small{font-weight:400;color:var(--gray-600);font-size:12.5px;}
 .ex-fams{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;}
 .ex-fam-sub{display:block;font-size:11.5px;font-weight:400;color:var(--gray-600);}
-.ex-fam>.ex-fac-h{min-height:52px;align-items:flex-start;}
+.ex-fam>.ex-fac-h{min-height:0;align-items:center;}
 @media (max-width:1300px){ .ex-fams{grid-template-columns:repeat(3,minmax(0,1fr));} }
 .ex-fam-h{display:flex;align-items:center;gap:9px;font-weight:700;color:var(--navy-900);font-size:15px;}
 .ex-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:15px;}
@@ -1150,6 +1150,18 @@
 .ptc-list b{font-family:'IBM Plex Mono',monospace;text-align:right;color:var(--navy-900);font-size:13.5px;}
 .ptc-list em{font-style:normal;font-family:'IBM Plex Mono',monospace;text-align:right;color:var(--gray-600);font-size:12px;}
 .ptc-list .rest span{color:var(--gray-600);font-style:italic;}
+/* การ์ดกลุ่มสินค้าให้เท่ากันทุกใบ (5 พ.ย. 2569): หัวการ์ดบรรทัดเดียว · ป้ายอยู่แถว % · ตัวเลข 3 บรรทัดเต็มความกว้าง */
+.ex-fam .ex-fam-h{min-width:0;flex:1;}
+.ex-fam-tt{display:flex;flex-direction:column;min-width:0;}
+.ex-fam-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:22px;}
+.ex-fam .ex-fam-sub{line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ex-fam>.ex-fac-h{height:44px;overflow:hidden;}
+.ex-fam .ex-pow-top{align-items:center;}
+.ex-pow-pill{margin-left:auto;}
+.ex-fam .ex-fam-nums{display:flex;flex-direction:column;gap:2px;margin-top:12px;}
+.ex-fam .ex-fam-nums>div{background:none;border-radius:0;padding:4px 2px;display:grid;grid-template-columns:1fr auto 26px;align-items:baseline;gap:6px;border-bottom:1px dashed #e3e8ea;}
+.ex-fam .ex-fam-nums>div:last-child{border-bottom:0;}
+.ex-fam .ex-fam-nums b{font-size:19px;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -1603,7 +1615,7 @@
     <div class="plan-meta" id="exMeta">กำลังโหลด...</div>
     <div class="ex-sec">กลุ่มสินค้า <small>% ใหญ่ = ใช้พื้นที่ของกลุ่ม (Stock ÷ ความจุที่ใช้เก็บกลุ่มนั้น)</small></div>
     <div class="ex-fams" id="exFams"></div>
-    <div class="ex-sec">ภาพรวมพื้นที่ทั้งเครือข่าย</div>
+    <div class="ex-sec">ภาพรวมพื้นที่คลังสินค้า</div>
     <div class="ex-card ex-ov" id="exTotal"></div>
     <div class="ex-sec">แยกตามโรง <small>หลอดพลัง = % ใช้พื้นที่ (ขีดเข้ม = 80%) · ฟ้า ปกติ (≤ 80%) / เหลือง ใกล้เต็ม (81–100%) / ส้ม เกินพิกัด (&gt; 100%, เต็มหลอด + ลายส้ม = ส่วนที่เกิน) · เรียงแน่นสุดก่อน</small></div>
     <div class="ex-facs" id="exFacs"></div>
@@ -5915,14 +5927,14 @@ const ExecPage = (() => {
     // ภาพรวม: รวม KPI 3 ค่า + % + แถบ + โรงที่ต้องดูแล ไว้ในการ์ดเดียว
     el('exTotal').innerHTML = `
       <div class="ex-ov-top">
-        <div class="ex-ov-pct"><span class="ex-pow-pct ${tt}">${T.pct.toFixed(1)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่ทั้งเครือข่าย</span>${pill(T.pct)}</div>
+        <div class="ex-ov-pct"><span class="ex-pow-pct ${tt}">${T.pct.toFixed(1)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่คลังสินค้า</span>${pill(T.pct)}</div>
         <div class="ex-ov-nums">
           <div class="total"><small>พื้นที่ทั้งหมด</small><b>${fmtNum(T.cap, 0)}</b><em>ตัน · ${F.length} โรง</em></div>
           <div class="used"><small>ใช้ไป (Stock)</small><b>${fmtNum(T.used, 0)}</b><em>ตัน · ${T.pct.toFixed(1)}%</em></div>
           <div class="free"><small>คงเหลือ</small><b>${fmtNum(T.free, 0)}</b><em>ตัน · ${(100 - T.pct).toFixed(1)}%</em></div>
         </div>
       </div>
-      <div class="ex-pow ${tt} big" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(T.pct)}" aria-label="ใช้พื้นที่ทั้งเครือข่าย ${T.pct.toFixed(1)}%">
+      <div class="ex-pow ${tt} big" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(T.pct)}" aria-label="ใช้พื้นที่คลังสินค้า ${T.pct.toFixed(1)}%">
         <i class="fill" style="width:${Math.min(T.pct, 100)}%;"></i><span class="tick" style="left:25%"></span><span class="tick" style="left:50%"></span><span class="tick" style="left:75%"></span><span class="mark80" style="left:80%"></span>
       </div>
       <div class="ex-ov-alerts">
@@ -5973,12 +5985,12 @@ const ExecPage = (() => {
       const p = cap > 0 ? t / cap * 100 : 0, ft = tier(p), share = stockAll > 0 ? t / stockAll * 100 : 0;
       const showTypes = types.length > 1;
       return `<div class="ex-card ex-fam ${ft}" style="--fam:${fm.color};">
-        <div class="ex-fac-h"><span class="ex-fam-h"><span class="ex-ic" style="background:${fm.color}22;color:${fm.color};">${fm.icon}</span><span>${escapeHtml(fm.label)}${fm.sub ? `<small class="ex-fam-sub">${escapeHtml(fm.sub)}</small>` : ''}</span></span>${cap > 0 ? pill(p) : ''}</div>
-        ${cap > 0 ? `<div class="ex-pow-top"><span class="ex-pow-pct ${ft}">${p.toFixed(0)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่ของกลุ่ม</span></div>
+        <div class="ex-fac-h"><span class="ex-fam-h"><span class="ex-ic" style="background:${fm.color}22;color:${fm.color};">${fm.icon}</span><span class="ex-fam-tt"><span class="ex-fam-name">${escapeHtml(fm.label)}</span>${fm.sub ? `<small class="ex-fam-sub">${escapeHtml(fm.sub)}</small>` : ''}</span></span></div>
+        ${cap > 0 ? `<div class="ex-pow-top"><span class="ex-pow-pct ${ft}">${p.toFixed(0)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่</span><span class="ex-pow-pill">${pill(p)}</span></div>
         <div class="ex-pow ${ft}"><i class="fill" style="width:${Math.min(p, 100)}%;"></i><span class="tick" style="left:25%"></span><span class="tick" style="left:50%"></span><span class="tick" style="left:75%"></span><span class="mark80" style="left:80%"></span></div>` : ''}
-        <div class="ex-fam-nums">
-          <div><small>Stock</small><b>${fmtNum(t, 0)}</b></div>
-          ${cap > 0 ? `<div><small>ความจุ</small><b>${fmtNum(cap, 0)}</b></div><div class="${cap - t < 0 ? 'neg' : 'free'}"><small>${cap - t < 0 ? 'เกิน' : 'คงเหลือ'}</small><b>${fmtNum(Math.abs(cap - t), 0)}</b></div>` : ''}
+        <div class="ex-lines ex-fam-nums">
+          <div><span>Stock</span><b>${fmtNum(t, 0)}</b><em>ตัน</em></div>
+          ${cap > 0 ? `<div><span>ความจุ</span><b>${fmtNum(cap, 0)}</b><em>ตัน</em></div><div class="${cap - t < 0 ? 'neg' : 'free'}"><span>${cap - t < 0 ? 'เกินพิกัด' : 'คงเหลือ'}</span><b>${cap - t < 0 ? '+' : ''}${fmtNum(Math.abs(cap - t), 0)}</b><em>ตัน</em></div>` : ''}
         </div>
       </div>`;
     }).join('');
