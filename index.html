@@ -988,7 +988,7 @@
   .rec-table td.num:nth-of-type(2)::before{content:'แผน';}
   .rec-table td.num:nth-of-type(3)::before{content:'Stock − แผน';}
 }
-/* ===== สรุปผู้บริหาร (แบบ A) ===== */
+/* ===== สรุปผล (แบบ A) ===== */
 .ex-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:6px;}
 .ex-card{background:var(--white);border:1px solid var(--gray-200);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);min-width:0;}
 .ex-kpi{position:relative;overflow:hidden;padding-left:22px;}
@@ -1059,6 +1059,48 @@
 .ex-lines .free b{color:#1f5f8b;} .ex-lines .neg span,.ex-lines .neg b{color:#c24e00;font-weight:700;}
 .ex-fac .ex-chips{margin-top:auto;padding-top:10px;}
 @media (max-width:640px){ .ex-pow-pct{font-size:28px;} .ex-lines b{font-size:16px;} .ex-lines span{font-size:12.5px;} .ex-lines div{grid-template-columns:1fr auto;} .ex-lines em{display:none;} }
+/* สรุปผล: การ์ดภาพรวมเดียว + การ์ดกลุ่มสินค้าแบบใหม่ */
+.ex-ov{padding:16px 18px;}
+.ex-ov-top{display:grid;grid-template-columns:minmax(220px,auto) 1fr;gap:18px;align-items:center;margin-bottom:12px;}
+.ex-ov-pct{display:flex;flex-direction:column;gap:4px;align-items:flex-start;}
+.ex-ov-pct .ex-pow-pct{font-size:44px;}
+.ex-ov-nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.ex-ov-nums>div{border-radius:12px;padding:10px 14px;background:#f6f9fa;border-left:5px solid #0c3843;}
+.ex-ov-nums .used{border-left-color:#fdc440;} .ex-ov-nums .free{border-left-color:#8bbade;}
+.ex-ov-nums small{display:block;font-size:13px;color:var(--gray-600);}
+.ex-ov-nums b{display:block;font-family:'IBM Plex Mono',monospace;font-size:28px;color:#0c3843;line-height:1.15;}
+.ex-ov-nums .free b{color:#1f5f8b;}
+.ex-ov-nums em{font-style:normal;font-size:12px;color:var(--gray-600);}
+.ex-pow.big{height:22px;}
+.ex-ov-alerts{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
+.ex-ov-alerts>div{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;}
+.ex-ov-alerts b{min-width:92px;}
+.ex-ov-alerts span{border-radius:999px;padding:2px 10px;font-weight:600;}
+.ex-ov-alerts em{font-style:normal;font-family:'IBM Plex Mono',monospace;font-weight:700;margin-left:2px;}
+.ex-ov-alerts .crit b{color:#a83f00;} .ex-ov-alerts .crit span{background:#ffe3cf;color:#a83f00;}
+.ex-ov-alerts .warn b{color:#6b4b00;} .ex-ov-alerts .warn span{background:#fff3cf;color:#6b4b00;}
+.ex-ov-alerts .ok b{color:#1f5f8b;} .ex-ov-alerts .ok span{background:#eaf3f9;color:#0c3843;}
+.ex-fam{display:flex;flex-direction:column;border-top:5px solid var(--fam);}
+.ex-fam .ex-fam-h{font-size:15.5px;}
+.ex-fam-nums{display:flex;gap:6px;margin-top:10px;}
+.ex-fam-nums>div{flex:1;background:#f6f9fa;border-radius:9px;padding:6px 8px;min-width:0;}
+.ex-fam-nums small{display:block;font-size:11.5px;color:var(--gray-600);}
+.ex-fam-nums b{font-family:'IBM Plex Mono',monospace;font-size:17px;color:#0c3843;}
+.ex-fam-nums .free b{color:#1f5f8b;} .ex-fam-nums .neg b,.ex-fam-nums .neg small{color:#c24e00;}
+.ex-share{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 8px;margin-top:12px;font-size:13px;color:var(--gray-600);}
+.ex-share b{font-family:'IBM Plex Mono',monospace;font-size:18px;color:#0c3843;}
+.ex-share .ex-bar{grid-column:1 / -1;height:8px;}
+.ex-types{margin-top:10px;display:flex;flex-direction:column;gap:6px;border-top:1px dashed #e3e8ea;padding-top:9px;}
+.ex-types>div{display:grid;grid-template-columns:1fr auto 42px;gap:2px 8px;align-items:baseline;font-size:13px;}
+.ex-types .nm{display:flex;align-items:center;gap:6px;color:#0c3843;min-width:0;}
+.ex-types .nm i{width:10px;height:10px;border-radius:3px;flex:none;}
+.ex-types b{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.ex-types em{font-style:normal;font-family:'IBM Plex Mono',monospace;font-weight:700;text-align:right;color:#0c3843;}
+.ex-types .mini{grid-column:1 / -1;height:5px;background:#eef2f4;border-radius:999px;overflow:hidden;}
+.ex-types .mini i{display:block;height:100%;border-radius:999px;}
+.ex-fam-foot{margin-top:auto;padding-top:10px;}
+@media (max-width:900px){ .ex-ov-top{grid-template-columns:1fr;} }
+@media (max-width:640px){ .ex-ov-nums{grid-template-columns:1fr;} .ex-ov-nums b{font-size:24px;} .ex-ov-pct .ex-pow-pct{font-size:36px;} .ex-ov-alerts b{min-width:0;width:100%;} }
 </style>
 </head>
 <body>
@@ -1070,7 +1112,7 @@
   </a>
   <div class="nav-links">
     <a href="#/dashboard" class="nav-link" data-route="dashboard">แดชบอร์ด</a>
-    <a href="#/exec" class="nav-link" data-route="exec">📊 สรุปผู้บริหาร</a>
+    <a href="#/exec" class="nav-link" data-route="exec">📊 สรุปผล</a>
     <a href="#/trends" class="nav-link" data-route="trends">📈 แนวโน้ม</a>
     <a href="#/lookup" class="nav-link" data-route="lookup">ค้นหา Material</a>
     <a href="#/unmatched" class="nav-link" data-route="unmatched">⚠️ Code ไม่พบข้อมูล</a>
@@ -1091,7 +1133,7 @@
           <span class="date-filter-icon">📅</span>
           <select id="fDateKey" class="date-filter-select" title="เลือกดูข้อมูลของวันที่นำเข้า"></select>
         </div>
-        <button class="btn btn-navy btn-sm" id="btnCaptureSummary" style="font-size:12.5px;" title="แคปเฉพาะส่วนสรุป (สรุปผู้บริหาร · พื้นที่ · กลุ่มสินค้า · รายโรง) เป็น JPG ขนาดไม่เกิน 4 MB — เหมาะแนบอีเมล">📧 แคปสรุป (ส่งอีเมล)</button>
+        <button class="btn btn-navy btn-sm" id="btnCaptureSummary" style="font-size:12.5px;" title="แคปเฉพาะส่วนสรุป (สรุปผล · พื้นที่ · กลุ่มสินค้า · รายโรง) เป็น JPG ขนาดไม่เกิน 4 MB — เหมาะแนบอีเมล">📧 แคปสรุป (ส่งอีเมล)</button>
         <button class="btn btn-outline btn-sm" id="btnCaptureSnapshot" style="font-size:12.5px;" title="แคปทั้งหน้าเป็น JPG ขนาดไม่เกิน 4 MB">📷 แคปทั้งหน้า</button>
       </div>
     </div>
@@ -1506,14 +1548,14 @@
   <!-- ============ EXECUTIVE SUMMARY VIEW (แบบ A ที่ผู้ใช้เลือก 30 ต.ค. 2569) ============ -->
   <div id="view-exec" class="route-view">
     <div class="section-title" style="justify-content:space-between;">
-      <span style="display:flex;align-items:center;gap:9px;">📊 สรุปผู้บริหาร <span class="tag">พื้นที่ทั้งหมด · ใช้ไป · คงเหลือ · แยกโรง · แยกกลุ่มสินค้า</span></span>
+      <span style="display:flex;align-items:center;gap:9px;">📊 สรุปผล <span class="tag">พื้นที่ทั้งหมด · ใช้ไป · คงเหลือ · แยกโรง · แยกกลุ่มสินค้า</span></span>
       <span style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn btn-primary btn-sm" id="btnExportExec">📸 Export รูป</button><button type="button" class="btn btn-outline btn-sm" id="btnRefreshExec">↻ รีเฟรช</button></span>
     </div>
     <div class="plan-meta" id="exMeta">กำลังโหลด...</div>
-    <div class="ex-kpis" id="exKpis"></div>
-    <div class="ex-card ex-total" id="exTotal"></div>
-    <div class="ex-sec">กลุ่มสินค้า <small>Stock · ความจุที่ใช้เก็บกลุ่มนั้น · แยกประเภท</small></div>
+    <div class="ex-sec">กลุ่มสินค้า <small>% ใหญ่ = ใช้พื้นที่ของกลุ่ม (Stock ÷ ความจุที่ใช้เก็บกลุ่มนั้น) · สัดส่วน = % ของ Stock ทั้งหมด</small></div>
     <div class="ex-fams" id="exFams"></div>
+    <div class="ex-sec">ภาพรวมพื้นที่ทั้งเครือข่าย</div>
+    <div class="ex-card ex-ov" id="exTotal"></div>
     <div class="ex-sec">แยกตามโรง <small>หลอดพลัง = % ใช้พื้นที่ (ขีดเข้ม = 80%) · ฟ้า ปกติ (≤ 80%) / เหลือง ใกล้เต็ม (81–100%) / ส้ม เกินพิกัด (&gt; 100%, เต็มหลอด + ลายส้ม = ส่วนที่เกิน) · เรียงแน่นสุดก่อน</small></div>
     <div class="ex-facs" id="exFacs"></div>
     <div class="plan-note" id="exNote"></div>
@@ -2014,7 +2056,7 @@ function familyChartColor(label){
 /* ============================================================
    DASHBOARD PAGE
 ============================================================ */
-/* ===== แคปภาพ: ย่อเป็น JPG ≤ 4 MB (ใช้ร่วม Dashboard + สรุปผู้บริหาร) ===== */
+/* ===== แคปภาพ: ย่อเป็น JPG ≤ 4 MB (ใช้ร่วม Dashboard + สรุปผล) ===== */
 const SNAPSHOT_MAX_BYTES = 4 * 1024 * 1024;
 const SNAPSHOT_MAX_SIDE = 14000;      // ต่ำกว่าเพดาน canvas ของ Chrome/Edge (16,384 px) เผื่อไว้
 const SNAPSHOT_MAX_PIXELS = 32e6;     // ~32 ล้านพิกเซล กันหน่วยความจำเต็มบนเครื่องสเปกต่ำ
@@ -2216,7 +2258,7 @@ const DashboardPage = (() => {
       if (dailyRes.error) throw dailyRes.error;
       if (capRes.error) throw capRes.error;
 
-      // ข้อมูลประกอบสรุปผู้บริหาร — ถ้าโหลดส่วนนี้ไม่ได้ ส่วนอื่นของแดชบอร์ดยังทำงานต่อ (สรุปจะบอกว่าข้อมูลไม่ครบ)
+      // ข้อมูลประกอบสรุปผล — ถ้าโหลดส่วนนี้ไม่ได้ ส่วนอื่นของแดชบอร์ดยังทำงานต่อ (สรุปจะบอกว่าข้อมูลไม่ครบ)
       dailyTons = {};
       (dailyRes.data || []).forEach(r => { if (r.date_key) dailyTons[r.date_key] = (+r.total_weight_kg || 0) / 1000; });
       movementByDate = {};
@@ -2774,7 +2816,7 @@ const DashboardPage = (() => {
   //    และหน้าที่ยาวมากเกินเพดาน canvas ของเบราว์เซอร์ (~16,384 px) จะได้ภาพว่าง
   // ตอนนี้: เลือก scale ให้ไม่เกินเพดาน → บันทึกเป็น JPG → ลดคุณภาพ/ย่อขนาดอัตโนมัติจนไฟล์ ≤ 4 MB
   //    (แนบอีเมลแล้วโตขึ้น ~33% จาก base64 ≈ 5.4 MB — ต่ำกว่าเพดานที่องค์กรนิยมตั้ง 10 MB)
-  // ค่าคงที่/ฟังก์ชันย่อไฟล์ภาพ ย้ายไป scope กลาง (ใช้ร่วมกับหน้าสรุปผู้บริหาร)
+  // ค่าคงที่/ฟังก์ชันย่อไฟล์ภาพ ย้ายไป scope กลาง (ใช้ร่วมกับหน้าสรุปผล)
 
   // mode: 'summary' = เฉพาะส่วนบนจนถึงรายโรงงาน (เหมาะแนบอีเมล) · 'full' = ทั้งหน้า
   async function captureDashboardSnapshot(btn, mode = 'full'){
@@ -5694,7 +5736,7 @@ const PlanningPage = (() => {
 })();
 
 /* ============================================================
-   EXECUTIVE SUMMARY PAGE (สรุปผู้บริหาร · แบบ A ที่ผู้ใช้เลือก 30 ต.ค. 2569)
+   OVERVIEW PAGE (สรุปผล — เปลี่ยนชื่อจากหน้าผู้บริหาร 4 พ.ย. 2569 · แบบ A ที่ผู้ใช้เลือก 30 ต.ค. 2569)
    - พื้นที่ทั้งหมด = Σ ความจุทุกโรง (v_location_capacity, รวม Fac B+E)
    - พื้นที่ใช้ไป   = Stock ณ วันที่ข้อมูลล่าสุด (v_location_daily)
    - พื้นที่คงเหลือ = ทั้งหมด − ใช้ไป (โรงที่เกินพิกัดนับเป็นติดลบในยอดรวม — ตรงกับหน้าแดชบอร์ด)
@@ -5769,20 +5811,28 @@ const ExecPage = (() => {
     const T = { cap: F.reduce((a, f) => a + f.cap, 0), used: F.reduce((a, f) => a + f.used, 0) };
     T.free = T.cap - T.used; T.pct = T.cap > 0 ? T.used / T.cap * 100 : 0;
     el('exMeta').innerHTML = `ข้อมูลสต็อก ณ <b>${escapeHtml(fmtDateKey(base))}</b> · ${F.length} โรง (Fac B + Fac E รวมเป็นพื้นที่เดียว)`;
-    el('exKpis').innerHTML = `
-      <div class="ex-card ex-kpi total"><small>พื้นที่ทั้งหมด (ความจุ)</small><b>${fmtNum(T.cap, 0)}</b><em>ตัน · ${F.length} โรง</em></div>
-      <div class="ex-card ex-kpi used"><small>พื้นที่ใช้ไป (Stock)</small><b>${fmtNum(T.used, 0)}</b><em>ตัน · ${T.pct.toFixed(1)}% ของความจุ</em></div>
-      <div class="ex-card ex-kpi free"><small>พื้นที่คงเหลือ</small><b>${fmtNum(T.free, 0)}</b><em>ตัน · ${(100 - T.pct).toFixed(1)}%</em></div>`;
     const crit = F.filter(f => f.pct > 100).sort((a, b) => b.pct - a.pct), warn = F.filter(f => f.pct > 80 && f.pct <= 100).sort((a, b) => b.pct - a.pct);
     const roomy = [...F].filter(f => f.free > 0).sort((a, b) => b.free - a.free).slice(0, 3);
-    el('exTotal').innerHTML = `${ring(T.pct, 124, 15)}<div>
-      <h3>ภาพรวมทั้งเครือข่าย ${pill(T.pct)}</h3>
-      <div class="ex-bar"><i style="width:${Math.min(T.pct, 100)}%;background:#fdc440;"></i></div>
-      <div class="ex-row"><span>ใช้ไป <b>${fmtNum(T.used, 0)}</b> ตัน</span><span>คงเหลือ <b>${fmtNum(T.free, 0)}</b> ตัน</span></div>
-      <div class="ex-alert">${crit.length ? `<span class="crit">⛔ เกินพิกัด: ${escapeHtml(crit.map(f => `${f.loc} (${f.pct.toFixed(0)}%, เกิน ${fmtNum(-f.free, 0)} t)`).join(', '))}</span><br/>` : ''}
-        ${warn.length ? `<span class="warn">! ใกล้เต็ม: ${escapeHtml(warn.map(f => `${f.loc} (${f.pct.toFixed(0)}%)`).join(', '))}</span><br/>` : ''}
-        ${roomy.length ? `<span style="color:#1f5f8b;">ว่างมากสุด: ${escapeHtml(roomy.map(f => `${f.loc} ${fmtNum(f.free, 0)} t`).join(' · '))}</span>` : ''}</div></div>`;
-    // กลุ่มสินค้า
+    const tt = tier(T.pct);
+    // ภาพรวม: รวม KPI 3 ค่า + % + แถบ + โรงที่ต้องดูแล ไว้ในการ์ดเดียว
+    el('exTotal').innerHTML = `
+      <div class="ex-ov-top">
+        <div class="ex-ov-pct"><span class="ex-pow-pct ${tt}">${T.pct.toFixed(1)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่ทั้งเครือข่าย</span>${pill(T.pct)}</div>
+        <div class="ex-ov-nums">
+          <div class="total"><small>พื้นที่ทั้งหมด</small><b>${fmtNum(T.cap, 0)}</b><em>ตัน · ${F.length} โรง</em></div>
+          <div class="used"><small>ใช้ไป (Stock)</small><b>${fmtNum(T.used, 0)}</b><em>ตัน · ${T.pct.toFixed(1)}%</em></div>
+          <div class="free"><small>คงเหลือ</small><b>${fmtNum(T.free, 0)}</b><em>ตัน · ${(100 - T.pct).toFixed(1)}%</em></div>
+        </div>
+      </div>
+      <div class="ex-pow ${tt} big" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(T.pct)}" aria-label="ใช้พื้นที่ทั้งเครือข่าย ${T.pct.toFixed(1)}%">
+        <i class="fill" style="width:${Math.min(T.pct, 100)}%;"></i><span class="tick" style="left:25%"></span><span class="tick" style="left:50%"></span><span class="tick" style="left:75%"></span><span class="mark80" style="left:80%"></span>
+      </div>
+      <div class="ex-ov-alerts">
+        ${crit.length ? `<div class="crit"><b>⛔ เกินพิกัด</b>${crit.map(f => `<span>${escapeHtml(f.loc)} ${f.pct.toFixed(0)}% <em>+${fmtNum(-f.free, 0)} t</em></span>`).join('')}</div>` : ''}
+        ${warn.length ? `<div class="warn"><b>! ใกล้เต็ม</b>${warn.map(f => `<span>${escapeHtml(f.loc)} ${f.pct.toFixed(0)}%</span>`).join('')}</div>` : ''}
+        ${roomy.length ? `<div class="ok"><b>ว่างมากสุด</b>${roomy.map(f => `<span>${escapeHtml(f.loc)} <em>${fmtNum(f.free, 0)} t</em></span>`).join('')}</div>` : ''}
+      </div>`;
+    // กลุ่มสินค้า: % ใช้พื้นที่ตัวใหญ่ + หลอดพลัง + ตัวเลขสั้น + สัดส่วนของ Stock + ประเภท (% ในกลุ่ม)
     const stockAll = Object.values(det).reduce((a, d) => a + d.t, 0) || T.used;
     el('exFams').innerHTML = EX_FAMS.map(fm => {
       const types = fm.codes.map(c => ({ c, ...(det[c] || { t: 0, sku: 0, locs: [] }), ...TYPE_INFO[c] }));
@@ -5791,16 +5841,22 @@ const ExecPage = (() => {
       const tDet = types.reduce((a, x) => a + x.t, 0);
       const t = hasDet && tDet > 0 ? tDet : tLoc, sku = types.reduce((a, x) => a + x.sku, 0);
       const locs = [...new Set(types.flatMap(x => x.locs))].sort();
-      // ความจุของกลุ่ม: แบ่งความจุโรงตามสัดส่วนน้ำหนักกลุ่มในโรง (ตัดเศษ < 0.5 t)
+      // ความจุของกลุ่ม: แบ่งความจุโรงตามสัดส่วนน้ำหนักกลุ่มในโรง (ตัดเศษ < 0.5 t) — ไม่นับซ้ำ
       const cap = F.reduce((a, f) => { const w = (f.fam || {})[fm.key] || 0; return a + (w >= 0.5 && f.used > 0 ? f.cap * w / f.used : 0); }, 0);
-      const p = cap > 0 ? t / cap * 100 : 0;
-      return `<div class="ex-card"><div class="ex-fam-h"><span class="ex-ic" style="background:${fm.color}22;color:${fm.color};">${fm.icon}</span>${escapeHtml(fm.label)}</div>
-        <div class="ex-fam-v">${fmtNum(t, 0)} <span>ตัน</span></div>
-        <div class="ex-s">${stockAll > 0 ? (t / stockAll * 100).toFixed(1) : '0'}% ของ Stock${hasDet ? ` · ${fmtNum(sku)} SKU` : ''}</div>
-        ${cap > 0 ? `<div class="ex-bar" style="margin-top:9px;"><i style="width:${Math.min(p, 100)}%;background:${fm.color};"></i></div>
-        <div class="ex-s" style="margin-top:4px;">ใช้ ${p.toFixed(0)}% ของ ${fmtNum(cap, 0)} t ${pill(p)}</div>` : ''}
-        ${locs.length ? `<div class="ex-s" style="margin-top:3px;">เก็บที่: ${escapeHtml(locs.join(', '))}</div>` : ''}
-        <div class="ex-tl">${(hasDet && tDet > 0 ? types : []).map(x => `<div><i style="background:${x.color};"></i><span>${escapeHtml(x.label)}${hasDet ? `<small>${fmtNum(x.sku)} SKU</small>` : ''}</span><b>${fmtNum(x.t, 0)} t</b></div>`).join('')}</div></div>`;
+      const p = cap > 0 ? t / cap * 100 : 0, ft = tier(p), share = stockAll > 0 ? t / stockAll * 100 : 0;
+      const showTypes = hasDet && tDet > 0 && types.length > 1;
+      return `<div class="ex-card ex-fam ${ft}" style="--fam:${fm.color};">
+        <div class="ex-fac-h"><span class="ex-fam-h"><span class="ex-ic" style="background:${fm.color}22;color:${fm.color};">${fm.icon}</span>${escapeHtml(fm.label)}</span>${cap > 0 ? pill(p) : ''}</div>
+        ${cap > 0 ? `<div class="ex-pow-top"><span class="ex-pow-pct ${ft}">${p.toFixed(0)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่ของกลุ่ม</span></div>
+        <div class="ex-pow ${ft}"><i class="fill" style="width:${Math.min(p, 100)}%;"></i><span class="tick" style="left:25%"></span><span class="tick" style="left:50%"></span><span class="tick" style="left:75%"></span><span class="mark80" style="left:80%"></span></div>` : ''}
+        <div class="ex-fam-nums">
+          <div><small>Stock</small><b>${fmtNum(t, 0)}</b></div>
+          ${cap > 0 ? `<div><small>ความจุ</small><b>${fmtNum(cap, 0)}</b></div><div class="${cap - t < 0 ? 'neg' : 'free'}"><small>${cap - t < 0 ? 'เกิน' : 'คงเหลือ'}</small><b>${fmtNum(Math.abs(cap - t), 0)}</b></div>` : ''}
+        </div>
+        <div class="ex-share"><span>สัดส่วนของ Stock ทั้งหมด</span><b>${share.toFixed(1)}%</b><div class="ex-bar"><i style="width:${share}%;background:${fm.color};"></i></div></div>
+        ${showTypes ? `<div class="ex-types">${types.map(x => { const tp = t > 0 ? x.t / t * 100 : 0; return `<div><span class="nm"><i style="background:${x.color};"></i>${escapeHtml(x.label)}</span><b>${fmtNum(x.t, 0)} t</b><em>${tp.toFixed(0)}%</em><span class="mini"><i style="width:${tp}%;background:${x.color};"></i></span></div>`; }).join('')}</div>` : ''}
+        <div class="ex-s ex-fam-foot">${hasDet ? `${fmtNum(sku)} SKU · ` : ''}เก็บที่ ${escapeHtml(locs.join(', ') || '—')}</div>
+      </div>`;
     }).join('');
     // แยกโรง
     // การ์ดโรง: หลอดพลัง (เต็มหลอดเมื่อเกินพิกัด + ส่วนเกินลายส้ม) + ตัวเลข 3 บรรทัดชัดๆ
@@ -5828,7 +5884,7 @@ const ExecPage = (() => {
       + '• หน่วย: ตัน · ปัดเศษเป็นจำนวนเต็ม';
   }
   let baseDate = null;
-  // Export รูปทั้งหน้าสรุปผู้บริหาร เป็น JPG (≤ 4 MB แนบอีเมล/LINE ได้) — ไม่เอาปุ่มติดไปในรูป
+  // Export รูปทั้งหน้าสรุปผล เป็น JPG (≤ 4 MB แนบอีเมล/LINE ได้) — ไม่เอาปุ่มติดไปในรูป
   async function exportImage(){
     const btn = el('btnExportExec');
     if (!baseDate){ toast('รอโหลดข้อมูลให้เสร็จก่อน', 'info'); return; }
@@ -5861,7 +5917,7 @@ const ExecPage = (() => {
           });
         } });
       const out = await encodeSnapshotUnder(canvas, SNAPSHOT_MAX_BYTES);
-      const fileName = `wh2-executive-summary-${baseDate}.jpg`;
+      const fileName = `wh2-summary-${baseDate}.jpg`;
       const url = URL.createObjectURL(out.blob);
       const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 4000);
