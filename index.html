@@ -1136,6 +1136,9 @@
 .ptc-name small{display:block;font-weight:400;font-size:11.5px;color:var(--gray-600);}
 .ptc-pct{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:700;color:var(--navy-900);line-height:1;}
 .ptc-pct small{font-size:16px;}
+.ptc-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.ptc-ton{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:var(--navy-900);white-space:nowrap;}
+.ptc-ton small{font-family:inherit;font-size:12px;font-weight:600;color:var(--gray-600);}
 .ptc-sub{font-size:12.5px;color:var(--gray-600);margin-top:4px;}
 .ptc-stack{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:10px 0 8px;background:#eef2f4;gap:2px;}
 .ptc-stack i{display:block;height:100%;min-width:2px;}
@@ -1152,13 +1155,13 @@
 <body>
 
 <div class="navbar">
-  <a href="#/dashboard" class="brand">
+  <a href="#/exec" class="brand">
     <span class="logo-badge" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 36 36"><path d="M8 27V13l10-6 10 6v14M14 27v-8h8v8" fill="none" stroke="#fdc440" stroke-width="2.6" stroke-linejoin="round"/></svg></span>
     <span>คลังสินค้า WH2<small>TMT STEEL · INVENTORY WAREHOUSE 2</small></span>
   </a>
   <div class="nav-links">
-    <a href="#/dashboard" class="nav-link" data-route="dashboard">แดชบอร์ด</a>
     <a href="#/exec" class="nav-link" data-route="exec">📊 สรุปผล</a>
+    <a href="#/dashboard" class="nav-link" data-route="dashboard">แดชบอร์ด</a>
     <a href="#/trends" class="nav-link" data-route="trends">📈 แนวโน้ม</a>
     <a href="#/lookup" class="nav-link" data-route="lookup">ค้นหา Material</a>
     <a href="#/unmatched" class="nav-link" data-route="unmatched">⚠️ Code ไม่พบข้อมูล</a>
@@ -1598,7 +1601,7 @@
       <span style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn btn-primary btn-sm" id="btnExportExec">📸 Export รูป</button><button type="button" class="btn btn-outline btn-sm" id="btnRefreshExec">↻ รีเฟรช</button></span>
     </div>
     <div class="plan-meta" id="exMeta">กำลังโหลด...</div>
-    <div class="ex-sec">กลุ่มสินค้า <small>% ใหญ่ = ใช้พื้นที่ของกลุ่ม (Stock ÷ ความจุที่ใช้เก็บกลุ่มนั้น) · สัดส่วน = % ของ Stock ทั้งหมด</small></div>
+    <div class="ex-sec">กลุ่มสินค้า <small>% ใหญ่ = ใช้พื้นที่ของกลุ่ม (Stock ÷ ความจุที่ใช้เก็บกลุ่มนั้น)</small></div>
     <div class="ex-fams" id="exFams"></div>
     <div class="ex-sec">ภาพรวมพื้นที่ทั้งเครือข่าย</div>
     <div class="ex-card ex-ov" id="exTotal"></div>
@@ -1754,7 +1757,7 @@ const Router = {
   go(route){ window.location.hash = '#/' + route; },
   current(){
     const h = (window.location.hash || '').replace('#/', '').split('?')[0];
-    return ['dashboard','exec','trends','lookup','unmatched','planning','import'].includes(h) ? h : 'dashboard';
+    return ['dashboard','exec','trends','lookup','unmatched','planning','import'].includes(h) ? h : 'exec';   // หน้าแรก = สรุปผล (ผู้ใช้ขอ 5 พ.ย. 2569)
   }
 };
 let activatedRoute = null;
@@ -3057,8 +3060,8 @@ const DashboardPage = (() => {
       const share = totalT > 0 ? gT / totalT * 100 : 0;
       return { gT, html: `<div class="ptc" style="--g:${g.color};">
         <div class="ptc-h"><span class="ptc-name">${escapeHtml(g.label)}<small>${escapeHtml(g.sub)}</small></span>
-          <span class="ptc-pct">${share.toFixed(1)}<small>%</small></span></div>
-        <div class="ptc-sub">${fmtNum(gT, 0)} ตัน · ${fmtNum(gSku)} SKU · ${fmtNum(ents.length)} ประเภท</div>
+          <span class="ptc-right"><span class="ptc-pct">${share.toFixed(1)}<small>%</small></span><span class="ptc-ton">${fmtNum(gT, 0)} <small>ตัน</small></span></span></div>
+        <div class="ptc-sub">${fmtNum(gSku)} SKU · ${fmtNum(ents.length)} ประเภท</div>
         <div class="ptc-stack" role="img" aria-label="สัดส่วน Product Type ใน ${escapeHtml(g.label)}">${shown.map((e, i) => `<i style="width:${e.pct}%;background:${col(i, e.isRest)};" title="${escapeHtml(e.name)} ${e.pct.toFixed(1)}%"></i>`).join('')}</div>
         <div class="ptc-list">${shown.map((e, i) => `<div class="${e.isRest ? 'rest' : ''}" title="${escapeHtml(e.name)} · ${fmtNum(e.skuCount)} SKU">
           <i style="background:${col(i, e.isRest)};"></i><span>${e.name === 'ไม่ระบุ' ? '<span class="cell-muted">ไม่ระบุ</span>' : escapeHtml(e.name)}</span><b>${e.pct.toFixed(0)}%</b><em>${fmtNum(e.weightTons, 0)} t</em></div>`).join('')}</div>
@@ -5837,8 +5840,9 @@ const ExecPage = (() => {
   const EX_FAMS = [
     // แยก Hot Rolled Sheet กับ Flat Bar เป็นคนละการ์ด (ผู้ใช้ขอ 5 พ.ย. 2569)
     // gps = ชื่อกลุ่มในชิปของโรง (GP_LABEL) ที่ใช้แบ่งความจุโรงให้การ์ดนี้ตามสัดส่วนน้ำหนัก
-    { key:'HRS',     label:'Hot Rolled Sheet', sub:'แผ่น (HS + Plate)', icon:'▬', color:'#0c3843', codes:['HRS'],      gps:['HRS'] },
-    { key:'FlatBar', label:'Flat Bar',         sub:'แบน (Flat Bars)',   icon:'▭', color:'#5f8f9c', codes:['FLAT_BAR'], gps:['Flat Bar'] },
+    // HRS / Flat Bar นับตามพื้นที่ (Sloc) ที่ผู้ใช้กำหนด 5 พ.ย. 2569: ทุกอย่างที่อยู่ใน Sloc นั้นนับเข้าการ์ดนี้
+    { key:'HRS',     label:'Hot Rolled Sheet', sub:'Sloc 2E03 + 2A08',  icon:'▬', color:'#0c3843', codes:['HRS'],      gps:['HRS'],      slocs:['2E03','2A08'] },
+    { key:'FlatBar', label:'Flat Bar',         sub:'Sloc 2K04 + 2F01',  icon:'▭', color:'#5f8f9c', codes:['FLAT_BAR'], gps:['Flat Bar'], slocs:['2K04','2F01'] },
     { key:'Pipe',    label:'Pipe + C Channel', sub:'ท่อ + ตัวซี',        icon:'◯', color:'#2f74a8', codes:['PIPE','PIPE_GI','CH','CH_GI'], gps:['Pipe','C Channel'] },
     { key:'Section', label:'Section',          sub:'Beam',               icon:'I', color:'#e05a00', codes:['SECTION'],  gps:['Section'] },
     { key:'อื่นๆ',    label:'Scrap / อื่นๆ',     sub:'Scrap / ไม่ระบุ',     icon:'♻', color:'#8a9ba1', codes:['OTHER'],    gps:['Scrap','อื่นๆ'] },
@@ -5873,6 +5877,8 @@ const ExecPage = (() => {
         sb.from('v_location_group_daily').select('location_code,dim_value,weight_kg').eq('date_key', base).eq('dim_type', 'group_product'),
         sb.rpc('plan_type_detail'),
       ]);
+      // ยอดราย Sloc (การ์ด HRS / Flat Bar กำหนดตาม Sloc) — ถ้าเรียกไม่ได้ ใช้การนับตามกลุ่มสินค้าแทน
+      const slocRes = await sb.rpc('summary_sloc_detail');
       if (capRes.error) throw capRes.error;
       if (locRes.error) throw locRes.error;
       // โรง (รวม Fac B+E)
@@ -5891,14 +5897,14 @@ const ExecPage = (() => {
       const F = Object.values(facs).filter(f => f.cap > 0 || f.used > 0).map(f => ({ ...f, free: f.cap - f.used, pct: f.cap > 0 ? f.used / f.cap * 100 : 0 }));
       const det = {};
       if (!detRes.error) (detRes.data || []).forEach(r => { det[r.type_code] = { t: (+r.stock_kg || 0) / 1000, sku: +r.sku_count || 0, locs: [...new Set((r.location_codes || []).map(locationDisplayCode).filter(Boolean))].sort() }; });
-      render(base, F, det, !detRes.error);
+      render(base, F, det, !detRes.error, slocRes && !slocRes.error && (slocRes.data || []).length ? slocRes.data : null);
     } catch (e){
       console.error(e);
       el('exMeta').innerHTML = `<span style="color:var(--danger);">⚠️ โหลดข้อมูลไม่สำเร็จ: ${escapeHtml(friendlyDbError(e))}</span>`;
     } finally { loading = false; }
   }
 
-  function render(base, F, det, hasDet){
+  function render(base, F, det, hasDet, slocRows){
     baseDate = base;
     const T = { cap: F.reduce((a, f) => a + f.cap, 0), used: F.reduce((a, f) => a + f.used, 0) };
     T.free = T.cap - T.used; T.pct = T.cap > 0 ? T.used / T.cap * 100 : 0;
@@ -5925,19 +5931,47 @@ const ExecPage = (() => {
         ${roomy.length ? `<div class="ok"><b>ว่างมากสุด</b>${roomy.map(f => `<span>${escapeHtml(f.loc)} <em>${fmtNum(f.free, 0)} t</em></span>`).join('')}</div>` : ''}
       </div>`;
     // กลุ่มสินค้า: % ใช้พื้นที่ตัวใหญ่ + หลอดพลัง + ตัวเลขสั้น + สัดส่วนของ Stock + ประเภท (% ในกลุ่ม)
-    const stockAll = Object.values(det).reduce((a, d) => a + d.t, 0) || T.used;
-    el('exFams').innerHTML = EX_FAMS.map(fm => {
-      const types = fm.codes.map(c => ({ c, ...(det[c] || { t: 0, sku: 0, locs: [] }), ...TYPE_INFO[c] }));
-      // ถ้าเรียกรายละเอียดรายประเภทไม่ได้ ใช้น้ำหนักจากข้อมูลรายโรง (มิติ group_product) แทน
-      const gw = (f) => fm.gps.reduce((a, g) => a + ((f.groups || {})[g] || 0), 0);   // น้ำหนักของการ์ดนี้ในโรง f
-      const tLoc = F.reduce((a, f) => a + gw(f), 0);
-      const tDet = types.reduce((a, x) => a + x.t, 0);
-      const t = hasDet && tDet > 0 ? tDet : tLoc, sku = types.reduce((a, x) => a + x.sku, 0);
-      const locs = [...new Set(types.flatMap(x => x.locs))].sort();
-      // ความจุของกลุ่ม: แบ่งความจุโรงตามสัดส่วนน้ำหนักกลุ่มในโรง (ตัดเศษ < 0.5 t) — ไม่นับซ้ำ
-      const cap = F.reduce((a, f) => { const w = gw(f); return a + (w >= 0.5 && f.used > 0 ? f.cap * w / f.used : 0); }, 0);
+    const Fby = Object.fromEntries(F.map(f => [f.loc, f]));
+    const capOf = (wByLoc) => Object.entries(wByLoc).reduce((a, [loc, w]) => { const f = Fby[loc]; return a + (f && w >= 0.5 && f.used > 0 ? f.cap * w / f.used : 0); }, 0);
+    let stats;
+    if (slocRows){
+      // นับจากยอดราย Sloc: Sloc ที่กำหนดของ HRS / Flat Bar ก่อน ที่เหลือแยกตามประเภทสินค้า (ไม่นับซ้ำ)
+      const cardOf = (r) => {
+        const bySloc = EX_FAMS.find(fm => fm.slocs && fm.slocs.includes(r.storage_location));
+        if (bySloc) return bySloc.key;
+        const byCode = EX_FAMS.find(fm => fm.codes.includes(r.type_code));
+        return byCode ? byCode.key : 'อื่นๆ';
+      };
+      const acc = {};
+      slocRows.forEach(r => {
+        const k = cardOf(r), t = (+r.stock_kg || 0) / 1000, loc = locationDisplayCode(r.location_code) || 'ไม่ระบุ';
+        const c = (acc[k] = acc[k] || { t: 0, mats: new Set(), byLoc: {}, slocs: {}, types: {} });
+        c.t += t; (r.materials || []).forEach(m => c.mats.add(m));
+        c.byLoc[loc] = (c.byLoc[loc] || 0) + t;
+        (c.slocs[loc] = c.slocs[loc] || new Set()).add(r.storage_location);
+        // ประเภทในการ์ด: ใช้ชื่อประเภทหลัก ถ้าเป็นสินค้านอก 7 ประเภท ใช้ชื่อ Group Product จริง (เช่น RM, pipe GradeB)
+        const tk = r.type_code !== 'OTHER' && TYPE_INFO[r.type_code] ? TYPE_INFO[r.type_code].label : (r.group_product || 'ไม่ระบุ');
+        const col = r.type_code !== 'OTHER' && TYPE_INFO[r.type_code] ? TYPE_INFO[r.type_code].color : '#9fb3b9';
+        const ty = (c.types[tk] = c.types[tk] || { label: tk, color: col, t: 0 }); ty.t += t;
+      });
+      stats = EX_FAMS.map(fm => { const c = acc[fm.key] || { t: 0, mats: new Set(), byLoc: {}, slocs: {}, types: {} };
+        return { fm, t: c.t, sku: c.mats.size, cap: capOf(c.byLoc), hasSku: true,
+          locs: Object.keys(c.byLoc).filter(l => c.byLoc[l] >= 0.05).sort().map(l => fm.slocs ? `${l} (${[...c.slocs[l]].sort().join(', ')})` : l),
+          types: Object.values(c.types).filter(x => x.t >= 0.05).sort((a, b) => b.t - a.t) }; });
+    } else {
+      // สำรอง: นับตามกลุ่มสินค้า (plan_type_detail + ข้อมูลรายโรง)
+      stats = EX_FAMS.map(fm => {
+        const types = fm.codes.map(c => ({ c, ...(det[c] || { t: 0, sku: 0, locs: [] }), ...TYPE_INFO[c] }));
+        const byLoc = {}; F.forEach(f => { byLoc[f.loc] = fm.gps.reduce((a, g) => a + ((f.groups || {})[g] || 0), 0); });
+        const tDet = types.reduce((a, x) => a + x.t, 0), tLoc = Object.values(byLoc).reduce((a, b) => a + b, 0);
+        return { fm, t: hasDet && tDet > 0 ? tDet : tLoc, sku: types.reduce((a, x) => a + x.sku, 0), cap: capOf(byLoc), hasSku: hasDet,
+          locs: [...new Set(types.flatMap(x => x.locs))].sort(), types: hasDet && tDet > 0 ? types : [] };
+      });
+    }
+    const stockAll = stats.reduce((a, x) => a + x.t, 0) || T.used;
+    el('exFams').innerHTML = stats.map(({ fm, t, sku, cap, hasSku, locs, types }) => {
       const p = cap > 0 ? t / cap * 100 : 0, ft = tier(p), share = stockAll > 0 ? t / stockAll * 100 : 0;
-      const showTypes = hasDet && tDet > 0 && types.length > 1;
+      const showTypes = types.length > 1;
       return `<div class="ex-card ex-fam ${ft}" style="--fam:${fm.color};">
         <div class="ex-fac-h"><span class="ex-fam-h"><span class="ex-ic" style="background:${fm.color}22;color:${fm.color};">${fm.icon}</span><span>${escapeHtml(fm.label)}${fm.sub ? `<small class="ex-fam-sub">${escapeHtml(fm.sub)}</small>` : ''}</span></span>${cap > 0 ? pill(p) : ''}</div>
         ${cap > 0 ? `<div class="ex-pow-top"><span class="ex-pow-pct ${ft}">${p.toFixed(0)}<small>%</small></span><span class="ex-pow-lbl">ใช้พื้นที่ของกลุ่ม</span></div>
@@ -5946,9 +5980,6 @@ const ExecPage = (() => {
           <div><small>Stock</small><b>${fmtNum(t, 0)}</b></div>
           ${cap > 0 ? `<div><small>ความจุ</small><b>${fmtNum(cap, 0)}</b></div><div class="${cap - t < 0 ? 'neg' : 'free'}"><small>${cap - t < 0 ? 'เกิน' : 'คงเหลือ'}</small><b>${fmtNum(Math.abs(cap - t), 0)}</b></div>` : ''}
         </div>
-        <div class="ex-share"><span>สัดส่วนของ Stock ทั้งหมด</span><b>${share.toFixed(1)}%</b><div class="ex-bar"><i style="width:${share}%;background:${fm.color};"></i></div></div>
-        ${showTypes ? `<div class="ex-types">${types.map(x => { const tp = t > 0 ? x.t / t * 100 : 0; return `<div><span class="nm"><i style="background:${x.color};"></i>${escapeHtml(x.label)}</span><b>${fmtNum(x.t, 0)} t</b><em>${tp.toFixed(0)}%</em><span class="mini"><i style="width:${tp}%;background:${x.color};"></i></span></div>`; }).join('')}</div>` : ''}
-        <div class="ex-s ex-fam-foot">${hasDet ? `${fmtNum(sku)} SKU · ` : ''}เก็บที่ ${escapeHtml(locs.join(', ') || '—')}</div>
       </div>`;
     }).join('');
     // แยกโรง
@@ -6029,7 +6060,7 @@ const ExecPage = (() => {
    BOOT
 ============================================================ */
 async function boot(){
-  if (!window.location.hash) window.location.hash = '#/dashboard';
+  if (!window.location.hash) window.location.hash = '#/exec';
   await Auth.init();           // ต้องรู้สถานะล็อกอินก่อน เพื่อให้หน้านำเข้าข้อมูลแสดงสถานะถูกต้องตั้งแต่ครั้งแรก
   Auth.onChange(() => { ImportPage.refreshAuthUI(); PlanningPage.refreshAuthUI(); });
   handleRoute();
