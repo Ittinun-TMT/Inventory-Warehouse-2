@@ -6002,10 +6002,15 @@ const ExecPage = (() => {
      ในแต่ละกลุ่ม: Product Type เรียงตามน้ำหนัก 6 อันดับแรก + "อื่นๆ n ประเภท" */
   const SUB_TOP = 6;
   const SUB_ALPHA = ['ff', 'd0', 'a6', '80', '5c', '3d', '26'];
-  function cardKeyOf(r){
-    const bySloc = EX_FAMS.find(fm => fm.slocs && fm.slocs.includes(r.storage_location));
+  // ข้อ 4 แยก Pipe กับ C Channel เป็นคนละการ์ด (ผู้ใช้ขอ 5 พ.ย. 2569 → 6 การ์ด) · ข้อ 3 ยังรวมเป็น Pipe + C Channel
+  const SUB_FAMS = EX_FAMS.flatMap(fm => fm.key !== 'Pipe' ? [fm] : [
+    { key:'PipeOnly', label:'Pipe',      sub:'ท่อ + ท่อชุบ GI',     color:'#2f74a8', codes:['PIPE','PIPE_GI'] },
+    { key:'CChannel', label:'C Channel', sub:'ตัวซี + ตัวซีชุบ GI', color:'#b07c00', codes:['CH','CH_GI'] },
+  ]);
+  function cardKeyOf(r, FAMS = EX_FAMS){
+    const bySloc = FAMS.find(fm => fm.slocs && fm.slocs.includes(r.storage_location));
     if (bySloc) return bySloc.key;
-    const byCode = EX_FAMS.find(fm => fm.codes.includes(r.type_code));
+    const byCode = FAMS.find(fm => fm.codes.includes(r.type_code));
     return byCode ? byCode.key : 'อื่นๆ';
   }
   function renderSubgroups(rows, totalUsed){
@@ -6013,7 +6018,7 @@ const ExecPage = (() => {
     if (!rows || !rows.length || !rows.some(r => r.product_type)){ box.innerHTML = '<div class="viz-empty">ยังไม่มีข้อมูลกลุ่มย่อย (Product Type)</div>'; return; }
     const acc = {};
     rows.forEach(r => {
-      const k = cardKeyOf(r), t = (+r.stock_kg || 0) / 1000;
+      const k = cardKeyOf(r, SUB_FAMS), t = (+r.stock_kg || 0) / 1000;
       const c = (acc[k] = acc[k] || { t: 0, mats: new Set(), pts: {} });
       c.t += t; (r.materials || []).forEach(m => c.mats.add(m));
       const pk = r.product_type || 'ไม่ระบุ';
@@ -6021,7 +6026,7 @@ const ExecPage = (() => {
       pt.t += t; (r.materials || []).forEach(m => pt.mats.add(m));
     });
     const all = Object.values(acc).reduce((a, c) => a + c.t, 0) || totalUsed;
-    const cards = EX_FAMS.filter(fm => acc[fm.key] && acc[fm.key].t > 0).map(fm => {
+    const cards = SUB_FAMS.filter(fm => acc[fm.key] && acc[fm.key].t > 0).map(fm => {
       const c = acc[fm.key];
       const ents = Object.values(c.pts).sort((a, b) => b.t - a.t);
       let shown = ents.slice(0, SUB_TOP);
