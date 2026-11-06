@@ -2180,12 +2180,25 @@ function summaryGroupOf(storageLocation, typeCode, groups = SUMMARY_GROUPS){
   const byCode = groups.find(g => g.codes.includes(typeCode));
   return byCode ? byCode.key : 'อื่นๆ';
 }
-// byLoc = { โรง: ตันของกลุ่ม } · capOfLoc/usedOfLoc = { โรง: ความจุ/ใช้ไปทั้งโรง }
-function proRatedCapacity(byLoc, capOfLoc, usedOfLoc){
-  return Object.entries(byLoc).reduce((a, [loc, w]) => {
-    const c = capOfLoc[loc] || 0, u = usedOfLoc[loc] || 0;
-    return a + (w >= 0.5 && u > 0 ? c * w / u : 0);
-  }, 0);
+// ความจุของกลุ่ม = ยึดตามไฟล์ Area (Excel) ตรงๆ — ผู้ใช้กำหนด 6 พ.ย. 2569 (เลิกแบ่งตามสัดส่วนน้ำหนัก)
+//   ความจุทั้งก้อนของแต่ละโรงนับให้กลุ่มที่เป็น "ที่เก็บหลัก" ของโรงนั้น (กลุ่มที่มีน้ำหนักมากที่สุดในโรง)
+//   1 โรง = 1 กลุ่ม → ไม่นับซ้ำ และความจุของทุกกลุ่มรวมกัน = ผลรวมในไฟล์ Area (ยกเว้นโรงที่ยังไม่มีสต็อกเลย)
+//   สินค้าก้อนเล็กที่อยู่ในโรงของกลุ่มอื่น (เช่น "ไม่ระบุ" จาก Code ไม่พบข้อมูล) ยังนับตันให้กลุ่มของมันเอง
+// tonsByGroupLoc = { กลุ่ม: { โรง: ตัน } } · capOfLoc = { โรง: ความจุจากไฟล์ Area }
+function assignFactoryCapacity(tonsByGroupLoc, capOfLoc, eligible = null){
+  const best = {};
+  Object.entries(tonsByGroupLoc).forEach(([g, byLoc]) => {
+    if (eligible && !eligible.includes(g)) return;
+    Object.entries(byLoc || {}).forEach(([loc, t]) => { if (t > 0 && (!best[loc] || t > best[loc].t)) best[loc] = { g, t }; });
+  });
+  const cap = {}, locs = {}, owner = {};
+  Object.entries(best).forEach(([loc, b]) => {
+    const c = Number(capOfLoc[loc]) || 0; if (!(c > 0)) return;
+    owner[loc] = b.g; cap[b.g] = (cap[b.g] || 0) + c; (locs[b.g] = locs[b.g] || []).push(loc);
+  });
+  Object.values(locs).forEach(l => l.sort());
+  const unassigned = Object.keys(capOfLoc).filter(l => (Number(capOfLoc[l]) || 0) > 0 && !owner[l]).sort();
+  return { cap, locs, owner, unassigned };
 }
 
 /* ============================================================
@@ -2750,10 +2763,9 @@ const DashboardPage = (() => {
 
     // การ์ดกลุ่มสินค้า = เกณฑ์เดียวกับหน้า "สรุปผล" ข้อ 3 (SUMMARY_GROUPS — ผู้ใช้เลือก 6 พ.ย. 2569)
     //   HRS = Sloc 2E03 + 2A08 · Flat Bar = 2K04 + 2F01 · ที่เหลือตามประเภทสินค้า · มีการ์ด Scrap / อื่นๆ
-    //   ความจุกลุ่ม = แบ่งความจุโรงตามสัดส่วนน้ำหนัก (ไม่นับซ้ำ) → ตัวเลขตรงกับหน้าสรุปผลทุกค่า เมื่อดูวันล่าสุด
-    const capOfLoc = {}, usedOfLoc = {};
+    //   ความจุกลุ่ม = ตามไฟล์ Area ทั้งโรง นับให้กลุ่มหลักของโรง (assignFactoryCapacity) → ตรงกับหน้าสรุปผลทุกค่า เมื่อดูวันล่าสุด
+    const capOfLoc = {};
     mergeLocationRows(locRows || []).forEach(r => { capOfLoc[r.location_code] = Number(r.actual_capacity_tons) || 0; });
-    allRowsForPct.forEach(r => { const l = locationDisplayCode(r.location_code); if (l) usedOfLoc[l] = (usedOfLoc[l] || 0) + (Number(r.total_weight) || 0) / 1000; });
     const PT_BY_CODE = Object.fromEntries(PLAN_TYPES.map(t => [t.code, t]));
     const acc = {};
     allRowsForPct.forEach(r => {
@@ -2768,14 +2780,15 @@ const DashboardPage = (() => {
       part.t += t; part.mats.add(r.material); part.locs.add(loc);
     });
     const grandT = grandTotal / 1000;
+    const CA = assignFactoryCapacity(Object.fromEntries(Object.entries(acc).map(([k, c]) => [k, c.byLoc])), capOfLoc);
     const OTHER_PART_COLORS = ['#8a9ba1', '#a9b8bd', '#c5d1d4', '#6f8186', '#dfe6e8'];
 
     box.innerHTML = SUMMARY_GROUPS.map(fam => {
       const c = acc[fam.key] || { t: 0, mats: new Set(), byLoc: {}, slocs: new Set(), parts: {} };
       const weightT = c.t;
       const pct = grandT > 0 ? weightT / grandT * 100 : 0;
-      const famLocations = Object.keys(c.byLoc).filter(l => c.byLoc[l] >= 0.05).sort();
-      const famCapacity = proRatedCapacity(c.byLoc, capOfLoc, usedOfLoc);
+      const famLocations = CA.locs[fam.key] || [];   // โรงที่ความจุทั้งก้อนนับให้กลุ่มนี้
+      const famCapacity = CA.cap[fam.key] || 0;
       const util = famCapacity > 0 ? weightT / famCapacity * 100 : 0;
       const famRemain = famCapacity - weightT;
       const famRemainCls = famRemain < 0 ? 'over' : 'ok';
@@ -2795,7 +2808,7 @@ const DashboardPage = (() => {
               <div class="fp-bar"><span style="width:${pt.share}%;background:${pt.color};"></span></div>
             </div>`).join('')}</div>` : '';
       const famInfoTitle = `น้ำหนัก ${fmtNum(weightT,2)} ตัน = ${fam.slocs ? `ทุกแถวใน Sloc ${fam.slocs.join(' + ')}` : `แถวประเภท ${fam.codes.join(', ')} (ไม่รวม Sloc ของ HRS / Flat Bar)`} ของวันที่เลือก\n`
-        + `ความจุ ${fmtNum(famCapacity,2)} ตัน = Σ ความจุโรง × (น้ำหนักกลุ่มนี้ในโรง ÷ น้ำหนักทั้งโรง) — ไม่นับซ้ำ: ${famLocations.join(', ') || '—'}\n`
+        + `ความจุ ${fmtNum(famCapacity,2)} ตัน = ความจุตามไฟล์ Area ของโรงที่กลุ่มนี้เป็นสินค้าหลัก: ${famLocations.map(l => `${l} ${fmtNum(capOfLoc[l] || 0,2)}`).join(' + ') || '—'}\n`
         + `ใช้พื้นที่ % = น้ำหนัก ÷ ความจุ × 100 · % ของสต็อกทั้งหมด = น้ำหนักกลุ่ม ÷ น้ำหนักรวมทุกกลุ่ม × 100\n`
         + `เกณฑ์เดียวกับหน้า "สรุปผล" ข้อ 3`;
       return `
@@ -2809,7 +2822,7 @@ const DashboardPage = (() => {
           <div class="family-track"><div class="family-fill" style="width:${Math.min(100,pct)}%;background:${fam.color};">${barHtml}</div></div>
           ${partsList}
           <div class="family-desc">${escapeHtml(fam.sub)}</div>
-          <div class="family-desc" style="margin-top:2px;">ความจุแบ่งตามสัดส่วนจาก: ${famLocations.length ? escapeHtml(famLocations.join(', ')) : '—'}</div>
+          <div class="family-desc" style="margin-top:2px;">ความจุตามไฟล์ Area: ${famLocations.length ? escapeHtml(famLocations.map(l => `${l} ${fmtNum(capOfLoc[l] || 0,2)}`).join(' + ')) : '— (ไม่มีโรงที่เป็นที่เก็บหลัก)'}</div>
         </div>`;
     }).join('');
   }
@@ -5396,16 +5409,13 @@ const PlanningPage = (() => {
     });
     famCap = {}; famCapDetail = {};
     PLAN_FAMS.forEach(f => { famCap[f.key] = 0; famCapDetail[f.key] = []; });
-    Object.entries(byLoc).forEach(([loc, v]) => {
-      const cap = capByLoc[loc] || 0;
-      if (!(cap > 0) || !(v.total > 0)) return;
-      PLAN_FAMS.forEach(f => {
-        const t = v.fam[f.key] || 0;
-        if (t < 0.5) return;
-        const share = t / v.total;
-        famCap[f.key] += cap * share;
-        famCapDetail[f.key].push({ loc, share });
-      });
+    // ความจุยึดตามไฟล์ Area (ผู้ใช้กำหนด 6 พ.ย. 2569): ทั้งโรงนับให้กลุ่มหลักของโรง — กฎเดียวกับแดชบอร์ด/สรุปผล
+    const tonsByFam = {};
+    Object.entries(byLoc).forEach(([loc, v]) => Object.entries(v.fam).forEach(([fam, t]) => { (tonsByFam[fam] = tonsByFam[fam] || {})[loc] = t; }));
+    const CA = assignFactoryCapacity(tonsByFam, capByLoc);
+    PLAN_FAMS.forEach(f => {
+      famCap[f.key] = CA.cap[f.key] || 0;
+      famCapDetail[f.key] = (CA.locs[f.key] || []).map(loc => ({ loc, share: 1, cap: capByLoc[loc] || 0 }));
     });
   }
 
@@ -6115,7 +6125,7 @@ const ExecPage = (() => {
         ${roomy.length ? `<div class="ok"><b>ว่างมากสุด</b>${roomy.map(f => `<span>${escapeHtml(f.loc)} <em>${fmtNum(f.free, 2)} t</em></span>`).join('')}</div>` : ''}
       </div>`;
     // กลุ่มสินค้า: % ใช้พื้นที่ตัวใหญ่ + หลอดพลัง + ตัวเลขสั้น + สัดส่วนของ Stock + ประเภท (% ในกลุ่ม)
-    const capOf = (wByLoc) => proRatedCapacity(wByLoc, Object.fromEntries(F.map(f => [f.loc, f.cap])), Object.fromEntries(F.map(f => [f.loc, f.used])));
+    const capByFac = Object.fromEntries(F.map(f => [f.loc, f.cap]));
     let stats;
     if (slocRows){
       // นับจากยอดราย Sloc: Sloc ที่กำหนดของ HRS / Flat Bar ก่อน ที่เหลือแยกตามประเภทสินค้า (ไม่นับซ้ำ)
@@ -6132,22 +6142,25 @@ const ExecPage = (() => {
         const col = r.type_code !== 'OTHER' && TYPE_INFO[r.type_code] ? TYPE_INFO[r.type_code].color : '#9fb3b9';
         const ty = (c.types[tk] = c.types[tk] || { label: tk, color: col, t: 0 }); ty.t += t;
       });
+      const CA = assignFactoryCapacity(Object.fromEntries(Object.entries(acc).map(([k, c]) => [k, c.byLoc])), capByFac);
       stats = EX_FAMS.map(fm => { const c = acc[fm.key] || { t: 0, mats: new Set(), byLoc: {}, slocs: {}, types: {} };
-        return { fm, t: c.t, sku: c.mats.size, cap: capOf(c.byLoc), hasSku: true,
+        return { fm, t: c.t, sku: c.mats.size, cap: CA.cap[fm.key] || 0, capLocs: CA.locs[fm.key] || [], hasSku: true,
           locs: Object.keys(c.byLoc).filter(l => c.byLoc[l] >= 0.05).sort().map(l => fm.slocs ? `${l} (${[...c.slocs[l]].sort().join(', ')})` : l),
           types: Object.values(c.types).filter(x => x.t >= 0.05).sort((a, b) => b.t - a.t) }; });
     } else {
       // สำรอง: นับตามกลุ่มสินค้า (plan_type_detail + ข้อมูลรายโรง)
+      const byLocOf = (fm) => { const byLoc = {}; F.forEach(f => { byLoc[f.loc] = fm.gps.reduce((a, g) => a + ((f.groups || {})[g] || 0), 0); }); return byLoc; };
+      const CA = assignFactoryCapacity(Object.fromEntries(EX_FAMS.map(fm => [fm.key, byLocOf(fm)])), capByFac);
       stats = EX_FAMS.map(fm => {
         const types = fm.codes.map(c => ({ c, ...(det[c] || { t: 0, sku: 0, locs: [] }), ...TYPE_INFO[c] }));
-        const byLoc = {}; F.forEach(f => { byLoc[f.loc] = fm.gps.reduce((a, g) => a + ((f.groups || {})[g] || 0), 0); });
+        const byLoc = byLocOf(fm);
         const tDet = types.reduce((a, x) => a + x.t, 0), tLoc = Object.values(byLoc).reduce((a, b) => a + b, 0);
-        return { fm, t: hasDet && tDet > 0 ? tDet : tLoc, sku: types.reduce((a, x) => a + x.sku, 0), cap: capOf(byLoc), hasSku: hasDet,
+        return { fm, t: hasDet && tDet > 0 ? tDet : tLoc, sku: types.reduce((a, x) => a + x.sku, 0), cap: CA.cap[fm.key] || 0, capLocs: CA.locs[fm.key] || [], hasSku: hasDet,
           locs: [...new Set(types.flatMap(x => x.locs))].sort(), types: hasDet && tDet > 0 ? types : [] };
       });
     }
     const stockAll = stats.reduce((a, x) => a + x.t, 0) || T.used;
-    el('exFams').innerHTML = stats.map(({ fm, t, sku, cap, hasSku, locs, types }) => {
+    el('exFams').innerHTML = stats.map(({ fm, t, sku, cap, capLocs, hasSku, locs, types }) => {
       const p = cap > 0 ? t / cap * 100 : 0, ft = facTier(p), share = stockAll > 0 ? t / stockAll * 100 : 0;
       const showTypes = types.length > 1;
       return `<div class="ex-card ex-fam ${ft}" style="--fam:${fm.color};">
@@ -6156,7 +6169,7 @@ const ExecPage = (() => {
         <div class="ex-pow ${ft}"><i class="fill" style="width:${Math.min(p, 100)}%;"></i><span class="tick" style="left:25%"></span><span class="tick" style="left:50%"></span><span class="tick" style="left:75%"></span><span class="mark80" style="left:80%"></span><span class="mark90" style="left:90%"></span></div>` : ''}
         <div class="ex-lines ex-fam-nums">
           <div><span>Stock</span><b>${fmtNum(t, 2)}</b><em>ตัน</em></div>
-          ${cap > 0 ? `<div><span>ความจุ</span><b>${fmtNum(cap, 2)}</b><em>ตัน</em></div><div class="${cap - t < 0 ? 'neg' : 'free'}"><span>${cap - t < 0 ? 'เกินพิกัด' : 'คงเหลือ'}</span><b>${cap - t < 0 ? '+' : ''}${fmtNum(Math.abs(cap - t), 2)}</b><em>ตัน</em></div>` : ''}
+          ${cap > 0 ? `<div title="ความจุตามไฟล์ Area: ${escapeHtml((capLocs || []).map(l => `${l} ${fmtNum(capByFac[l] || 0, 2)}`).join(' + ') || '—')}"><span>ความจุ</span><b>${fmtNum(cap, 2)}</b><em>ตัน</em></div><div class="${cap - t < 0 ? 'neg' : 'free'}"><span>${cap - t < 0 ? 'เกินพิกัด' : 'คงเหลือ'}</span><b>${cap - t < 0 ? '+' : ''}${fmtNum(Math.abs(cap - t), 2)}</b><em>ตัน</em></div>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -6183,7 +6196,7 @@ const ExecPage = (() => {
         <div class="ex-chips">${Object.entries(f.groups).filter(([, v]) => v >= 0.5).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="ex-chip"><i style="background:${GP_COLOR[k] || '#c9d6da'};"></i>${escapeHtml(k)} <b>${fmtNum(v, 2)}</b></span>`).join('')}</div></div>`;
     }).join('');
     el('exNote').innerHTML = '<b>ที่มาของตัวเลข</b><br/>• พื้นที่ทั้งหมด = ผลรวมความจุจริงของทุกโรง · พื้นที่ใช้ไป = Stock ณ วันที่ข้อมูลล่าสุด · คงเหลือ = ทั้งหมด − ใช้ไป (โรงที่เกินพิกัดทำให้ยอดรวมคงเหลือลดลงด้วย)<br/>'
-      + '• ความจุของกลุ่มสินค้า = ความจุโรงที่เก็บกลุ่มนั้นจริง ถ้าโรงเดียวเก็บหลายกลุ่ม แบ่งตามสัดส่วนน้ำหนัก (ไม่นับซ้ำ)<br/>'
+      + '• ความจุ = ค่า "พื้นที่จัดเก็บจริง Tons." จากไฟล์ Area ที่นำเข้า · ความจุของกลุ่มสินค้า = ผลรวมความจุทั้งโรงของโรงที่กลุ่มนั้นเป็นสินค้าหลัก (น้ำหนักมากสุดในโรง) — 1 โรงนับให้กลุ่มเดียว ไม่นับซ้ำ<br/>'
       + '• หน่วย: ตัน ทศนิยม 2 ตำแหน่ง · % ทศนิยม 1 ตำแหน่ง · เกณฑ์กลุ่มสินค้าเดียวกับการ์ดกลุ่มสินค้าในหน้าแดชบอร์ด';
   }
   let baseDate = null;
