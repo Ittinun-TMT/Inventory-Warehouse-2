@@ -178,6 +178,28 @@
   }
   .modal-close:hover{background:rgba(255,255,255,0.22);}
   .modal-body{padding:0;display:flex;}
+  /* ===== ลบข้อมูลสต็อกแบบเลือกวัน ===== */
+  .sdel-box{max-width:620px;display:flex;flex-direction:column;}
+  .sdel-tools{padding:14px 20px;border-bottom:1px solid var(--gray-200);background:var(--gray-50);display:flex;flex-direction:column;gap:10px;}
+  .sdel-range{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--navy-900);}
+  .sdel-range input[type=date]{font:inherit;padding:6px 8px;border:1px solid var(--gray-300,#cfd8dc);border-radius:7px;background:var(--white);}
+  .sdel-quick{display:flex;flex-wrap:wrap;gap:6px;}
+  .sdel-list{padding:6px 20px;overflow:auto;max-height:46vh;}
+  .sdel-row{display:grid;grid-template-columns:22px 1fr auto auto;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px dashed #e3e8ea;cursor:pointer;font-size:14px;}
+  .sdel-row:last-child{border-bottom:0;}
+  .sdel-row input{width:17px;height:17px;accent-color:#c1121f;cursor:pointer;}
+  .sdel-row.on{background:#fdf0f0;}
+  .sdel-row.off{opacity:.5;cursor:not-allowed;}
+  .sdel-row b{color:var(--navy-900);font-weight:600;}
+  .sdel-row .sdel-n{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--gray-600);text-align:right;}
+  .sdel-latest{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:#fdc440;color:#0c3843;}
+  .sdel-foot{position:sticky;bottom:0;background:var(--white);border-top:2px solid var(--gray-200);padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;}
+  .sdel-sum{font-size:13.5px;color:var(--navy-900);}
+  .sdel-sum b{font-family:'IBM Plex Mono',monospace;}
+  .sdel-warn{font-size:12.5px;color:#a4161a;margin-top:2px;}
+  .sdel-foot .btn-row{display:flex;gap:8px;margin:0;}
+  .btn-danger-solid{background:#c1121f;color:#fff;border:1px solid #c1121f;}
+  .btn-danger-solid:disabled{background:#e6b3b6;border-color:#e6b3b6;cursor:not-allowed;}
   .loc-gp-strip{padding:16px 24px;border-bottom:1px solid var(--gray-200);background:var(--gray-50);}
   .loc-gp-list{display:flex;flex-wrap:wrap;gap:8px;}
   .loc-gp-chip{font-size:13px;color:var(--navy-900);background:var(--white);border:1px solid var(--gray-200);border-radius:999px;padding:5px 12px;font-variant-numeric:tabular-nums;}
@@ -1432,7 +1454,7 @@
         <div class="import-log" id="logStock"></div>
         <div class="btn-row">
           <button class="btn btn-primary" id="btnImportStock" disabled>➕ เพิ่มข้อมูลสต็อก</button>
-          <button class="btn btn-danger-outline" id="btnDeleteAllStock">🗑️ ลบข้อมูลสต็อกทั้งหมด</button>
+          <button class="btn btn-danger-outline" id="btnDeleteAllStock" title="เลือกวันที่ต้องการลบ (เลือกได้หลายวัน / ช่วงวันที่ / ทั้งหมด)">🗑️ ลบข้อมูลสต็อก (เลือกวัน)</button>
         </div>
         <div class="last-import-info" id="lastStock">ยังไม่เคยนำเข้าข้อมูล</div>
       </div>
@@ -3754,7 +3776,7 @@ const ImportPage = (() => {
     el('btnImportArea').addEventListener('click', () => runImport('area'));
     el('btnImportGroup').addEventListener('click', () => runImport('group'));
 
-    el('btnDeleteAllStock').addEventListener('click', () => deleteAllData('stock'));
+    el('btnDeleteAllStock').addEventListener('click', () => openStockDeleteDialog());
     el('btnDeleteAllArea').addEventListener('click', () => deleteAllData('area'));
     el('btnDeleteAllGroup').addEventListener('click', () => deleteAllData('group'));
   }
@@ -4174,6 +4196,139 @@ const ImportPage = (() => {
     tbody.querySelectorAll('button[data-date-key]').forEach(btn => {
       btn.addEventListener('click', () => deleteStockByDate(btn.dataset.dateKey, Number(btn.dataset.rowCount)));
     });
+  }
+
+  /* ---------- ลบข้อมูลสต็อก / รายการสินค้า แบบเลือกวัน (ผู้ใช้ขอ 6 พ.ย. 2569) ----------
+     เดิมปุ่มในการ์ดนำเข้าลบทั้งตารางทีเดียว → ตอนนี้เปิดหน้าต่างให้เลือกวันที่นำเข้า (ติ๊กทีละวัน / ช่วงวันที่ / ทั้งหมด)
+     ลบทีละวันตามช่วงเวลาไทย (bkkDayRange) ตรงกับการจัดกลุ่มของ v_stock_daily · เลือกครบทุกวัน = ล้างทั้งตาราง */
+  async function openStockDeleteDialog(){
+    if (!Auth.isSignedIn()){ toast('ต้องใส่รหัสพนักงาน 8 หลักก่อนลบข้อมูล', 'error'); return; }
+    const { data, error } = await sb.from('v_stock_daily').select('date_key,row_count,total_weight_kg').order('date_key', { ascending: false });
+    if (error){ toast(`โหลดรายการวันที่ไม่สำเร็จ: ${friendlyDbError(error)}`, 'error'); return; }
+    const days = (data || []).map(r => ({ key: r.date_key, rows: Number(r.row_count) || 0, t: (Number(r.total_weight_kg) || 0) / 1000, ok: /^\d{4}-\d{2}-\d{2}$/.test(r.date_key || '') }));
+    if (!days.length){ toast('ยังไม่มีข้อมูลสต็อกในระบบ', 'info'); return; }
+    const valid = days.filter(d => d.ok);
+    const latest = valid.length ? valid[0].key : null, oldest = valid.length ? valid[valid.length - 1].key : null;
+    const sel = new Set();
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box sdel-box" role="dialog" aria-modal="true" aria-labelledby="sdelTitle">
+        <div class="modal-head">
+          <div><h3 id="sdelTitle">🗑️ ลบข้อมูลสต็อก / รายการสินค้า</h3>
+            <div class="modal-sub">เลือกวันที่นำเข้าที่ต้องการลบ · ${fmtNum(valid.length)} วันในระบบ · วันที่ไม่ได้เลือกจะไม่ถูกแตะต้อง</div></div>
+          <button class="modal-close" aria-label="ปิด">&times;</button>
+        </div>
+        <div class="sdel-tools">
+          <div class="sdel-range">
+            <span>ช่วงวันที่</span>
+            <input type="date" id="sdelFrom" min="${oldest || ''}" max="${latest || ''}" value="${oldest || ''}" aria-label="ตั้งแต่วันที่">
+            <span>ถึง</span>
+            <input type="date" id="sdelTo" min="${oldest || ''}" max="${latest || ''}" value="${latest || ''}" aria-label="ถึงวันที่">
+            <button class="btn btn-outline btn-sm" id="sdelPickRange">✓ เลือกช่วงนี้</button>
+          </div>
+          <div class="sdel-quick">
+            <button class="btn btn-outline btn-sm" data-q="all">เลือกทั้งหมด</button>
+            <button class="btn btn-outline btn-sm" data-q="keepLatest">ทั้งหมด ยกเว้นวันล่าสุด</button>
+            <button class="btn btn-outline btn-sm" data-q="none">ล้างที่เลือก</button>
+          </div>
+        </div>
+        <div class="sdel-list" id="sdelList">${days.map(d => `
+          <label class="sdel-row${d.ok ? '' : ' off'}" title="${d.ok ? '' : 'ไม่มีวันที่นำเข้าที่ชัดเจน — ลบได้ด้วย &quot;เลือกทั้งหมด&quot; เท่านั้น'}">
+            <input type="checkbox" value="${escapeHtml(d.key)}" ${d.ok ? '' : 'disabled'}>
+            <span><b>${escapeHtml(fmtDateKey(d.key))}</b>${d.key === latest ? '<span class="sdel-latest">ล่าสุด</span>' : ''}</span>
+            <span class="sdel-n">${fmtNum(d.rows)} แถว</span>
+            <span class="sdel-n">${fmtNum(d.t, 2)} ตัน</span>
+          </label>`).join('')}</div>
+        <div class="sdel-foot">
+          <div><div class="sdel-sum" id="sdelSum"></div><div class="sdel-warn" id="sdelWarn"></div></div>
+          <div class="btn-row">
+            <button class="btn btn-outline" id="sdelCancel">ยกเลิก</button>
+            <button class="btn btn-danger-solid" id="sdelGo" disabled>🗑️ ลบวันที่เลือก</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const $ = (q) => overlay.querySelector(q);
+    const boxes = [...overlay.querySelectorAll('.sdel-row input:not([disabled])')];
+    let busy = false;
+    const allSelected = () => valid.length > 0 && sel.size === valid.length;
+    const sync = () => {
+      boxes.forEach(b => { b.checked = sel.has(b.value); b.closest('.sdel-row').classList.toggle('on', b.checked); });
+      const picked = valid.filter(d => sel.has(d.key));
+      const rows = picked.reduce((a, d) => a + d.rows, 0), t = picked.reduce((a, d) => a + d.t, 0);
+      $('#sdelSum').innerHTML = picked.length ? `เลือก <b>${fmtNum(picked.length)}</b> วัน · <b>${fmtNum(rows)}</b> แถว · <b>${fmtNum(t, 2)}</b> ตัน` : 'ยังไม่ได้เลือกวัน';
+      const w = [];
+      if (allSelected()) w.push('เลือกครบทุกวัน = ล้างข้อมูลสต็อกทั้งหมด');
+      else if (latest && sel.has(latest)) w.push('รวมวันล่าสุด — แดชบอร์ด/สรุปผลจะย้อนไปใช้วันก่อนหน้า');
+      $('#sdelWarn').textContent = w.join(' · ');
+      $('#sdelGo').disabled = busy || !picked.length;
+      $('#sdelGo').textContent = allSelected() ? '🗑️ ลบทั้งหมด' : `🗑️ ลบ ${picked.length || ''} วันที่เลือก`.replace('  ', ' ');
+    };
+    const escHandler = (e) => { if (e.key === 'Escape' && !busy) close(); };
+    const close = () => { overlay.remove(); document.removeEventListener('keydown', escHandler); };
+    overlay.addEventListener('click', (e) => { if (e.target === overlay && !busy) close(); });
+    $('.modal-close').addEventListener('click', () => { if (!busy) close(); });
+    $('#sdelCancel').addEventListener('click', () => { if (!busy) close(); });
+    document.addEventListener('keydown', escHandler);
+    boxes.forEach(b => b.addEventListener('change', () => { b.checked ? sel.add(b.value) : sel.delete(b.value); sync(); }));
+    overlay.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => {
+      sel.clear();
+      if (b.dataset.q === 'all') valid.forEach(d => sel.add(d.key));
+      if (b.dataset.q === 'keepLatest') valid.slice(1).forEach(d => sel.add(d.key));
+      sync();
+    }));
+    $('#sdelPickRange').addEventListener('click', () => {
+      let a = $('#sdelFrom').value, z = $('#sdelTo').value;
+      if (!a || !z){ toast('เลือกวันเริ่มต้นและวันสิ้นสุดก่อน', 'info'); return; }
+      if (a > z) [a, z] = [z, a];
+      const inRange = valid.filter(d => d.key >= a && d.key <= z);
+      if (!inRange.length){ toast(`ไม่มีข้อมูลในช่วง ${fmtDateKey(a)} – ${fmtDateKey(z)}`, 'info'); return; }
+      inRange.forEach(d => sel.add(d.key));
+      sync();
+    });
+    $('#sdelGo').addEventListener('click', async () => {
+      const picked = valid.filter(d => sel.has(d.key)).sort((x, y) => x.key < y.key ? -1 : 1);
+      if (!picked.length) return;
+      const rows = picked.reduce((a, d) => a + d.rows, 0);
+      const wipeAll = allSelected();
+      const list = picked.length <= 12 ? picked.map(d => '• ' + fmtDateKey(d.key)).join('\n') : `${fmtDateKey(picked[0].key)} – ${fmtDateKey(picked[picked.length - 1].key)} (${picked.length} วัน)`;
+      const ok = confirm(`ยืนยันลบข้อมูลสต็อก/รายการสินค้า ${picked.length} วัน รวม ${rows.toLocaleString()} แถว?\n${list}`
+        + (wipeAll ? '\n\n⚠️ เลือกครบทุกวัน = ล้างข้อมูลสต็อกทั้งหมด' : '') + '\n\nการลบนี้ไม่สามารถย้อนกลับได้');
+      if (!ok) return;
+      busy = true; sync();
+      const done = [];
+      try {
+        if (wipeAll){
+          $('#sdelGo').textContent = '⏳ กำลังลบทั้งหมด...';
+          const { error } = await sb.from('stock').delete().gt('id', 0);
+          if (error) throw error;
+          done.push(...picked);
+        } else {
+          for (const d of picked){
+            $('#sdelGo').textContent = `⏳ กำลังลบ ${done.length + 1}/${picked.length} · ${fmtDateKey(d.key)}`;
+            const { startIso, endIso } = bkkDayRange(d.key);
+            const { error } = await sb.from('stock').delete().gte('imported_at', startIso).lt('imported_at', endIso);
+            if (error) throw Object.assign(error, { failedDay: d.key });
+            done.push(d);
+          }
+        }
+        close();
+        toast(`ลบข้อมูลสต็อก ${done.length} วัน (${done.reduce((a, d) => a + d.rows, 0).toLocaleString()} แถว) เรียบร้อย`, 'success');
+      } catch (e) {
+        console.error(e);
+        busy = false;
+        done.forEach(d => sel.delete(d.key));
+        toast(`ลบไม่สำเร็จ${e.failedDay ? ` ที่วันที่ ${fmtDateKey(e.failedDay)}` : ''}: ${friendlyDbError(e)}` + (done.length ? ` — ลบไปแล้ว ${done.length} วัน` : ''), 'error');
+        sync();
+      }
+      if (done.length){
+        await refreshAggregatesQuiet();
+        await loadStockByDate(); await loadStorageSummary(); await loadAggStatus();
+        await loadLastImportInfo(); await loadImportHistory();
+      }
+    });
+    sync();
   }
 
   async function deleteStockByDate(dateKey, rowCount){
